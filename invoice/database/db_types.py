@@ -22,14 +22,16 @@ __all__ = [
     'Int',
     'Float',
     'Date',
+    'DateTime',
+    'Path',
 ]
 
 import datetime
+import os
 
 class BaseType(object):
     DB_TYPENAME = None
     PY_TYPE = None
-
     def __init__(self, *db_create_args):
         self._db_create_args = db_create_args
 
@@ -63,25 +65,30 @@ class BaseType(object):
 
     @classmethod
     def impl_db_from(cls, value_s):
-        return cls.py_type(value_s)
+        return cls.py_type()(value_s)
 
     @classmethod
     def impl_db_to(cls, value):
         return str(value)
 
-class Str(object):
+class Str(BaseType):
     DB_TYPENAME = 'TEXT'
     PY_TYPE = str
 
-class Int(object):
+class Path(Str):
+    @classmethod
+    def impl_db_to(cls, value):
+        return os.path.normpath(os.path.abspath(os.path.realpath(value)))
+
+class Int(BaseType):
     DB_TYPENAME = 'INTEGER'
     PY_TYPE = int
 
-class Float(object):
+class Float(BaseType):
     DB_TYPENAME = 'REAL'
     PY_TYPE = int
 
-class Date(object):
+class Date(BaseType):
     DB_TYPENAME = 'TEXT'
     PY_TYPE = datetime.date
     DATE_FORMAT = "%Y-%m-%d"
@@ -93,3 +100,16 @@ class Date(object):
     @classmethod
     def impl_db_to(cls, value):
         return value.strftime(cls.DATE_FORMAT)
+
+class DateTime(BaseType):
+    DB_TYPENAME = 'TEXT'
+    PY_TYPE = datetime.date
+    DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+    
+    @classmethod
+    def impl_db_from(cls, value_s):
+        return datetime.datetime.strptime(value_s, cls.DATETIME_FORMAT)
+
+    @classmethod
+    def impl_db_to(cls, value):
+        return value.strftime(cls.DATETIME_FORMAT)

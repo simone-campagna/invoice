@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+
+import datetime
+import os
+
+from invoice.invoice import Invoice
+from invoice.invoice_db import InvoiceDb
+from invoice.log import get_default_logger, set_verbose_level
+
+logger = get_default_logger()
+set_verbose_level(logger, 2)
+
+
+db_filename = "a.db"
+
+invoice_db = InvoiceDb(db_filename, logger=logger)
+
+if not os.path.exists(db_filename):
+    print("initializing {}...".format(db_filename))
+    invoice_db.initialize()
+    print("writing to {}...".format(db_filename))
+    invoices = [
+        Invoice(doc_filename='a.doc', year=2014, number=1, city="Topolinia", date=datetime.date(2014, 1, 23),
+                name="Pippo De Pippis", tax_code="DPPPPP12G21T999X", income=33.50, currency="euro"),
+        Invoice(doc_filename='b.doc', year=2014, number=2, city="Paperopoli", date=datetime.date(2014, 2, 3),
+                name="Paperino De Paperinis", tax_code="DPPPPR21J02P313W", income=22.00, currency="euro"),
+        Invoice(doc_filename='c.doc', year=2014, number=3, city="Gotham", date=datetime.date(2014, 2, 19),
+                name="Er Batman", tax_code="BTMREX01U12G666Y", income=897.00, currency="euro"),
+    ]
+    invoice_db.write('invoices', invoices)
+else:
+    print("reading from {}...".format(db_filename))
+    for invoice in invoice_db.read('invoices'):
+        print(invoice)
