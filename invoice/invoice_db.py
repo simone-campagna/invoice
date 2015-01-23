@@ -25,16 +25,22 @@ import os
 import sqlite3
 
 from .invoice import Invoice
+from .invoice_collection import InvoiceCollection
 from .database.db import Db
 from .database.table import Table
 from .database.db_types import Str, Int, Float, Date, DateTime, Path
 
 class InvoiceDb(Db):
     TABLES = {
+        'patterns': Table(
+            fields=(
+                ('pattern', Path('UNIQUE')),
+            ),
+        ),
         'invoices': Table(
             fields=(
                 ('ID', Int('PRIMARY KEY')),
-                ('doc_filename', Path()),
+                ('doc_filename', Path('UNIQUE')),
                 ('year', Int()),
                 ('number', Int()),
                 ('name', Str()),
@@ -51,7 +57,6 @@ class InvoiceDb(Db):
                 ('doc_filename', Str('UNIQUE')),
                 ('scan_date', DateTime()),
             ),
-            dict_type=Invoice,
         ),
     }
 
@@ -76,3 +81,15 @@ DELETE FROM scan_dates WHERE doc_filename == old.doc_filename;
 END"""
             self.execute(cursor, sql)
 
+    def store_invoice_collection(self, invoice_collection, connection=None):
+        with self.connect(connection) as connection:
+            self.write('invoices', invoice_collection, connection=connection)
+            
+
+    def load_invoice_collection(self, connection=None):
+        invoice_collection = InvoiceCollection()
+        with self.connect(connection) as connection:
+            for invoice in self.read('invoices', connection=connection):
+                invoice_collection.add(invoice)
+        return invoice_collection
+                
