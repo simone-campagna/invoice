@@ -182,7 +182,7 @@ year {year}:
                 else:
                     client_income_percentage = 0.0
                 client_weeks = sorted(set(self.get_week_number(invoice.date) for invoice in invoices))
-                print("""\
+                print_function("""\
     + client:             {tax_code} ({name}):
       number of invoices: {num_invoices}
       total income:       {client_total_income}
@@ -210,7 +210,7 @@ year {year}:
                 else:
                     week_income_percentage = 0.0
                 first_date, last_date = self.get_week_range(year, week)
-                print("""\
+                print_function("""\
     + week:               {week} [{first_date} -> {last_date}]:
       number of invoices: {num_invoices}
       total income:       {week_total_income}

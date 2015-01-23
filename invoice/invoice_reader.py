@@ -92,8 +92,9 @@ class InvoiceReader(object):
                     got_total = True
                     store(data, converters, match)
                     continue
-        self.logger.debug("year: {year} no: {number}, city: {city}, date: {date}, name: {name}, tax_code: {tax_code}, income: {income}, currency: {currency}".format(**data))
-        return Invoice(**data)
+        invoice = Invoice(**data)
+        self.logger.info("scanned {}".format(invoice))
+        return invoice
 
     @classmethod
     def convert_name(cls, income_s):

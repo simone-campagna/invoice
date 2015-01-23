@@ -80,10 +80,10 @@ class InvoiceDb(Db):
         ),
     }
 
-    def initialize(self, connection=None):
+    def impl_initialize(self, connection=None):
         min_datetime = DateTime.db_to(datetime.datetime(1900, 1, 1))
         with self.connect(connection) as connection:
-            super().initialize(connection=connection)
+            super().impl_initialize(connection=connection)
             cursor = connection.cursor()
             sql = """CREATE TRIGGER insert_on_invoices BEFORE INSERT ON invoices
 BEGIN
@@ -113,7 +113,7 @@ END"""
                 invoice_collection.add(invoice)
         return invoice_collection
                 
-    def scan(self, connection=None):
+    def scan(self, warnings_mode=InvoiceCollection.WARNINGS_MODE_DEFAULT, raise_on_error=False, connection=None):
         found_doc_filenames = set()
         file_date_times = FileDateTimes()
         updated_invoice_collection = InvoiceCollection()
@@ -169,6 +169,9 @@ END"""
                     else:
                         new_invoices.append(invoice)
                     scan_date_times.append(self.ScanDateTime(doc_filename=invoice.doc_filename, scan_date_time=file_date_times[invoice.doc_filename]))
+                result = updated_invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
+                if result['errors']:
+                    raise InvoiceError("validation failed - {} errors found".format(result['errors']))
                 if old_invoices:
                     self.update('invoices', 'doc_filename', old_invoices, connection=connection)
                 else:

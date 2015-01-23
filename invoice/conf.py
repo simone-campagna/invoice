@@ -21,10 +21,17 @@ __all__ = [
     'VERSION_MINOR',
     'VERSION_PATCH',
     'VERSION',
+    'RC_DIR',
+    'DB_FILENAME',
 ]
+
+import os
 
 VERSION_MAJOR = 1
 VERSION_MINOR = 0
 VERSION_PATCH = 0
 
 VERSION = '{}.{}.{}'.format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
+
+RC_DIR = os.path.join(os.environ['HOME'], '.invoice')
+DB_FILENAME = os.path.join(RC_DIR, 'invoices.db')

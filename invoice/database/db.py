@@ -59,14 +59,19 @@ class Db(object):
             )
             self.execute(cursor, sql)
 
-    def initialize(self, connection):
-        if os.path.exists(self.db_filename):
+    def initialize(self):
+        if not os.path.exists(self.db_filename):
+            dirname, basename = os.path.split(self.db_filename)
+            if not os.path.isdir(dirname):
+                os.makedirs(dirname)
+        self.impl_initialize()
+
+    def impl_initialize(self, connection=None):
+        with self.connect(connection) as connection:
             table_names = self.get_table_names(connection=connection)
-        else:
-            table_names = ()
-        for table_name, table in self.TABLES.items():
-            if not table in table_names:
-                self.create_table(table_name, table.fields, connection=connection)
+            for table_name, table in self.TABLES.items():
+                if not table in table_names:
+                    self.create_table(table_name, table.fields, connection=connection)
 
     def read(self, table_name, where=None, connection=None):
         if where:
@@ -108,6 +113,23 @@ class Db(object):
                 values = [getattr(record, field_name) for field_name in field_names] + [getattr(record, key)]
                 self.execute(cursor, sql, values)
 
+    def delete(self, table_name, where=None, connection=None):
+        if where:
+            if isinstance(where, str):
+                 where_list = [where]
+            else:
+                 where_list = where
+            where = " WHERE ({})".format(" AND ".join("( {} )".format(w) for w in where_list))
+        else:
+            where = ""
+        sql = """DELETE FROM {table_name}{where};""".format(
+            table_name=table_name,
+            where=where,
+        )
+        with self.connect(connection) as connection:
+            cursor = connection.cursor()
+            self.execute(cursor, sql)
+    
     def write(self, table_name, records, connection=None):
         table = self.TABLES[table_name]
         field_names = table.field_names
