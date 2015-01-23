@@ -4,6 +4,7 @@ Read and process invoice documents
 ## Requirements
 invoice requires:
  * python3
+ * sqlite3 (python module)
  * catdoc
 
 ## Install

@@ -23,7 +23,7 @@ __all__ = [
 import argparse
 import traceback
 
-from .conf import VERSION, DB_FILENAME
+from .conf import VERSION, DB_FILENAME, DB_FILENAME_VAR
 from .log import get_default_logger, set_verbose_level
 from .invoice_collection import InvoiceCollection
 from .invoice_db import InvoiceDb
@@ -72,6 +72,7 @@ def invoice_program():
     )
 
     common_parser.add_argument("--db", "-d",
+        metavar="F",
         dest="db_filename",
         default=DB_FILENAME,
         help="db filename")
@@ -98,7 +99,51 @@ Read and process a collection of invoices.
 Each input invoice is a DOC file.
 The 'catdoc' tool is used to convert DOC files; it must be available.
 
-For each DOC file, the following information is retrieved:
+Read invoices are stored on a SQLite3 db; sqlite3 python module must be
+available.
+
+The db is normally stored in
+{db_filename}
+
+The init subcommand is used to initialize the db; then, the 'scan'
+subcommand can be used to read new or recently changed invoice DOC
+files. Other subcommands ('list', 'report') can be used to show some
+information about the invoices stored on the db.
+
+""".format(db_filename=DB_FILENAME_VAR),
+        epilog="""\
+Please, donate 10% of the your income to the author of this nice tool!
+""".format(__author__),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=(common_parser, ),
+    )
+
+    subparsers = top_level_parser.add_subparsers()
+
+    init_parser = subparsers.add_parser(
+        "init",
+        parents=(common_parser, ),
+        description="""\
+Initialize the db. At least one pattern must be provided, for instance:
+$ %(prog)s init 'docs/*.doc'
+""",
+    )
+    init_parser.set_defaults(
+        function_name="db_init",
+        function_arguments=('patterns', ),
+    )
+
+    init_parser.add_argument("patterns",
+        nargs='+',
+        help='doc patterns',
+    )
+
+    scan_parser = subparsers.add_parser(
+        "scan",
+        parents=(common_parser, ),
+        description="""\
+Read new or recently updated invoice DOC files and retrieves the
+following information:
   * 'year'
   * 'number'
   * 'city'
@@ -114,41 +159,8 @@ as:
   * wrong numbering
   * missing information
 
-The read invoices can then be filtered by passing some filtering
-function, for instance:
-  * -f 'number > 10'
-
-It is then possible to apply an action to the parsed invoices:
-* --list, -l: all the invoices are listed
-* --report, -r: a per-year report is shown.
-
+If validation is successfull, the read invoices are stored onto the db.
 """,
-        epilog="""\
-Please, donate 10% of the total income to the author {!r}!
-""".format(__author__),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=(common_parser, ),
-    )
-
-    subparsers = top_level_parser.add_subparsers()
-
-    init_parser = subparsers.add_parser(
-        "init",
-        parents=(common_parser, ),
-    )
-    init_parser.set_defaults(
-        function_name="db_init",
-        function_arguments=('patterns', ),
-    )
-
-    init_parser.add_argument("patterns",
-        nargs='+',
-        help='doc patterns',
-    )
-
-    scan_parser = subparsers.add_parser(
-        "scan",
-        parents=(common_parser, ),
     )
     scan_parser.set_defaults(
         function_name="db_scan",
@@ -158,6 +170,9 @@ Please, donate 10% of the total income to the author {!r}!
     clear_parser = subparsers.add_parser(
         "clear",
         parents=(common_parser, ),
+        description="""\
+Remove all invoices stored on the db.
+""",
     )
     clear_parser.set_defaults(
         function_name="db_clear",
@@ -167,6 +182,9 @@ Please, donate 10% of the total income to the author {!r}!
     validate_parser = subparsers.add_parser(
         "validate",
         parents=(common_parser, ),
+        description="""\
+Validate the invoices stored on the db.
+""",
     )
     validate_parser.set_defaults(
         function_name="db_validate",
@@ -176,6 +194,9 @@ Please, donate 10% of the total income to the author {!r}!
     list_parser = subparsers.add_parser(
         "list",
         parents=(common_parser, ),
+        description="""\
+List the invoices stored on the db.
+""",
     )
     list_parser.set_defaults(
         function_name="db_list",
@@ -193,6 +214,9 @@ Please, donate 10% of the total income to the author {!r}!
     report_parser = subparsers.add_parser(
         "report",
         parents=(common_parser, ),
+        description="""\
+Show a report about the invoices stored on the db.
+""",
     )
     report_parser.set_defaults(
         function_name="db_report",
