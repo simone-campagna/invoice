@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright 2015 Simone Campagna
@@ -17,9 +16,15 @@
 #
 
 __author__ = "Simone Campagna"
+__all__ = [
+    'VERSION_MAJOR',
+    'VERSION_MINOR',
+    'VERSION_PATCH',
+    'VERSION',
+]
 
-import sys
+VERSION_MAJOR = 1
+VERSION_MINOR = 1
+VERSION_PATCH = 0
 
-from invoice.main import invoice_program
-
-sys.exit(invoice_program())
+VERSION = '{}.{}.{}'.format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)

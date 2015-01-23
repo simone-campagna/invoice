@@ -44,7 +44,9 @@ setup(
     author_email = "simone.campagna11@gmail.com",
     url="https://github.com/simone-campagna/invoice",
     download_url = 'https://github.com/simone-campagna/invoice/archive/{}.tar.gz'.format(version),
-    packages = [],
+    packages = [
+        'invoice',
+    ],
     scripts = scripts,
     package_data = {},
 )

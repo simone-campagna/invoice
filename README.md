@@ -5,3 +5,10 @@ Read and process invoice documents
 invoice requires:
  * python3
  * catdoc
+
+## Install
+```shell
+
+$ python3 setup.py install [--home=...]
+
+```

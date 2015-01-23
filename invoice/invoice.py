@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright 2015 Simone Campagna
@@ -17,9 +16,20 @@
 #
 
 __author__ = "Simone Campagna"
+__all__ = [
+    'Invoice',
+]
 
-import sys
+import collections
 
-from invoice.main import invoice_program
-
-sys.exit(invoice_program())
+Invoice = collections.namedtuple('Invoice', (
+    'doc_filename',
+    'year',
+    'number',
+    'name',
+    'tax_code',
+    'city',
+    'date',
+    'income',
+    'currency',
+))

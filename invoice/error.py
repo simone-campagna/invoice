@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright 2015 Simone Campagna
@@ -17,9 +16,9 @@
 #
 
 __author__ = "Simone Campagna"
+__all__ = [
+    'InvoiceError',
+]
 
-import sys
-
-from invoice.main import invoice_program
-
-sys.exit(invoice_program())
+class InvoiceError(Exception):
+    pass
