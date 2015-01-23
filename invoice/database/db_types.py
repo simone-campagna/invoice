@@ -78,7 +78,7 @@ class Str(BaseType):
 class Path(Str):
     @classmethod
     def impl_db_to(cls, value):
-        return os.path.normpath(os.path.abspath(os.path.realpath(value)))
+        return os.path.normpath(os.path.abspath(value))
 
 class Int(BaseType):
     DB_TYPENAME = 'INTEGER'
