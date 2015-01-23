@@ -23,6 +23,7 @@ __all__ = [
 import argparse
 import traceback
 
+from .conf import VERSION
 from .invoice_collection import InvoiceCollection
 from .invoice_collection_reader import InvoiceCollectionReader
 from .log import get_default_logger, set_verbose_level
@@ -125,6 +126,10 @@ Please, donate 10% of the total income to the author {!r}!
         action="count",
         default=0,
         help="increase verbose level")
+
+    parser.add_argument('--version',
+        action='version',
+        version='%(prog)s {}'.format(VERSION))
 
     parser.add_argument("patterns",
         nargs='+',

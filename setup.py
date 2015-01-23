@@ -29,9 +29,8 @@ try:
     py_dirname = dirname
     sys.path.insert(0, py_dirname)
 
-    #from invoice import conf
-    #version = conf.VERSION
-    version = '1.0.0'
+    from invoice import conf
+    version = conf.VERSION
 finally:
     del sys.path[0]
 
