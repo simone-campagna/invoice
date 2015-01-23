@@ -30,8 +30,12 @@ if not os.path.exists(db_filename):
     ]
     invoice_collection = InvoiceCollection(invoices)
     invoice_collection.validate()
-    invoice_db.store_invoice_collection(invoice_collection)
+    #invoice_db.store_invoice_collection(invoice_collection)
+    invoice_db.write('patterns', (InvoiceDb.Pattern(pattern='tmp/docs/*.doc'), ))
 else:
     print("reading from {}...".format(db_filename))
     invoice_collection = invoice_db.load_invoice_collection()
+    invoice_collection.list()
+    invoice_collection = invoice_db.scan()
+    print(".......")
     invoice_collection.list()

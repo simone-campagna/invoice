@@ -45,7 +45,6 @@ class InvoiceCollectionReader(object):
                 except Exception as err:
                     if self.trace:
                         traceback.print_exc()
-                    
                     self.logger.error("cannot read invoice from {!r}: {}: {}".format(doc_filename, type(err).__name__, err))
         return invoice_collection
           

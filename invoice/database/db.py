@@ -94,6 +94,20 @@ class Db(object):
                 records.append(dict_type(**record_d))
         return records
         
+    def update(self, table_name, key, records, connection=None):
+        table = self.TABLES[table_name]
+        field_names = [field_name for field_name in table.field_names if field_name != key]
+        sql = """UPDATE {table_name} SET {field_values} WHERE {key} == ?;""".format(
+            table_name=table_name,
+            field_values=', '.join("{} = ?".format(field_name) for field_name in field_names),
+            key=key,
+        )
+        with self.connect(connection) as connection:
+            cursor = connection.cursor()
+            for record in records:
+                values = [getattr(record, field_name) for field_name in field_names] + [getattr(record, key)]
+                self.execute(cursor, sql, values)
+
     def write(self, table_name, records, connection=None):
         table = self.TABLES[table_name]
         field_names = table.field_names
