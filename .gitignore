@@ -54,7 +54,7 @@ docs/_build/
 target/
 
 # vim swap files
-.*.swap
+.*.swp
 
 # tmp dir
 tmp/
