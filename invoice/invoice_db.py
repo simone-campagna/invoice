@@ -27,6 +27,7 @@ import os
 import sqlite3
 import time
 
+from .error import InvoiceError
 from .invoice import Invoice
 from .invoice_reader import InvoiceReader
 from .invoice_collection import InvoiceCollection

@@ -23,6 +23,7 @@ __all__ = [
 import datetime
 import math
 
+from .error import InvoiceError
 from .invoice import Invoice
 from .log import get_default_logger
 from .week import WeekManager
@@ -89,41 +90,65 @@ class InvoiceCollection(object):
     def years(self):
         return self._years
 
-    def validate(self, warnings_mode=None, raise_on_error=False):
-        self.process()
+    def log_result(self):
+        return dict(errors=0, warnings=0)
+
+    def log_critical(self, message, result):
+        self.logger.critical(message)
+        raise InvoiceError(message)
+        
+    def log_error(self, message, result):
+        self.logger.error(message)
+        result['errors'] += 1
+        return result
+
+    def log_warning(self, message, result):
+        self.logger.warning(message)
+        result['warnings'] += 1
+        return result
+
+    def log_functions(self, warnings_mode=None, raise_on_error=False, result=None):
+        if result is None:
+            result = self.log_result()
         if warnings_mode is None:
             warnings_mode = self.WARNINGS_MODE_DEFAULT
-
-        result = dict(errors=0, warnings=0)
-        def log_error(message):
-            self.logger.error(message)
-            if raise_on_error:
-                raise InvoiceError(message)
-            result['errors'] += 1
-
+        if raise_on_error:
+            log_error = lambda message: self.log_critical(message, result=result)
+        else:
+            log_error = lambda message: self.log_error(message, result=result)
         if warnings_mode == self.WARNINGS_MODE_ERROR:
             log_warning = log_error
         elif warnings_mode == self.WARNINGS_MODE_IGNORE:
             def log_warning(message):
                 pass
         elif warnings_mode == self.WARNINGS_MODE_DEFAULT:
-            def log_warning(message):
-                self.logger.warning(message)
-                result['warnings'] += 1
+            log_warning = lambda message: self.log_warning(message, result=result)
         else:
             raise ValueError("invalid warnings mode {!r}".format(warnings_mode))
+        return result, log_error, log_warning
 
+    def validate_invoice(self, warnings_mode=None, raise_on_error=False, result=None):
+        result, log_error, log_warning = self.log_functions(warnings_mode=warnings_mode, raise_on_error=raise_on_error, result=result)
+        return self.impl_validate_invoice(invoice, result, log_error, log_warning)
+
+    def impl_validate_invoice(self, invoice, result, log_error, log_warning):
+        for key in 'year', 'number', 'name', 'tax_code', 'date', 'income':
+            val = getattr(invoice, key)
+            if val is None:
+                log_error("invoice {}: {} is undefined".format(invoice.doc_filename, key))
+        if invoice.currency != 'euro':
+            log_error("invoice {}: unsupported currency {!r}".format(invoice.doc_filename, invoice.currency))
+        if invoice.date is not None and invoice.date.year != invoice.year:
+            log_error("invoice {}: date {} does not match with year {}".format(invoice.doc_filename, invoice.date, invoice.year))
+        return result
+
+    def validate(self, warnings_mode=None, raise_on_error=False, result=None):
+        self.process()
+        result, log_error, log_warning = self.log_functions(warnings_mode=warnings_mode, raise_on_error=raise_on_error, result=result)
 
         # verify fields definition:
         for invoice in self._invoices:
-            for key in 'year', 'number', 'name', 'tax_code', 'date', 'income':
-                val = getattr(invoice, key)
-                if val is None:
-                    log_error("invoice {}: {} is undefined".format(invoice.doc_filename, key))
-            if invoice.currency != 'euro':
-                log_error("invoice {}: unsupported currency {!r}".format(invoice.doc_filename, invoice.currency))
-            if invoice.date is not None and invoice.date.year != invoice.year:
-                log_error("invoice {}: date {} does not match with year {}".format(invoice.doc_filename, invoice.date, invoice.year))
+            self.impl_validate_invoice(invoice, result, log_error, log_warning)
 
         # verify first/last name exchange:
         nd = {}
