@@ -51,19 +51,27 @@ class InvoiceProgram(object):
         result = invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
         return result['errors']
 
-    def db_list(self, *, list_mode, filters):
-        invoice_collection = self.db.load_invoice_collection()
+    def db_filter(self, invoice_collection, filters):
         if filters:
-            logger.info("filtering {} invoices...".format(len(invoice_collection)))
-            invoice_collection = invoice_collection.filter(filters)
-        invoice_collection.list(list_mode=list_mode)
+            self.logger.info("filtering {} invoices...".format(len(invoice_collection)))
+            for filter_source in filters:
+                self.logger.info("applying filter {!r} to {} invoices...".format(filter_source, len(invoice_collection)))
+                invoice_collection = invoice_collection.filter(filter_source)
+        return invoice_collection
+
+    def db_list(self, *, field_names, header, filters):
+        invoice_collection = self.db_filter(self.db.load_invoice_collection(), filters)
+        invoice_collection.list(header=header, field_names=field_names)
+
+    def db_dump(self, *, filters):
+        invoice_collection = self.db_filter(self.db.load_invoice_collection(), filters)
+        invoice_collection.dump()
 
     def db_report(self):
         invoice_collection = self.db.load_invoice_collection()
         invoice_collection.report()
 
     def legacy(self, patterns, filters, validate, list, report, warnings_mode, raise_on_error):
-        list_mode = InvoiceCollection.LIST_MODE_LONG
         invoice_collection_reader = InvoiceCollectionReader(trace=self.trace)
 
         invoice_collection = invoice_collection_reader.read(*patterns)
@@ -79,16 +87,11 @@ class InvoiceProgram(object):
                     self.logger.error("found #{} errors - exiting".format(result['errors']))
                     return 1
     
-            if filters:
-                self.logger.info("filtering {} invoices...".format(len(invoice_collection)))
-                for filter_source in filters:
-                    self.logger.info("applying filter {!r} to {} invoices...".format(filter_source, len(invoice_collection)))
-                    invoice_collection = invoice_collection.filter(filter_source)
-    
+            invoice_collection = self.db_filter(invoice_collection, filters)
     
             if list:
                 self.logger.info("listing {} invoices...".format(len(invoice_collection)))
-                invoice_collection.list(list_mode=list_mode)
+                invoice_collection.dump()
     
             if report:
                 self.logger.info("producing report for {} invoices...".format(len(invoice_collection)))
@@ -102,7 +105,7 @@ class InvoiceProgram(object):
 def invoice_program():
     default_validate = True
     default_warnings_mode = InvoiceCollection.WARNINGS_MODE_DEFAULT
-    default_list_mode = InvoiceCollection.LIST_MODE_LONG
+    default_list_field_names = InvoiceCollection.LIST_FIELD_NAMES_LONG
 
     common_parser = argparse.ArgumentParser(
         add_help=False,
@@ -263,7 +266,20 @@ List the invoices stored on the db.
     )
     list_parser.set_defaults(
         function_name="db_list",
-        function_arguments=('filters', 'list_mode'),
+        function_arguments=('filters', 'field_names', 'header'),
+    )
+
+    ### dump_parser ###
+    dump_parser = subparsers.add_parser(
+        "dump",
+        parents=(common_parser, ),
+        description="""\
+Dump the content of the db.
+""",
+    )
+    dump_parser.set_defaults(
+        function_name="db_dump",
+        function_arguments=('filters', ),
     )
 
     ### report_parser ###
@@ -294,23 +310,37 @@ use the db.
     )
 
     ### list_mode option
-    list_parser.add_argument("--short", "-s",
-        dest="list_mode",
-        action="store_const",
-        const=InvoiceCollection.LIST_MODE_SHORT,
-        default=default_list_mode,
-        help="short list mode")
+    list_parser.add_argument("--no-header", "-H",
+        dest="header",
+        action="store_false",
+        default=True,
+        help="do not show header")
 
-    list_parser.add_argument("--long", "-l",
-        dest="list_mode",
+    list_argument_group = list_parser.add_mutually_exclusive_group()
+    list_argument_group.add_argument("--short", "-s",
+        dest="field_names",
         action="store_const",
-        const=InvoiceCollection.LIST_MODE_LONG,
-        default=default_list_mode,
-        help="long list mode")
+        const=InvoiceCollection.LIST_FIELD_NAMES_SHORT,
+        default=default_list_field_names,
+        help="short listing")
+
+    list_argument_group.add_argument("--long", "-l",
+        dest="field_names",
+        action="store_const",
+        const=InvoiceCollection.LIST_FIELD_NAMES_LONG,
+        default=default_list_field_names,
+        help="long listing")
+
+    list_argument_group.add_argument("--full", "-f",
+        dest="field_names",
+        action="store_const",
+        const=InvoiceCollection.LIST_FIELD_NAMES_FULL,
+        default=default_list_field_names,
+        help="full listing")
 
     ### filter option
-    for parser in list_parser, legacy_parser:
-        parser.add_argument("--filter", "-f",
+    for parser in list_parser, dump_parser, legacy_parser:
+        parser.add_argument("--filter", "-F",
             metavar="F",
             dest="filters",
             type=str,

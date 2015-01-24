@@ -33,9 +33,9 @@ class InvoiceCollection(object):
     WARNINGS_MODE_IGNORE = 'ignore'
     WARNINGS_MODES = (WARNINGS_MODE_DEFAULT, WARNINGS_MODE_ERROR, WARNINGS_MODE_IGNORE)
 
-    LIST_MODE_SHORT = 'short'
-    LIST_MODE_LONG = 'long'
-    LIST_MODES = (LIST_MODE_SHORT, LIST_MODE_LONG)
+    LIST_FIELD_NAMES_SHORT = ('year', 'number', 'date', 'tax_code', 'income', 'currency')
+    LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+    LIST_FIELD_NAMES_FULL = Invoice._fields
 
     def __init__(self, init=None, logger=None):
         self._invoices = []
@@ -71,15 +71,6 @@ class InvoiceCollection(object):
         if isinstance(function, str):
             function = self.compile_filter_function(function)
         return InvoiceCollection(filter(function, self._invoices), logger=self.logger)
-
-    def filters(self, *functions):
-        invoice_collection = self
-        if functions:
-            for function in functions:
-                logger.info("applying filter {!r} to {} invoices...".format(function, len(invoice_collection)))
-                invoice_collection = invoice_collection.filter(function)
-        return invoice_collection
-
 
     @classmethod
     def subst_None(cls, value, substitution):
@@ -157,15 +148,9 @@ class InvoiceCollection(object):
                 prev_doc, prev_date = invoice.doc_filename, invoice.date
         return result
 
-    def list(self, list_mode=LIST_MODE_SHORT, print_function=print):
-        if list_mode == self.LIST_MODE_SHORT:
-            return self.list_short(print_function=print_function)
-        elif list_mode == self.LIST_MODE_LONG:
-            return self.list_long(print_function=print_function)
-        else:
-            raise ValueError("invalid list mode {!r}".format(list_mode))
-
-    def list_short(self, print_function=print):
+    def list(self, field_names, header=True, print_function=print):
+        if field_names is None:
+            field_names = Invoice._fields
         self.process()
         data = []
         digits =1 + int(math.log10(max(1, len(self._invoices))))
@@ -173,17 +158,21 @@ class InvoiceCollection(object):
             'number': lambda n: "{n:0{digits}d}".format(n=n, digits=digits),
             'income': lambda i: "{:.2f}".format(i),
         }
-        aligns = ['<', '>', '<', '<', '>', '<']
-        field_names = ('year', 'number', 'date', 'tax_code', 'income', 'currency')
-        data.append(field_names)
+        aligns = {
+            'number': '>',
+            'income': '>',
+        }
+        if header:
+            data.append(field_names)
         for invoice in self._invoices:
             data.append(tuple(converters.get(field_name, str)(getattr(invoice, field_name)) for field_name in field_names))
-        lengths = [max(len(row[c]) for row in data) for c, f in enumerate(field_names)]
-        fmt = " ".join("{{row[{i}]:{{aligns[{i}]}}{{lengths[{i}]}}s}}".format(i=i) for i, f in enumerate(field_names))
-        for row in data:
-            print_function(fmt.format(row=row, lengths=lengths, aligns=aligns))
+        if data:
+            lengths = [max(len(row[c]) for row in data) for c, f in enumerate(field_names)]
+            fmt = " ".join("{{row[{i}]:{align}{{lengths[{i}]}}s}}".format(i=i, align=aligns.get(f, '<')) for i, f in enumerate(field_names))
+            for row in data:
+                print_function(fmt.format(row=row, lengths=lengths))
 
-    def list_long(self, print_function=print):
+    def dump(self, print_function=print):
         self.process()
         digits = 1 + int(math.log10(max(1, len(self._invoices))))
         for invoice in self._invoices:
