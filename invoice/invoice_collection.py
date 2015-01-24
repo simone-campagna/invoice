@@ -33,6 +33,10 @@ class InvoiceCollection(object):
     WARNINGS_MODE_IGNORE = 'ignore'
     WARNINGS_MODES = (WARNINGS_MODE_DEFAULT, WARNINGS_MODE_ERROR, WARNINGS_MODE_IGNORE)
 
+    LIST_MODE_SHORT = 'short'
+    LIST_MODE_LONG = 'long'
+    LIST_MODES = (LIST_MODE_SHORT, LIST_MODE_LONG)
+
     def __init__(self, init=None, logger=None):
         self._invoices = []
         self._processed = False
@@ -67,6 +71,15 @@ class InvoiceCollection(object):
         if isinstance(function, str):
             function = self.compile_filter_function(function)
         return InvoiceCollection(filter(function, self._invoices), logger=self.logger)
+
+    def filters(self, *functions):
+        invoice_collection = self
+        if functions:
+            for function in functions:
+                logger.info("applying filter {!r} to {} invoices...".format(function, len(invoice_collection)))
+                invoice_collection = invoice_collection.filter(function)
+        return invoice_collection
+
 
     @classmethod
     def subst_None(cls, value, substitution):
@@ -144,7 +157,20 @@ class InvoiceCollection(object):
                 prev_doc, prev_date = invoice.doc_filename, invoice.date
         return result
 
-    def list(self, print_function=print):
+    def list(self, list_mode=LIST_MODE_SHORT, print_function=print):
+        if list_mode == self.LIST_MODE_SHORT:
+            return self.list_short(print_function=print_function)
+        elif list_mode == self.LIST_MODE_LONG:
+            return self.list_long(print_function=print_function)
+        else:
+            raise ValueError("invalid list mode {!r}".format(list_mode))
+
+    def list_short(self, print_function=print):
+        self.process()
+        for invoice in self._invoices:
+            print_function(invoice)
+
+    def list_long(self, print_function=print):
         self.process()
         digits = 1 + int(math.log10(max(1, len(self._invoices))))
         for invoice in self._invoices:

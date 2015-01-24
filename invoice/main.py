@@ -51,14 +51,12 @@ class InvoiceProgram(object):
         result = invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
         return result['errors']
 
-    def db_list(self, *, filters):
+    def db_list(self, *, list_mode, filters):
         invoice_collection = self.db.load_invoice_collection()
         if filters:
             logger.info("filtering {} invoices...".format(len(invoice_collection)))
-            for filter_source in filters:
-                logger.info("applying filter {!r} to {} invoices...".format(filter_source, len(invoice_collection)))
-                invoice_collection = invoice_collection.filter(filter_source)
-        invoice_collection.list()
+            invoice_collection = invoice_collection.filter(filters)
+        invoice_collection.list(list_mode=list_mode)
 
     def db_report(self):
         invoice_collection = self.db.load_invoice_collection()
@@ -103,6 +101,7 @@ class InvoiceProgram(object):
 def invoice_program():
     default_validate = True
     default_warnings_mode = InvoiceCollection.WARNINGS_MODE_DEFAULT
+    default_list_mode = InvoiceCollection.LIST_MODE_LONG
 
     common_parser = argparse.ArgumentParser(
         add_help=False,
@@ -237,7 +236,7 @@ List the invoices stored on the db.
     )
     list_parser.set_defaults(
         function_name="db_list",
-        function_arguments=('filters', ),
+        function_arguments=('filters', 'list_mode'),
     )
 
     ### report_parser ###
@@ -266,6 +265,21 @@ use the db.
         function_name="legacy",
         function_arguments=('patterns', 'filters', 'validate', 'list', 'report', 'warnings_mode', 'raise_on_error'),
     )
+
+    ### list_mode option
+    list_parser.add_argument("--short", "-s",
+        dest="list_mode",
+        action="store_const",
+        const=InvoiceCollection.LIST_MODE_SHORT,
+        default=default_list_mode,
+        help="short list mode")
+
+    list_parser.add_argument("--long", "-l",
+        dest="list_mode",
+        action="store_const",
+        const=InvoiceCollection.LIST_MODE_LONG,
+        default=default_list_mode,
+        help="long list mode")
 
     ### filter option
     for parser in list_parser, legacy_parser:
