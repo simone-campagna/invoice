@@ -26,6 +26,7 @@ import traceback
 from .conf import VERSION, DB_FILENAME, DB_FILENAME_VAR
 from .log import get_default_logger, set_verbose_level
 from .invoice_collection import InvoiceCollection
+from .invoice_collection_reader import InvoiceCollectionReader
 from .invoice_db import InvoiceDb
 
 class InvoiceProgram(object):
@@ -62,6 +63,42 @@ class InvoiceProgram(object):
     def db_report(self):
         invoice_collection = self.db.load_invoice_collection()
         invoice_collection.report()
+
+    def legacy(self, patterns, filters, validate, list, report, warnings_mode, raise_on_error):
+        invoice_collection_reader = InvoiceCollectionReader(trace=self.trace)
+
+        invoice_collection = invoice_collection_reader.read(*patterns)
+
+        if validate is None:
+            validate = any([report])
+
+        try:
+            if validate:
+                self.logger.info("validating {} invoices...".format(len(invoice_collection)))
+                result = invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
+                if result['errors']:
+                    self.logger.error("found #{} errors - exiting".format(result['errors']))
+                    return 1
+    
+            if filters:
+                self.logger.info("filtering {} invoices...".format(len(invoice_collection)))
+                for filter_source in filters:
+                    self.logger.info("applying filter {!r} to {} invoices...".format(filter_source, len(invoice_collection)))
+                    invoice_collection = invoice_collection.filter(filter_source)
+    
+    
+            if list:
+                self.logger.info("listing {} invoices...".format(len(invoice_collection)))
+                invoice_collection.list()
+    
+            if report:
+                self.logger.info("producing report for {} invoices...".format(len(invoice_collection)))
+                invoice_collection.report()
+    
+        except Exception as err:
+            if self.trace:
+                traceback.print_exc()
+            self.logger.error("{}: {}\n".format(type(err).__name__, err))
 
 def invoice_program():
     default_validate = True
@@ -120,6 +157,7 @@ Please, donate 10% of the your income to the author of this nice tool!
 
     subparsers = top_level_parser.add_subparsers()
 
+    ### init_parser ###
     init_parser = subparsers.add_parser(
         "init",
         parents=(common_parser, ),
@@ -133,11 +171,7 @@ $ %(prog)s init 'docs/*.doc'
         function_arguments=('patterns', ),
     )
 
-    init_parser.add_argument("patterns",
-        nargs='+',
-        help='doc patterns',
-    )
-
+    ### scan_parser ###
     scan_parser = subparsers.add_parser(
         "scan",
         parents=(common_parser, ),
@@ -167,6 +201,7 @@ If validation is successfull, the read invoices are stored onto the db.
         function_arguments=('warnings_mode', 'raise_on_error'),
     )
 
+    ### clear_parser ###
     clear_parser = subparsers.add_parser(
         "clear",
         parents=(common_parser, ),
@@ -179,6 +214,7 @@ Remove all invoices stored on the db.
         function_arguments=(),
     )
 
+    ### validate_parser ###
     validate_parser = subparsers.add_parser(
         "validate",
         parents=(common_parser, ),
@@ -191,6 +227,7 @@ Validate the invoices stored on the db.
         function_arguments=('warnings_mode', 'raise_on_error'),
     )
 
+    ### list_parser ###
     list_parser = subparsers.add_parser(
         "list",
         parents=(common_parser, ),
@@ -203,14 +240,7 @@ List the invoices stored on the db.
         function_arguments=('filters', ),
     )
 
-    list_parser.add_argument("--filter", "-f",
-        metavar="F",
-        dest="filters",
-        type=str,
-        action="append",
-        default=[],
-        help="add a filter (e.g. 'year == 2014')")
-
+    ### report_parser ###
     report_parser = subparsers.add_parser(
         "report",
         parents=(common_parser, ),
@@ -223,7 +253,32 @@ Show a report about the invoices stored on the db.
         function_arguments=(),
     )
 
-    for parser in scan_parser, validate_parser:
+    ### legacy_parser ###
+    legacy_parser = subparsers.add_parser(
+        "legacy",
+        parents=(common_parser, ),
+        description="""\
+Legacy mode: it has the same interface as the 1.0 version, and does not
+use the db.
+""",
+    )
+    legacy_parser.set_defaults(
+        function_name="legacy",
+        function_arguments=('patterns', 'filters', 'validate', 'list', 'report', 'warnings_mode', 'raise_on_error'),
+    )
+
+    ### filter option
+    for parser in list_parser, legacy_parser:
+        parser.add_argument("--filter", "-f",
+            metavar="F",
+            dest="filters",
+            type=str,
+            action="append",
+            default=[],
+            help="add a filter (e.g. 'year == 2014')")
+
+    ### warnings and error options
+    for parser in scan_parser, validate_parser, legacy_parser:
         parser.add_argument("--werror", "-we",
             dest="warnings_mode",
             action="store_const",
@@ -244,6 +299,32 @@ Show a report about the invoices stored on the db.
             default=False,
             help="make first error be fatal")
     
+    ### patterns option
+    for parser in init_parser, legacy_parser:
+        parser.add_argument("patterns",
+            nargs='+',
+            help='doc patterns',
+        )
+
+    ### legacy options
+    legacy_parser.add_argument("--disable-validation", "-V",
+        dest="validate",
+        action="store_false",
+        default=default_validate,
+        help="do not validate invoices")
+
+    legacy_action_group = legacy_parser.add_mutually_exclusive_group()
+
+    legacy_action_group.add_argument("--list", "-l",
+        action="store_true",
+        default=False,
+        help="list invoices")
+
+    legacy_action_group.add_argument("--report", "-r",
+        action="store_true",
+        default=False,
+        help="show invoice report")
+
 
     args = top_level_parser.parse_args()
 
