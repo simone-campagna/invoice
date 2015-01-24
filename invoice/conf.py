@@ -22,9 +22,9 @@ __all__ = [
     'VERSION_PATCH',
     'VERSION',
     'RC_DIR_VAR',
-    'DB_FILENAME_VAR',
+    'DB_FILE_VAR',
     'RC_DIR',
-    'DB_FILENAME',
+    'DB_FILE',
 ]
 
 import os
@@ -35,7 +35,8 @@ VERSION_PATCH = 0
 
 VERSION = '{}.{}.{}'.format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 
-RC_DIR_VAR = os.path.join('~', '.invoice')
-DB_FILENAME_VAR = os.path.join(RC_DIR_VAR, 'invoices.db')
-RC_DIR = os.path.expanduser(RC_DIR_VAR)
-DB_FILENAME = os.path.expanduser(DB_FILENAME_VAR)
+RC_DIR_VAR = os.environ.get('INVOICE_RC_DIR', os.path.join('~', '.invoice'))
+DB_FILE_VAR = os.environ.get('INVOICE_DB_FILE', os.path.join(RC_DIR_VAR, 'invoices.db'))
+
+RC_DIR = os.path.expandvars(os.path.expanduser(RC_DIR_VAR))
+DB_FILE = os.path.expandvars(os.path.expanduser(DB_FILE_VAR))

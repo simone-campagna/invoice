@@ -23,11 +23,19 @@ __all__ = [
 import os
 import sqlite3
 
+class DbError(Exception):
+    pass
+
 class Db(object):
     TABLES = {}
     def __init__(self, db_filename, logger):
         self.logger = logger
         self.db_filename = db_filename
+        self.logger.info("db file is {}".format(self.db_filename))
+
+    def check(self):
+        if not os.path.exists(self.db_filename):
+            raise DbError("db file {!r} not initialized")
 
     def connect(self, connection=None):
         if connection:

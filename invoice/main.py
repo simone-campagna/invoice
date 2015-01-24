@@ -23,7 +23,7 @@ __all__ = [
 import argparse
 import traceback
 
-from .conf import VERSION, DB_FILENAME, DB_FILENAME_VAR
+from .conf import VERSION, DB_FILE, DB_FILE_VAR
 from .log import get_default_logger, set_verbose_level
 from .invoice import Invoice
 from .invoice_collection import InvoiceCollection
@@ -42,17 +42,21 @@ class InvoiceProgram(object):
         self.db.write('patterns', [InvoiceDb.Pattern(pattern=pattern) for pattern in patterns])
 
     def db_scan(self, *, warnings_mode, raise_on_error):
+        self.db.check()
         invoice_collection = self.db.scan(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
 
     def db_clear(self):
+        self.db.check()
         self.db.delete('invoices')
 
     def db_validate(self, *, warnings_mode, raise_on_error):
+        self.db.check()
         invoice_collection = self.db.load_invoice_collection()
         result = invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
         return result['errors']
 
     def db_filter(self, invoice_collection, filters):
+        self.db.check()
         if filters:
             self.logger.info("filtering {} invoices...".format(len(invoice_collection)))
             for filter_source in filters:
@@ -61,14 +65,17 @@ class InvoiceProgram(object):
         return invoice_collection
 
     def db_list(self, *, field_names, header, filters):
+        self.db.check()
         invoice_collection = self.db_filter(self.db.load_invoice_collection(), filters)
         invoice_collection.list(header=header, field_names=field_names)
 
     def db_dump(self, *, filters):
+        self.db.check()
         invoice_collection = self.db_filter(self.db.load_invoice_collection(), filters)
         invoice_collection.dump()
 
     def db_report(self):
+        self.db.check()
         invoice_collection = self.db.load_invoice_collection()
         invoice_collection.report()
 
@@ -124,7 +131,7 @@ def invoice_program():
     common_parser.add_argument("--db", "-d",
         metavar="F",
         dest="db_filename",
-        default=DB_FILENAME,
+        default=DB_FILE,
         help="db filename")
 
     common_parser.add_argument("--verbose", "-v",
@@ -186,7 +193,7 @@ invoice:                  'example/2014_001_bruce_wayne.doc'
   total income:           51.00 [euro]
 ...
 
-""".format(db_filename=DB_FILENAME_VAR, version=VERSION),
+""".format(db_filename=DB_FILE_VAR, version=VERSION),
         epilog="""\
 Please, donate 10% of the your income to the author of this nice tool!
 """.format(__author__),
