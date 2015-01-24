@@ -25,6 +25,7 @@ import traceback
 
 from .conf import VERSION, DB_FILENAME, DB_FILENAME_VAR
 from .log import get_default_logger, set_verbose_level
+from .invoice import Invoice
 from .invoice_collection import InvoiceCollection
 from .invoice_collection_reader import InvoiceCollectionReader
 from .invoice_db import InvoiceDb
@@ -106,6 +107,15 @@ def invoice_program():
     default_validate = True
     default_warnings_mode = InvoiceCollection.WARNINGS_MODE_DEFAULT
     default_list_field_names = InvoiceCollection.LIST_FIELD_NAMES_LONG
+
+    def store_fields(s):
+        field_names = []
+        for field_name in s.split(','):
+            field_name = field_name.strip()
+            if not field_name in Invoice._fields:
+                raise ValueError("invalid field {!r}".format(field_name))
+            field_names.append(field_name)
+        return field_names
 
     common_parser = argparse.ArgumentParser(
         add_help=False,
@@ -337,6 +347,12 @@ use the db.
         const=InvoiceCollection.LIST_FIELD_NAMES_FULL,
         default=default_list_field_names,
         help="full listing")
+
+    list_argument_group.add_argument("--fields", "-o",
+        dest="field_names",
+        type=store_fields,
+        default=default_list_field_names,
+        help="manually select fields, for instance 'year,number,tax_code' [{}]".format('|'.join(Invoice._fields)))
 
     ### filter option
     for parser in list_parser, dump_parser, legacy_parser:
