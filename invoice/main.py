@@ -63,6 +63,7 @@ class InvoiceProgram(object):
         invoice_collection.report()
 
     def legacy(self, patterns, filters, validate, list, report, warnings_mode, raise_on_error):
+        list_mode = InvoiceCollection.LIST_MODE_LONG
         invoice_collection_reader = InvoiceCollectionReader(trace=self.trace)
 
         invoice_collection = invoice_collection_reader.read(*patterns)
@@ -87,7 +88,7 @@ class InvoiceProgram(object):
     
             if list:
                 self.logger.info("listing {} invoices...".format(len(invoice_collection)))
-                invoice_collection.list()
+                invoice_collection.list(list_mode=list_mode)
     
             if report:
                 self.logger.info("producing report for {} invoices...".format(len(invoice_collection)))
@@ -130,12 +131,17 @@ def invoice_program():
 
     top_level_parser = argparse.ArgumentParser(
         description="""\
-Read and process a collection of invoices.
+%(prog)s {version}  - read and process a collection of invoices.
 
 Each input invoice is a DOC file.
 The 'catdoc' tool is used to convert DOC files; it must be available.
 
-Read invoices are stored on a SQLite3 db; sqlite3 python module must be
+WARNING: currently a single invoice formatting is supported, so this
+tool is not really usable. In the future, generic invoice formatting
+will be supported.
+The example directory contains some example invoices.
+
+The read invoices are stored on a SQLite3 db; sqlite3 python module must be
 available.
 
 The db is normally stored in
@@ -146,7 +152,28 @@ subcommand can be used to read new or recently changed invoice DOC
 files. Other subcommands ('list', 'report') can be used to show some
 information about the invoices stored on the db.
 
-""".format(db_filename=DB_FILENAME_VAR),
+$ invoice -d x.db init 'example/*.doc' 
+$ invoice -d x.db scan
+$ invoice -d x.db list --short
+year number date       tax_code         income currency
+2014      1 2014-01-03 WNYBRC01G01H663Y  51.00 euro    
+2014      2 2014-01-03 PRKPRT01G01H663Y  76.00 euro    
+2014      3 2014-01-22 WNYBRC01G01H663Y 102.00 euro    
+2014      4 2014-01-25 WNYBRC01G01H663Y  51.00 euro    
+2014      5 2014-01-29 PRKPRT01G01H663Y  76.00 euro    
+
+[legacy mode]
+
+$ invoice legacy 'example/*.doc' -l
+invoice:                  'example/2014_001_bruce_wayne.doc'
+  year/number:            2014/1
+  city/date:              Gotham City/2014-01-03
+  name:                   Bruce Wayne
+  tax code:               WNYBRC01G01H663Y
+  total income:           51.00 [euro]
+...
+
+""".format(db_filename=DB_FILENAME_VAR, version=VERSION),
         epilog="""\
 Please, donate 10% of the your income to the author of this nice tool!
 """.format(__author__),

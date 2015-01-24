@@ -167,8 +167,21 @@ class InvoiceCollection(object):
 
     def list_short(self, print_function=print):
         self.process()
+        data = []
+        digits =1 + int(math.log10(max(1, len(self._invoices))))
+        converters = {
+            'number': lambda n: "{n:0{digits}d}".format(n=n, digits=digits),
+            'income': lambda i: "{:.2f}".format(i),
+        }
+        aligns = ['<', '>', '<', '<', '>', '<']
+        field_names = ('year', 'number', 'date', 'tax_code', 'income', 'currency')
+        data.append(field_names)
         for invoice in self._invoices:
-            print_function(invoice)
+            data.append(tuple(converters.get(field_name, str)(getattr(invoice, field_name)) for field_name in field_names))
+        lengths = [max(len(row[c]) for row in data) for c, f in enumerate(field_names)]
+        fmt = " ".join("{{row[{i}]:{{aligns[{i}]}}{{lengths[{i}]}}s}}".format(i=i) for i, f in enumerate(field_names))
+        for row in data:
+            print_function(fmt.format(row=row, lengths=lengths, aligns=aligns))
 
     def list_long(self, print_function=print):
         self.process()

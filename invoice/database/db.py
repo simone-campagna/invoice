@@ -62,7 +62,7 @@ class Db(object):
     def initialize(self):
         if not os.path.exists(self.db_filename):
             dirname, basename = os.path.split(self.db_filename)
-            if not os.path.isdir(dirname):
+            if dirname and not os.path.isdir(dirname):
                 os.makedirs(dirname)
         self.impl_initialize()
 

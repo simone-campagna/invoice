@@ -29,7 +29,7 @@ from .log import get_default_logger
 
 class InvoiceReader(object):
     RE_INVOICE_NUMBER = re.compile("^[Ff]attura\s+n.\s+(?P<year>\d+)/(?P<number>\d+)\s*$")
-    RE_NAME = re.compile("^\s*[Ss]pett\.(?:\s*[Ss]ig\.?)?\s*(?P<name>[\w\s']+)\s*$")
+    RE_NAME = re.compile("^\s*[Ss]pett\.(?:\s*[Ss]ig\.?)?\s*(?P<name>[\w\s'\.]+)\s*$")
     RE_TAX_CODE = re.compile("^.*(?P<tax_code>[A-Z]{6,6}\d\d[A-Z]\d\d[A-Z]\d\d\d[A-Z])\s*$")
     RE_DATE = re.compile("^\s*(?P<city>[^,]+)(?:,|\s)\s*(?P<date>\d{1,2}/\d{1,2}/\d\d\d\d)\s*$")
     RE_TOTAL = re.compile("Totale\s+fattura\s+(?P<income>[\d,\.]*)\s+(?P<currency>\w+)\s*$")
