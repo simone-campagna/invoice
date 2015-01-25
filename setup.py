@@ -45,6 +45,7 @@ setup(
     download_url = 'https://github.com/simone-campagna/invoice/archive/{}.tar.gz'.format(version),
     packages = [
         'invoice',
+        'invoice.database',
     ],
     scripts = scripts,
     package_data = {},
