@@ -440,13 +440,14 @@ use the db.
 
     ### partial_update option
     for parser in init_parser, scan_parser:
-        parser.add_argument("--remove-orphaned", "-O",
-            metavar="on/off",
-            type=type_onoff,
-            const=type_onoff("on"),
-            default=None,
-            nargs='?',
-            help="remove orphaned database entries (invoices whose DOC file was removed from disk)")
+        #parser.add_argument("--remove-orphaned", "-O",
+        #    metavar="on/off",
+        #    type=type_onoff,
+        #    const=type_onoff("on"),
+        #    default=None,
+        #    nargs='?',
+        #    help="remove orphaned database entries (invoices whose DOC file was removed from disk)")
+        parser.set_defaults(remove_orphaned=False)
 
         parser.add_argument("--partial-update", "-P",
             metavar="on/off",
