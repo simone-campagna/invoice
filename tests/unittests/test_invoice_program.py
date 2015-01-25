@@ -29,6 +29,7 @@ import unittest
 from invoice.log import get_null_logger
 from invoice.invoice_collection import InvoiceCollection
 from invoice.invoice_program import InvoiceProgram
+from invoice.database.db_types import Path
 
 class Print(object):
     def __init__(self):
@@ -42,7 +43,7 @@ class Print(object):
 
 class TestInvoiceProgram(unittest.TestCase):
     def setUp(self):
-        self.dirname = os.path.join(os.path.dirname(__file__), '..', '..', 'example')
+        self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
         self.logger = get_null_logger()
 
     # invoice
@@ -89,38 +90,38 @@ KNTCRK01G01H663Y 2014      5
                 print_function=p,
             )
             p_cmp = """\
-invoice:                  '/home/simone/Programs/Programming/invoice/example/2014_001_bruce_wayne.doc'
+invoice:                  '<DIRNAME>/2014_001_bruce_wayne.doc'
   year/number:            2014/1
   city/date:              Gotham City/2014-01-03
   name:                   Bruce Wayne
   tax code:               WNYBRC01G01H663Y
   total income:           51.00 [euro]
-invoice:                  '/home/simone/Programs/Programming/invoice/example/2014_002_peter_parker.doc'
+invoice:                  '<DIRNAME>/2014_002_peter_parker.doc'
   year/number:            2014/2
   city/date:              New York City/2014-01-03
   name:                   Peter B. Parker
   tax code:               PRKPRT01G01H663Y
   total income:           76.00 [euro]
-invoice:                  '/home/simone/Programs/Programming/invoice/example/2014_003_bruce_banner.doc'
+invoice:                  '<DIRNAME>/2014_003_bruce_banner.doc'
   year/number:            2014/3
   city/date:              Greenville/2014-01-22
   name:                   Robert Bruce Banner
   tax code:               BNNBRC01G01H663Y
   total income:           102.00 [euro]
-invoice:                  '/home/simone/Programs/Programming/invoice/example/2014_004_bruce_wayne.doc'
+invoice:                  '<DIRNAME>/2014_004_bruce_wayne.doc'
   year/number:            2014/4
   city/date:              Gotham City/2014-01-25
   name:                   Bruce Wayne
   tax code:               WNYBRC01G01H663Y
   total income:           51.00 [euro]
-invoice:                  '/home/simone/Programs/Programming/invoice/example/2014_005_clark_kent.doc'
+invoice:                  '<DIRNAME>/2014_005_clark_kent.doc'
   year/number:            2014/5
   city/date:              Smallville/2014-01-29
   name:                   Clark Kent
   tax code:               KNTCRK01G01H663Y
   total income:           152.00 [euro]
 """
-            self.assertEqual(p.string(), p_cmp)
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), p_cmp)
             p = Print()
             p_cmp = """\
 year 2014:
