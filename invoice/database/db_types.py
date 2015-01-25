@@ -24,6 +24,7 @@ __all__ = [
     'Date',
     'DateTime',
     'Path',
+    'Bool',
 ]
 
 import datetime
@@ -113,3 +114,23 @@ class DateTime(BaseType):
     @classmethod
     def impl_db_to(cls, value):
         return value.strftime(cls.DATETIME_FORMAT)
+
+class Bool(BaseType):
+    DB_TYPENAME = "INTEGER"
+    PY_TYPE = bool
+
+    @classmethod
+    def impl_db_from(cls, i):
+        return bool(i)
+
+    @classmethod
+    def impl_db_to(cls, value):
+        if isinstance(value, str):
+            if value == "True":
+                return True
+            elif value == "False":
+                return False
+            else:
+                raise ValueError("{}: invalid string value {!r}".format(cls.__name__, value, type(value).__name__))
+        else:
+            return bool(value)

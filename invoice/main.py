@@ -38,16 +38,25 @@ class InvoiceProgram(object):
         self.trace = trace
         self.db = InvoiceDb(self.db_filename, self.logger)
 
-    def db_init(self, *, patterns, reset):
+    def db_init(self, *, patterns, reset, partial_update, remove_orphaned):
         if reset and os.path.exists(self.db_filename):
             self.logger.info("removing db {!r}".format(self.db_filename))
             os.remove(self.db_filename)
         self.db.initialize()
-        self.db.write('patterns', [InvoiceDb.Pattern(pattern=pattern) for pattern in patterns])
+        self.db.configure(
+            patterns=patterns,
+            remove_orphaned=remove_orphaned,
+            partial_update=partial_update,
+        )
 
-    def db_scan(self, *, warnings_mode, raise_on_error, partial_update):
+    def db_scan(self, *, warnings_mode, raise_on_error, partial_update, remove_orphaned):
         self.db.check()
-        invoice_collection = self.db.scan(warnings_mode=warnings_mode, raise_on_error=raise_on_error, partial_update=partial_update)
+        invoice_collection = self.db.scan(
+            warnings_mode=warnings_mode,
+            raise_on_error=raise_on_error,
+            partial_update=partial_update,
+            remove_orphaned=remove_orphaned,
+        )
 
     def db_clear(self):
         self.db.check()
@@ -137,6 +146,14 @@ def invoice_program():
             filter_source = 'year in {{{}}}'.format(', '.join(str(year) for year in years))
         print("{!r} -> {!r}".format(s, filter_source))
         return filter_source
+
+    def type_onoff(value):
+        if value.lower() in {"on", "true"}:
+            return True
+        elif value.lower() in {"off", "false"}:
+            return False
+        else:
+            raise ValueError("invalid on/off value {!r} (accepts on/True|off/False".format(value))
 
     common_parser = argparse.ArgumentParser(
         add_help=False,
@@ -228,7 +245,7 @@ $ %(prog)s init 'docs/*.doc'
     )
     init_parser.set_defaults(
         function_name="db_init",
-        function_arguments=('patterns', 'reset'),
+        function_arguments=('patterns', 'reset', 'remove_orphaned', 'partial_update'),
     )
 
     ### scan_parser ###
@@ -258,7 +275,7 @@ If validation is successfull, the read invoices are stored onto the db.
     )
     scan_parser.set_defaults(
         function_name="db_scan",
-        function_arguments=('warnings_mode', 'raise_on_error', 'partial_update'),
+        function_arguments=('warnings_mode', 'raise_on_error', 'remove_orphaned', 'partial_update'),
     )
 
     ### clear_parser ###
@@ -393,13 +410,6 @@ use the db.
             default=default_filters,
             help="add a filter (e.g. 'year == 2014')")
 
-    ### partial_update option
-    scan_parser.add_argument("--disable-partial-update", "-P",
-        dest="partial_update",
-        action="store_false",
-        default=True,
-        help="disable partial update")
-
     ### warnings and error options
     for parser in scan_parser, validate_parser, legacy_parser:
         parser.add_argument("--werror", "-we",
@@ -426,7 +436,25 @@ use the db.
     init_parser.add_argument("--reset", "-r",
         action="store_true",
         default=False,
-        help="Reset db if it already exists")
+        help="reset db if it already exists")
+
+    ### partial_update option
+    for parser in init_parser, scan_parser:
+        parser.add_argument("--remove-orphaned", "-O",
+            metavar="on/off",
+            type=type_onoff,
+            const=type_onoff("on"),
+            default=None,
+            nargs='?',
+            help="remove orphaned database entries (invoices whose DOC file was removed from disk)")
+
+        parser.add_argument("--partial-update", "-P",
+            metavar="on/off",
+            type=type_onoff,
+            const=type_onoff("on"),
+            default=None,
+            nargs='?',
+            help="enable/disable partial update (in case of validation errors, correct invoices are added)")
 
     ### patterns option
     for parser in init_parser, legacy_parser:
