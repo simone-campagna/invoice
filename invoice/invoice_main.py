@@ -17,11 +17,12 @@
 
 __author__ = "Simone Campagna"
 __all__ = [
-    'invoice_program'
+    'invoice_main'
 ]
 
 import argparse
 import os
+import sys
 import traceback
 
 from .conf import VERSION, DB_FILE, DB_FILE_VAR
@@ -30,7 +31,12 @@ from .invoice import Invoice
 from .invoice_collection import InvoiceCollection
 from .invoice_program import InvoiceProgram
 
-def invoice_program():
+def invoice_main(print_function=print, logger=None, args=None):
+    if args is None:
+        args = sys.argv[1:]
+    if logger is None:
+        logger = get_default_logger()
+
     default_validate = True
     default_warnings_mode = InvoiceCollection.WARNINGS_MODE_DEFAULT
     default_list_field_names = InvoiceCollection.LIST_FIELD_NAMES_LONG
@@ -391,14 +397,14 @@ use the db.
         help="show invoice report")
 
 
-    args = top_level_parser.parse_args()
+    args = top_level_parser.parse_args(args)
 
-    logger = get_default_logger()
     set_verbose_level(logger, args.verbose_level)
 
     ip = InvoiceProgram(
         db_filename=args.db_filename,
         logger=logger,
+        print_function=print_function,
         trace=args.trace,
     )
 

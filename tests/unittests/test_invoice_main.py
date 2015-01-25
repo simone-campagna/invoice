@@ -17,7 +17,7 @@
 
 __author__ = "Simone Campagna"
 __all__ = [
-    'TestInvoiceProgram',
+    'TestMain',
 ]
 
 import datetime
@@ -28,7 +28,7 @@ import unittest
 
 from invoice.log import get_null_logger
 from invoice.invoice_collection import InvoiceCollection
-from invoice.invoice_program import InvoiceProgram
+from invoice.invoice_main import invoice_main
 from invoice.database.db_types import Path
 
 class Print(object):
@@ -44,41 +44,38 @@ class Print(object):
     def string(self):
         return self._s.getvalue()
 
-class TestInvoiceProgram(unittest.TestCase):
+class Test_main(unittest.TestCase):
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
         self.logger = get_null_logger()
 
     # invoice
-    def test_InvoiceProgram(self):
+    def test_Main(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = Print()
-            invoice_program = InvoiceProgram(
-                db_filename=db_filename.name,
-                logger=self.logger,
-                trace=False,
+
+            p.reset()
+            invoice_main(
                 print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
             )
-            invoice_program.db_init(
-                patterns=[os.path.join(self.dirname, '*.doc')],
-                reset=True,
-                partial_update=True,
-                remove_orphaned=True,
-            )
+            self.assertEqual(p.string(), '')
 
-            invoice_program.db_scan(
-                warnings_mode=InvoiceCollection.WARNINGS_MODE_DEFAULT,
-                raise_on_error=False,
-                partial_update=None,
-                remove_orphaned=None,
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'scan'],
             )
+            self.assertEqual(p.string(), '')
 
-            invoice_program.db_list(
-                field_names=('tax_code', 'year', 'number'),
-                header=True,
-                filters=(),
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number'],
             )
-
             self.assertEqual(p.string(), """\
 tax_code         year number
 WNYBRC01G01H663Y 2014      1
@@ -89,8 +86,11 @@ KNTCRK01G01H663Y 2014      5
 """)
             p.reset()
 
-            invoice_program.db_dump(
-                filters=(),
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'dump'],
             )
             p_cmp = """\
 invoice:                  '<DIRNAME>/2014_001_bruce_wayne.doc'
@@ -125,7 +125,13 @@ invoice:                  '<DIRNAME>/2014_005_clark_kent.doc'
   total income:           152.00 [euro]
 """
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), p_cmp)
+
             p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'report'],
+            )
             p_cmp = """\
 year 2014:
   * number_of invoices:   5
@@ -171,6 +177,5 @@ year 2014:
       income percentage:  35.19%
 
 """
-            invoice_program.db_report()
             self.assertEqual(p.string(), p_cmp)
 

@@ -20,6 +20,6 @@ __author__ = "Simone Campagna"
 
 import sys
 
-from invoice.main import invoice_program
+from invoice.invoice_main import invoice_main
 
-sys.exit(invoice_program())
+sys.exit(invoice_main())

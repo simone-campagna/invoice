@@ -27,9 +27,10 @@ from .invoice_collection_reader import InvoiceCollectionReader
 from .invoice_db import InvoiceDb
 
 class InvoiceProgram(object):
-    def __init__(self, db_filename, logger, trace):
+    def __init__(self, db_filename, logger, print_function=print, trace=False):
         self.db_filename = db_filename
         self.logger = logger
+        self.print_function = print_function
         self.trace = trace
         self.db = InvoiceDb(self.db_filename, self.logger)
 
@@ -72,20 +73,20 @@ class InvoiceProgram(object):
                 invoice_collection = invoice_collection.filter(filter_source)
         return invoice_collection
 
-    def db_list(self, *, field_names, header, filters, print_function=print):
+    def db_list(self, *, field_names, header, filters):
         self.db.check()
         invoice_collection = self.db_filter(self.db.load_invoice_collection(), filters)
-        invoice_collection.list(header=header, field_names=field_names, print_function=print_function)
+        invoice_collection.list(header=header, field_names=field_names, print_function=self.print_function)
 
-    def db_dump(self, *, filters, print_function=print):
+    def db_dump(self, *, filters):
         self.db.check()
         invoice_collection = self.db_filter(self.db.load_invoice_collection(), filters)
-        invoice_collection.dump(print_function=print_function)
+        invoice_collection.dump(print_function=self.print_function)
 
-    def db_report(self, print_function=print):
+    def db_report(self):
         self.db.check()
         invoice_collection = self.db.load_invoice_collection()
-        invoice_collection.report(print_function=print_function)
+        invoice_collection.report(print_function=self.print_function)
 
     def legacy(self, patterns, filters, validate, list, report, warnings_mode, raise_on_error):
         invoice_collection_reader = InvoiceCollectionReader(trace=self.trace)
