@@ -1,13 +1,14 @@
 language: python
 python:
   - "3.2"
-  - "3.3"
+  - "3.4"
 
 # command to install dependencies
 install: 
+  - "sudo apt-get update -qq"
+  - "sudo apt-get install -y catdoc"
   - "pip install coveralls"
   - "pip install pytest"
-  - "apt-get install catdoc"
   - "pip install ."
 
 # command to run tests
