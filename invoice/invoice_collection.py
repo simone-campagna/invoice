@@ -64,6 +64,9 @@ class InvoiceCollection(object):
     def __len__(self):
         return len(self._invoices)
 
+    def __getitem__(self, index):
+        return self._invoices[index]
+
     def add(self, invoice):
         if not isinstance(invoice, Invoice):
             raise TypeError("invalid object {!r} of type {} (not an Invoice)".format(invoice, type(invoice).__name__))

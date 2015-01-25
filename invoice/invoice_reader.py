@@ -41,7 +41,7 @@ class InvoiceReader(object):
             logger = get_default_logger()
         self.logger = logger
         
-    def read(self, doc_filename):
+    def __call__(self, doc_filename):
         got_number = False
         got_date = False
         got_name = False

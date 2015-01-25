@@ -213,13 +213,13 @@ END"""
                 scan_date_times = []
                 for existing, doc_filename in result:
                     try:
-                        invoice = invoice_reader.read(doc_filename)
+                        invoice = invoice_reader(doc_filename)
                     except Exception as err:
                         if self.trace:
                             traceback.print_exc()
                         self.logger.error("cannot read invoice from {!r}: {}: {}".format(doc_filename, type(err).__name__, err))
                         continue
-                    updated_invoice_collection.add(invoice_reader.read(doc_filename))
+                    updated_invoice_collection.add(invoice_reader(doc_filename))
                     if existing:
                         old_invoices.append(invoice)
                     else:

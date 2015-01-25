@@ -23,11 +23,13 @@ __all__ = [
 import datetime
 import unittest
 
+from invoice.log import get_null_logger
 from invoice.invoice import Invoice
 from invoice.invoice_collection import InvoiceCollection
 
-class TestInvoice(unittest.TestCase):
+class TestInvoiceCollection(unittest.TestCase):
     def setUp(self):
+        self.logger = get_null_logger()
         self._invoice_001_peter_parker = Invoice(
             doc_filename='2015_001_peter_parker.doc',
             year=2015, number=1,
@@ -78,13 +80,13 @@ class TestInvoice(unittest.TestCase):
 
     # invoice
     def test_InvoiceCollection_default(self):
-        invoice_collection = InvoiceCollection()
+        invoice_collection = InvoiceCollection(logger=self.logger)
         
     def test_InvoiceCollection_init(self):
-        invoice_collection = InvoiceCollection(self._invoices)
+        invoice_collection = InvoiceCollection(self._invoices, logger=self.logger)
 
     def test_filter(self):
-        invoice_collection = InvoiceCollection(self._invoices)
+        invoice_collection = InvoiceCollection(self._invoices, logger=self.logger)
         self.assertEqual(len(invoice_collection), 3)
         invoice_collection_2 = invoice_collection.filter("number != 2")
         self.assertEqual(len(invoice_collection_2), 2)
@@ -94,13 +96,13 @@ class TestInvoice(unittest.TestCase):
             invoice_collection_4 = invoice_collection.filter("numer != 2")
 
     def test_InvoiceCollection_validate_ok(self):
-        invoice_collection = InvoiceCollection(self._invoices)
+        invoice_collection = InvoiceCollection(self._invoices, logger=self.logger)
         validation_result = invoice_collection.validate()
         self.assertEqual(validation_result.num_errors(), 0)
         self.assertEqual(validation_result.num_warnings(), 0)
 
     def test_InvoiceCollection_validate_warning_multiple_names(self):
-        invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_parker_peter])
+        invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_parker_peter], logger=self.logger)
         validation_result = invoice_collection.validate()
         self.assertEqual(validation_result.num_errors(), 0)
         self.assertEqual(validation_result.num_warnings(), 1)
@@ -108,7 +110,7 @@ class TestInvoice(unittest.TestCase):
             self.assertEqual(doc_filename, self._invoice_004_parker_peter.doc_filename)
 
     def test_InvoiceCollection_validate_error_wrong_date(self):
-        invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_peter_parker_wrong_date])
+        invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_peter_parker_wrong_date], logger=self.logger)
         validation_result = invoice_collection.validate()
         self.assertEqual(validation_result.num_errors(), 1)
         self.assertEqual(validation_result.num_warnings(), 0)
@@ -116,7 +118,7 @@ class TestInvoice(unittest.TestCase):
             self.assertEqual(doc_filename, self._invoice_004_peter_parker_wrong_date.doc_filename)
 
     def test_InvoiceCollection_validate_error_wrong_number(self):
-        invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_peter_parker_wrong_number])
+        invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_peter_parker_wrong_number], logger=self.logger)
         validation_result = invoice_collection.validate()
         self.assertEqual(validation_result.num_errors(), 1)
         self.assertEqual(validation_result.num_warnings(), 0)
@@ -124,7 +126,7 @@ class TestInvoice(unittest.TestCase):
             self.assertEqual(doc_filename, self._invoice_004_peter_parker_wrong_number.doc_filename)
 
     def test_InvoiceCollection_validate_error_duplicated_number(self):
-        invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_peter_parker_duplicated_number])
+        invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_peter_parker_duplicated_number], logger=self.logger)
         validation_result = invoice_collection.validate()
         self.assertEqual(validation_result.num_errors(), 1)
         self.assertEqual(validation_result.num_warnings(), 0)

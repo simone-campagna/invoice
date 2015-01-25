@@ -21,6 +21,7 @@ __all__ = [
     'create_logger',
     'set_verbose_level',
     'get_default_logger',
+    'get_null_logger',
 ]
 
 import logging
@@ -56,3 +57,15 @@ def get_default_logger():
     if _DEFAULT_LOGGER is None:
         _DEFAULT_LOGGER = create_logger('invoice')
     return _DEFAULT_LOGGER
+
+_NULL_LOGGER = None
+
+def get_null_logger():
+    global _NULL_LOGGER
+    if _NULL_LOGGER is None:
+        logger = logging.getLogger('null')
+        handler = logging.NullHandler()
+        logger.addHandler(handler)
+        _NULL_LOGGER = logger
+    return _NULL_LOGGER
+

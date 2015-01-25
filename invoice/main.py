@@ -95,7 +95,7 @@ class InvoiceProgram(object):
     def legacy(self, patterns, filters, validate, list, report, warnings_mode, raise_on_error):
         invoice_collection_reader = InvoiceCollectionReader(trace=self.trace)
 
-        invoice_collection = invoice_collection_reader.read(*patterns)
+        invoice_collection = invoice_collection_reader(*patterns)
 
         if validate is None:
             validate = any([report])
