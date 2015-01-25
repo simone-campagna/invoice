@@ -21,6 +21,7 @@ __all__ = [
 ]
 
 import argparse
+import os
 import traceback
 
 from .conf import VERSION, DB_FILE, DB_FILE_VAR
@@ -37,7 +38,10 @@ class InvoiceProgram(object):
         self.trace = trace
         self.db = InvoiceDb(self.db_filename, self.logger)
 
-    def db_init(self, *, patterns):
+    def db_init(self, *, patterns, reset):
+        if reset and os.path.exists(self.db_filename):
+            self.logger.info("removing db {!r}".format(self.db_filename))
+            os.remove(self.db_filename)
         self.db.initialize()
         self.db.write('patterns', [InvoiceDb.Pattern(pattern=pattern) for pattern in patterns])
 
@@ -53,7 +57,7 @@ class InvoiceProgram(object):
         self.db.check()
         invoice_collection = self.db.load_invoice_collection()
         result = invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
-        return result['errors']
+        return result.num_errors()
 
     def db_filter(self, invoice_collection, filters):
         self.db.check()
@@ -214,7 +218,7 @@ $ %(prog)s init 'docs/*.doc'
     )
     init_parser.set_defaults(
         function_name="db_init",
-        function_arguments=('patterns', ),
+        function_arguments=('patterns', 'reset'),
     )
 
     ### scan_parser ###
@@ -393,6 +397,12 @@ use the db.
             default=False,
             help="make first error be fatal")
     
+    ### reset option
+    init_parser.add_argument("--reset", "-r",
+        action="store_true",
+        default=False,
+        help="Reset db if it already exists")
+
     ### patterns option
     for parser in init_parser, legacy_parser:
         parser.add_argument("patterns",

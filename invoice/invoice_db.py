@@ -171,8 +171,8 @@ END"""
                         new_invoices.append(invoice)
                     scan_date_times.append(self.ScanDateTime(doc_filename=invoice.doc_filename, scan_date_time=file_date_times[invoice.doc_filename]))
                 result = updated_invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
-                if result['errors']:
-                    raise InvoiceError("validation failed - {} errors found".format(result['errors']))
+                if result.num_errors():
+                    raise InvoiceError("validation failed - {} errors found".format(result.num_errors()))
                 if old_invoices:
                     self.update('invoices', 'doc_filename', old_invoices, connection=connection)
                 else:

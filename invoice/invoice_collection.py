@@ -20,6 +20,7 @@ __all__ = [
     'InvoiceCollection',
 ]
 
+import collections
 import datetime
 import math
 
@@ -27,6 +28,26 @@ from .error import InvoiceError
 from .invoice import Invoice
 from .log import get_default_logger
 from .week import WeekManager
+
+class ValidationResult(object):
+    def __init__(self):
+        self._errors = collections.OrderedDict()
+        self._warnings = collections.OrderedDict()
+
+    def add_error(self, invoice, message):
+        self._errors.setdefault(invoice.doc_filename, []).append(message)
+
+    def add_warning(self, invoice, message):
+        self._warnings.setdefault(invoice.doc_filename, []).append(message)
+
+    def __bool__(self):
+        return len(self._errors) == 0
+
+    def num_errors(self):
+        return sum(len(l) for l in self._errors.values())
+
+    def num_warnings(self):
+        return sum(len(l) for l in self._warnings.values())
 
 class InvoiceCollection(object):
     WARNINGS_MODE_DEFAULT = 'default'
@@ -90,39 +111,37 @@ class InvoiceCollection(object):
     def years(self):
         return self._years
 
-    def log_result(self):
-        return dict(errors=0, warnings=0)
-
-    def log_critical(self, message, result):
+    def log_critical(self, invoice, message, result):
         self.logger.critical(message)
+        result.add_error(invoice, message)
         raise InvoiceError(message)
         
-    def log_error(self, message, result):
+    def log_error(self, invoice, message, result):
         self.logger.error(message)
-        result['errors'] += 1
+        result.add_error(invoice, message)
         return result
 
-    def log_warning(self, message, result):
+    def log_warning(self, invoice, message, result):
         self.logger.warning(message)
-        result['warnings'] += 1
+        result.add_warning(invoice, message)
         return result
 
     def log_functions(self, warnings_mode=None, raise_on_error=False, result=None):
         if result is None:
-            result = self.log_result()
+            result = ValidationResult()
         if warnings_mode is None:
             warnings_mode = self.WARNINGS_MODE_DEFAULT
         if raise_on_error:
-            log_error = lambda message: self.log_critical(message, result=result)
+            log_error = lambda invoice, message: self.log_critical(invoice, message, result=result)
         else:
-            log_error = lambda message: self.log_error(message, result=result)
+            log_error = lambda invoice, message: self.log_error(invoice, message, result=result)
         if warnings_mode == self.WARNINGS_MODE_ERROR:
             log_warning = log_error
         elif warnings_mode == self.WARNINGS_MODE_IGNORE:
-            def log_warning(message):
+            def log_warning(invoice, message):
                 pass
         elif warnings_mode == self.WARNINGS_MODE_DEFAULT:
-            log_warning = lambda message: self.log_warning(message, result=result)
+            log_warning = lambda invoice, message: self.log_warning(invoice, message, result=result)
         else:
             raise ValueError("invalid warnings mode {!r}".format(warnings_mode))
         return result, log_error, log_warning
@@ -135,11 +154,11 @@ class InvoiceCollection(object):
         for key in 'year', 'number', 'name', 'tax_code', 'date', 'income':
             val = getattr(invoice, key)
             if val is None:
-                log_error("invoice {}: {} is undefined".format(invoice.doc_filename, key))
+                log_error(invoice, "invoice {}: {} is undefined".format(invoice.doc_filename, key))
         if invoice.currency != 'euro':
-            log_error("invoice {}: unsupported currency {!r}".format(invoice.doc_filename, invoice.currency))
+            log_error(invoice, "invoice {}: unsupported currency {!r}".format(invoice.doc_filename, invoice.currency))
         if invoice.date is not None and invoice.date.year != invoice.year:
-            log_error("invoice {}: date {} does not match with year {}".format(invoice.doc_filename, invoice.date, invoice.year))
+            log_error(invoice, "invoice {}: date {} does not match with year {}".format(invoice.doc_filename, invoice.date, invoice.year))
         return result
 
     def validate(self, warnings_mode=None, raise_on_error=False, result=None):
@@ -153,10 +172,18 @@ class InvoiceCollection(object):
         # verify first/last name exchange:
         nd = {}
         for invoice in self._invoices:
-            nd.setdefault(invoice.tax_code, set()).add(invoice.name)
-        for tax_code, names in nd.items():
-            if len(names) > 1:
-                log_warning("#{} names ({}) refer to the same tax_code {}: possible first/last name exchange".format(len(names), ', '.join(repr(name) for name in names), tax_code))
+            if invoice.tax_code in nd:
+                i_name, i_doc_filenames = nd[invoice.tax_code]
+                if i_name != invoice.name:
+                    log_warning(invoice, "tax_code {!r} refers to name {!r} in {!r}, but it was used with a different name {!r} in #{} invoices".format(
+                        invoice.tax_code,
+                        invoice.name,
+                        invoice.doc_filename,
+                        i_name,
+                        len(i_doc_filenames),
+                    ))
+            else:
+                nd[invoice.tax_code] = (invoice.name, [invoice.doc_filename])
 
         # verify numbering and dates per year
         for year in self.years():
@@ -166,10 +193,10 @@ class InvoiceCollection(object):
             for invoice in invoices:
                 expected_number += 1
                 if invoice.number != expected_number:
-                    log_error("invoice {}: number {} is not valid (expected number for year {} is {})".format(invoice.doc_filename, invoice.number, year, expected_number))
+                    log_error(invoice, "invoice {}: number {} is not valid (expected number for year {} is {})".format(invoice.doc_filename, invoice.number, year, expected_number))
                 if prev_date is not None:
                     if invoice.date < prev_date:
-                        log_error("invoice {}: date {} is lower than previous invoice {} ({})".format(invoice.doc_filename, invoice.date, prev_doc, prev_date))
+                        log_error(invoice, "invoice {}: date {} is lower than previous invoice {} ({})".format(invoice.doc_filename, invoice.date, prev_doc, prev_date))
                 prev_doc, prev_date = invoice.doc_filename, invoice.date
         return result
 
