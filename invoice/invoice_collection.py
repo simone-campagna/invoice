@@ -20,6 +20,7 @@ __all__ = [
     'InvoiceCollection',
 ]
 
+import collections
 import datetime
 import math
 
@@ -224,8 +225,8 @@ invoice:                  {doc_filename!r}
         self.process()
         for year in self.years():
             year_invoices = self.filter(lambda invoice: invoice.year == year)
-            td = {}
-            wd = {}
+            td = collections.OrderedDict()
+            wd = collections.OrderedDict()
             for invoice in year_invoices:
                 td.setdefault(invoice.tax_code, []).append(invoice)
                 wd.setdefault(self.get_week_number(invoice.date), []).append(invoice)

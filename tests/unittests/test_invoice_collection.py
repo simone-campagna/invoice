@@ -17,7 +17,7 @@
 
 __author__ = "Simone Campagna"
 __all__ = [
-    'TestInvoice',
+    'TestInvoiceCollection',
 ]
 
 import datetime
