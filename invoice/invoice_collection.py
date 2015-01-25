@@ -31,11 +31,23 @@ from .week import WeekManager
 
 class ValidationResult(object):
     def __init__(self):
+        self._failing_invoices = set()
         self._errors = collections.OrderedDict()
         self._warnings = collections.OrderedDict()
 
+    def filter_validated_invoices(self, invoices):
+        validated_invoices = []
+        for invoice in invoices:
+            if not invoice.doc_filename in self._failing_invoices:
+                validated_invoices.append(invoice)
+        return validated_invoices
+
+    def failing_invoices(self):
+        return self._failing_invoices
+
     def add_error(self, invoice, message):
         self._errors.setdefault(invoice.doc_filename, []).append(message)
+        self._failing_invoices.add(invoice.doc_filename)
 
     def add_warning(self, invoice, message):
         self._warnings.setdefault(invoice.doc_filename, []).append(message)
@@ -126,9 +138,7 @@ class InvoiceCollection(object):
         result.add_warning(invoice, message)
         return result
 
-    def log_functions(self, warnings_mode=None, raise_on_error=False, result=None):
-        if result is None:
-            result = ValidationResult()
+    def log_functions(self, result, warnings_mode=None, raise_on_error=False):
         if warnings_mode is None:
             warnings_mode = self.WARNINGS_MODE_DEFAULT
         if raise_on_error:
@@ -144,10 +154,10 @@ class InvoiceCollection(object):
             log_warning = lambda invoice, message: self.log_warning(invoice, message, result=result)
         else:
             raise ValueError("invalid warnings mode {!r}".format(warnings_mode))
-        return result, log_error, log_warning
+        return log_error, log_warning
 
-    def validate_invoice(self, warnings_mode=None, raise_on_error=False, result=None):
-        result, log_error, log_warning = self.log_functions(warnings_mode=warnings_mode, raise_on_error=raise_on_error, result=result)
+    def validate_invoice(self, result, warnings_mode=None, raise_on_error=False):
+        log_error, log_warning = self.log_functions(result=result, warnings_mode=warnings_mode, raise_on_error=raise_on_error)
         return self.impl_validate_invoice(invoice, result, log_error, log_warning)
 
     def impl_validate_invoice(self, invoice, result, log_error, log_warning):
@@ -161,9 +171,10 @@ class InvoiceCollection(object):
             log_error(invoice, "invoice {}: date {} does not match with year {}".format(invoice.doc_filename, invoice.date, invoice.year))
         return result
 
-    def validate(self, warnings_mode=None, raise_on_error=False, result=None):
+    def validate(self, warnings_mode=None, raise_on_error=False):
+        result = ValidationResult()
         self.process()
-        result, log_error, log_warning = self.log_functions(warnings_mode=warnings_mode, raise_on_error=raise_on_error, result=result)
+        log_error, log_warning = self.log_functions(result=result, warnings_mode=warnings_mode, raise_on_error=raise_on_error)
 
         # verify fields definition:
         for invoice in self._invoices:
@@ -198,6 +209,8 @@ class InvoiceCollection(object):
                     if invoice.date < prev_date:
                         log_error(invoice, "invoice {}: date {} is lower than previous invoice {} ({})".format(invoice.doc_filename, invoice.date, prev_doc, prev_date))
                 prev_doc, prev_date = invoice.doc_filename, invoice.date
+
+        
         return result
 
     def list(self, field_names, header=True, print_function=print):

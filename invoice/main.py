@@ -45,9 +45,9 @@ class InvoiceProgram(object):
         self.db.initialize()
         self.db.write('patterns', [InvoiceDb.Pattern(pattern=pattern) for pattern in patterns])
 
-    def db_scan(self, *, warnings_mode, raise_on_error):
+    def db_scan(self, *, warnings_mode, raise_on_error, partial_update):
         self.db.check()
-        invoice_collection = self.db.scan(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
+        invoice_collection = self.db.scan(warnings_mode=warnings_mode, raise_on_error=raise_on_error, partial_update=partial_update)
 
     def db_clear(self):
         self.db.check()
@@ -56,8 +56,8 @@ class InvoiceProgram(object):
     def db_validate(self, *, warnings_mode, raise_on_error):
         self.db.check()
         invoice_collection = self.db.load_invoice_collection()
-        result = invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
-        return result.num_errors()
+        validation_result = invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
+        return validation_result.num_errors()
 
     def db_filter(self, invoice_collection, filters):
         self.db.check()
@@ -94,9 +94,9 @@ class InvoiceProgram(object):
         try:
             if validate:
                 self.logger.info("validating {} invoices...".format(len(invoice_collection)))
-                result = invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
-                if result['errors']:
-                    self.logger.error("found #{} errors - exiting".format(result['errors']))
+                validation_result = invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
+                if validation_result.num_errors():
+                    self.logger.error("found #{} errors - exiting".format(validation_result.num_errors()))
                     return 1
     
             invoice_collection = self.db_filter(invoice_collection, filters)
@@ -248,7 +248,7 @@ If validation is successfull, the read invoices are stored onto the db.
     )
     scan_parser.set_defaults(
         function_name="db_scan",
-        function_arguments=('warnings_mode', 'raise_on_error'),
+        function_arguments=('warnings_mode', 'raise_on_error', 'partial_update'),
     )
 
     ### clear_parser ###
@@ -374,6 +374,13 @@ use the db.
             action="append",
             default=[],
             help="add a filter (e.g. 'year == 2014')")
+
+    ### partial_update option
+    scan_parser.add_argument("--disable-partial-update", "-P",
+        dest="partial_update",
+        action="store_false",
+        default=True,
+        help="disable partial update")
 
     ### warnings and error options
     for parser in scan_parser, validate_parser, legacy_parser:

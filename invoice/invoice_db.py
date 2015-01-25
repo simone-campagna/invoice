@@ -114,7 +114,7 @@ END"""
                 invoice_collection.add(invoice)
         return invoice_collection
                 
-    def scan(self, warnings_mode=InvoiceCollection.WARNINGS_MODE_DEFAULT, raise_on_error=False, connection=None):
+    def scan(self, warnings_mode=InvoiceCollection.WARNINGS_MODE_DEFAULT, raise_on_error=False, partial_update=True, connection=None):
         found_doc_filenames = set()
         file_date_times = FileDateTimes()
         updated_invoice_collection = InvoiceCollection()
@@ -170,9 +170,16 @@ END"""
                     else:
                         new_invoices.append(invoice)
                     scan_date_times.append(self.ScanDateTime(doc_filename=invoice.doc_filename, scan_date_time=file_date_times[invoice.doc_filename]))
-                result = updated_invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
-                if result.num_errors():
-                    raise InvoiceError("validation failed - {} errors found".format(result.num_errors()))
+                validation_result = updated_invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
+                if validation_result.num_errors():
+                    message = "validation failed - {} errors found".format(validation_result.num_errors())
+                    if not partial_update:
+                        raise InvoiceError(message)
+                    else:
+                        old_invoices = validation_result.filter_validated_invoices(old_invoices)
+                        new_invoices = validation_result.filter_validated_invoices(new_invoices)
+                        if old_invoices or new_invoices:
+                            self.logger.warning(message + ' - partial update')
                 if old_invoices:
                     self.update('invoices', 'doc_filename', old_invoices, connection=connection)
                 else:
