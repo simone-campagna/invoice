@@ -20,46 +20,14 @@ __all__ = [
     'InvoiceCollection',
 ]
 
-import collections
 import datetime
 import math
 
 from .error import InvoiceError
 from .invoice import Invoice
+from .validation_result import ValidationResult
 from .log import get_default_logger
 from .week import WeekManager
-
-class ValidationResult(object):
-    def __init__(self):
-        self._failing_invoices = set()
-        self._errors = collections.OrderedDict()
-        self._warnings = collections.OrderedDict()
-
-    def filter_validated_invoices(self, invoices):
-        validated_invoices = []
-        for invoice in invoices:
-            if not invoice.doc_filename in self._failing_invoices:
-                validated_invoices.append(invoice)
-        return validated_invoices
-
-    def failing_invoices(self):
-        return self._failing_invoices
-
-    def add_error(self, invoice, message):
-        self._errors.setdefault(invoice.doc_filename, []).append(message)
-        self._failing_invoices.add(invoice.doc_filename)
-
-    def add_warning(self, invoice, message):
-        self._warnings.setdefault(invoice.doc_filename, []).append(message)
-
-    def __bool__(self):
-        return len(self._errors) == 0
-
-    def num_errors(self):
-        return sum(len(l) for l in self._errors.values())
-
-    def num_warnings(self):
-        return sum(len(l) for l in self._warnings.values())
 
 class InvoiceCollection(object):
     WARNINGS_MODE_DEFAULT = 'default'
