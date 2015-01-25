@@ -118,8 +118,9 @@ def invoice_program():
     default_validate = True
     default_warnings_mode = InvoiceCollection.WARNINGS_MODE_DEFAULT
     default_list_field_names = InvoiceCollection.LIST_FIELD_NAMES_LONG
+    default_filters = []
 
-    def store_fields(s):
+    def type_fields(s):
         field_names = []
         for field_name in s.split(','):
             field_name = field_name.strip()
@@ -127,6 +128,15 @@ def invoice_program():
                 raise ValueError("invalid field {!r}".format(field_name))
             field_names.append(field_name)
         return field_names
+
+    def type_years_filter(s):
+        years = tuple(int(y.strip()) for y in s.split(','))
+        if len(years) == 1:
+            filter_source = 'year == {}'.format(years[0])
+        else:
+            filter_source = 'year in {{{}}}'.format(', '.join(str(year) for year in years))
+        print("{!r} -> {!r}".format(s, filter_source))
+        return filter_source
 
     common_parser = argparse.ArgumentParser(
         add_help=False,
@@ -361,18 +371,26 @@ use the db.
 
     list_argument_group.add_argument("--fields", "-o",
         dest="field_names",
-        type=store_fields,
+        type=type_fields,
         default=default_list_field_names,
         help="manually select fields, for instance 'year,number,tax_code' [{}]".format('|'.join(Invoice._fields)))
 
-    ### filter option
+    ### year and filter option
     for parser in list_parser, dump_parser, legacy_parser:
+        parser.add_argument("--year", "-y",
+            metavar="Y",
+            dest="filters",
+            type=type_years_filter,
+            action="append",
+            default=default_filters,
+            help="filter invoices by year")
+
         parser.add_argument("--filter", "-F",
             metavar="F",
             dest="filters",
             type=str,
             action="append",
-            default=[],
+            default=default_filters,
             help="add a filter (e.g. 'year == 2014')")
 
     ### partial_update option
