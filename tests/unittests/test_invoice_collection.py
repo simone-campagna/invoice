@@ -40,11 +40,40 @@ class TestInvoice(unittest.TestCase):
             name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
             city='New York', date=datetime.date(2015, 1, 2),
             income=100.0, currency='euro')
-        self._invoice_003_parker_peter = Invoice(
-            doc_filename='2015_003_parker_peter.doc',
+        self._invoice_003_peter_parker = Invoice(
+            doc_filename='2015_003_peter_parser.doc',
             year=2015, number=3,
-            name='Parker B. Peter', tax_code='PRKPRT01A01B123C', 
+            name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
             city='New York', date=datetime.date(2015, 1, 3),
+            income=150.0, currency='euro')
+        self._invoices = [
+            self._invoice_001_peter_parker,
+            self._invoice_002_peter_parker,
+            self._invoice_003_peter_parker,
+        ]
+        self._invoice_004_parker_peter = Invoice(
+            doc_filename='2015_004_parker_peter.doc',
+            year=2015, number=4,
+            name='Parker B. Peter', tax_code='PRKPRT01A01B123C', 
+            city='New York', date=datetime.date(2015, 1, 4),
+            income=200.0, currency='euro')
+        self._invoice_004_peter_parker_wrong_date = Invoice(
+            doc_filename='2015_004_peter_parker.doc',
+            year=2015, number=4,
+            name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
+            city='New York', date=datetime.date(2015, 1, 2),
+            income=200.0, currency='euro')
+        self._invoice_004_peter_parker_wrong_number = Invoice(
+            doc_filename='2015_004_peter_parker.doc',
+            year=2015, number=6,
+            name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
+            city='New York', date=datetime.date(2015, 1, 5),
+            income=200.0, currency='euro')
+        self._invoice_004_peter_parker_duplicated_number = Invoice(
+            doc_filename='2015_004_peter_parker.doc',
+            year=2015, number=self._invoices[-1].number,
+            name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
+            city='New York', date=datetime.date(2015, 1, 5),
             income=200.0, currency='euro')
 
     # invoice
@@ -52,18 +81,10 @@ class TestInvoice(unittest.TestCase):
         invoice_collection = InvoiceCollection()
         
     def test_InvoiceCollection_init(self):
-        invoice_collection = InvoiceCollection([
-            self._invoice_001_peter_parker,
-            self._invoice_002_peter_parker,
-            self._invoice_003_parker_peter,
-        ])
+        invoice_collection = InvoiceCollection(self._invoices)
 
     def test_filter(self):
-        invoice_collection = InvoiceCollection([
-            self._invoice_001_peter_parker,
-            self._invoice_002_peter_parker,
-            self._invoice_003_parker_peter,
-        ])
+        invoice_collection = InvoiceCollection(self._invoices)
         self.assertEqual(len(invoice_collection), 3)
         invoice_collection_2 = invoice_collection.filter("number != 2")
         self.assertEqual(len(invoice_collection_2), 2)
@@ -71,3 +92,43 @@ class TestInvoice(unittest.TestCase):
         self.assertEqual(len(invoice_collection_3), 2)
         with self.assertRaises(NameError):
             invoice_collection_4 = invoice_collection.filter("numer != 2")
+
+    def test_InvoiceCollection_validate_ok(self):
+        invoice_collection = InvoiceCollection(self._invoices)
+        validation_result = invoice_collection.validate()
+        self.assertEqual(validation_result.num_errors(), 0)
+        self.assertEqual(validation_result.num_warnings(), 0)
+
+    def test_InvoiceCollection_validate_warning_multiple_names(self):
+        invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_parker_peter])
+        validation_result = invoice_collection.validate()
+        self.assertEqual(validation_result.num_errors(), 0)
+        self.assertEqual(validation_result.num_warnings(), 1)
+        for doc_filename, warnings in validation_result.warnings().items():
+            self.assertEqual(doc_filename, self._invoice_004_parker_peter.doc_filename)
+
+    def test_InvoiceCollection_validate_error_wrong_date(self):
+        invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_peter_parker_wrong_date])
+        validation_result = invoice_collection.validate()
+        self.assertEqual(validation_result.num_errors(), 1)
+        self.assertEqual(validation_result.num_warnings(), 0)
+        for doc_filename, errors in validation_result.errors().items():
+            self.assertEqual(doc_filename, self._invoice_004_peter_parker_wrong_date.doc_filename)
+
+    def test_InvoiceCollection_validate_error_wrong_number(self):
+        invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_peter_parker_wrong_number])
+        validation_result = invoice_collection.validate()
+        self.assertEqual(validation_result.num_errors(), 1)
+        self.assertEqual(validation_result.num_warnings(), 0)
+        for doc_filename, errors in validation_result.errors().items():
+            self.assertEqual(doc_filename, self._invoice_004_peter_parker_wrong_number.doc_filename)
+
+    def test_InvoiceCollection_validate_error_duplicated_number(self):
+        invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_peter_parker_duplicated_number])
+        validation_result = invoice_collection.validate()
+        self.assertEqual(validation_result.num_errors(), 1)
+        self.assertEqual(validation_result.num_warnings(), 0)
+        for doc_filename, errors in validation_result.errors().items():
+            self.assertEqual(doc_filename, self._invoice_004_peter_parker_duplicated_number.doc_filename)
+        
+

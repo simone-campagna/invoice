@@ -54,3 +54,8 @@ class ValidationResult(object):
     def num_warnings(self):
         return sum(len(l) for l in self._warnings.values())
 
+    def errors(self):
+        return self._errors
+
+    def warnings(self):
+        return self._warnings
