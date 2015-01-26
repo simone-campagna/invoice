@@ -131,6 +131,6 @@ class Bool(BaseType):
             elif value == "False":
                 return False
             else:
-                raise ValueError("{}: invalid string value {!r}".format(cls.__name__, value, type(value).__name__))
+                raise ValueError("{}: valore {!r} non valido (i valori leciti sono True|False)".format(cls.__name__, value, type(value).__name__))
         else:
             return bool(value)

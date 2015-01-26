@@ -77,7 +77,7 @@ class InvoiceCollection(object):
         try:
             function_code = compile(function_source, '<string>', 'eval')
         except SyntaxError as err:
-            raise InvoiceSyntaxError("invalid filter function {!r}".format(function_source), "invalid filter function", function_source, err)
+            raise InvoiceSyntaxError("funzione filtro {!r} non valida".format(function_source), "funzione filter non valida", function_source, err)
         def filter(invoice):
             d = invoice._asdict()
             for field_name, name in cls.FIELD_HEADERS.items():
@@ -102,7 +102,7 @@ class InvoiceCollection(object):
 
     def add(self, invoice):
         if not isinstance(invoice, Invoice):
-            raise TypeError("invalid object {!r} of type {} (not an Invoice)".format(invoice, type(invoice).__name__))
+            raise TypeError("{}.add(...): oggetto {!r} di tipo {} non valido".format(self.__class__.__name__, invoice, type(invoice).__name__))
         self._invoices.append(invoice)
 
     def filter(self, function):
@@ -159,7 +159,7 @@ class InvoiceCollection(object):
         elif warnings_mode == self.WARNINGS_MODE_DEFAULT:
             log_warning = lambda invoice, exc_type, message: self.log_warning(invoice, exc_type, message, result=result)
         else:
-            raise ValueError("invalid warnings mode {!r}".format(warnings_mode))
+            raise ValueError("warnings_mode {!r} non valido (i valori leciti sono {})".format(warnings_mode, '|'.joi(self.WARNINGS_MODES)))
         return log_error, log_warning
 
     def validate_invoice(self, result, warnings_mode=None, raise_on_error=False):

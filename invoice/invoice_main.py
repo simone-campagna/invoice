@@ -48,7 +48,7 @@ def invoice_main(print_function=print, logger=None, args=None):
         for field_name in s.split(','):
             field_name = field_name.strip()
             if not field_name in Invoice._fields:
-                raise ValueError("invalid field {!r}".format(field_name))
+                raise ValueError("campo {!r} non valido".format(field_name))
             field_names.append(field_name)
         return field_names
 
@@ -66,7 +66,7 @@ def invoice_main(print_function=print, logger=None, args=None):
         elif value.lower() in {"off", "false"}:
             return False
         else:
-            raise ValueError("invalid on/off value {!r} (accepts on/True|off/False".format(value))
+            raise ValueError("valore {!r} non valido (i valori leciti sono on/True|off/False)".format(value))
 
     common_parser = argparse.ArgumentParser(
         add_help=False,
