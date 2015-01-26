@@ -57,7 +57,6 @@ def invoice_main(print_function=print, logger=None, args=None):
             filter_source = 'year == {}'.format(years[0])
         else:
             filter_source = 'year in {{{}}}'.format(', '.join(str(year) for year in years))
-        print("{!r} -> {!r}".format(s, filter_source))
         return filter_source
 
     def type_onoff(value):
@@ -95,53 +94,59 @@ def invoice_main(print_function=print, logger=None, args=None):
 
     top_level_parser = argparse.ArgumentParser(
         description="""\
-%(prog)s {version}  - read and process a collection of invoices.
+%(prog)s {version} - legge e processa una collezione di file DOC
+contenenti fatture.
 
-Each input invoice is a DOC file.
-The 'catdoc' tool is used to convert DOC files; it must be available.
+La lettura del file DOC avviene attraverso il programma 'catdoc', che
+deve quindi essere installato.
 
-WARNING: currently a single invoice formatting is supported, so this
-tool is not really usable. In the future, generic invoice formatting
-will be supported.
-The example directory contains some example invoices.
+ATTENZIONE: attualmente è gestito un solo formato per le fatture; in
+futuro, potrebbero essere supportati formati generici.
+La directory 'example' contiene alcuni file di esempio.
 
-The read invoices are stored on a SQLite3 db; sqlite3 python module must be
-available.
+Le fatture lette e processsate vengono archiviate in un database SQLite;
+questo database è normalmente in
 
-The db is normally stored in
 {db_filename}
 
-The init subcommand is used to initialize the db; then, the 'scan'
-subcommand can be used to read new or recently changed invoice DOC
-files. Other subcommands ('list', 'report') can be used to show some
-information about the invoices stored on the db.
+Il comando 'init' inizializza il database; in questa fase vengono
+fissate alcune opzioni, in particolare i pattern utilizzati per la
+ricerca dei DOC file.
 
 $ invoice -d x.db init 'example/*.doc' 
-$ invoice -d x.db scan
-$ invoice -d x.db list --short
-year number date       tax_code         income currency
-2014      1 2014-01-03 WNYBRC01G01H663Y  51.00 euro    
-2014      2 2014-01-03 PRKPRT01G01H663Y  76.00 euro    
-2014      3 2014-01-22 BNNBRC01G01H663Y 102.00 euro    
-2014      4 2014-01-25 WNYBRC01G01H663Y  51.00 euro    
-2014      5 2014-01-29 KNTCRK01G01H663Y 152.00 euro    
 
-[legacy mode]
+A questo punto, il comando 'scan' scansiona i DOC file presenti su
+disco, legge i file nuovi o modificati di recente, esegue una
+validazione delle fatture lette, ed archivia sul database i nuovi dati.
+
+$ invoice -d x.db scan
+
+Il contenuto del database può essere ispezionato utilizzando alcuni
+comandi ('list', 'dump', 'report'). Ad esempio:
+
+$ invoice -d x.db list --short
+anno numero data       codice_fiscale   importo valuta
+2014      1 2014-01-03 WNYBRC01G01H663Y   51.00 euro  
+2014      2 2014-01-03 PRKPRT01G01H663Y   76.50 euro  
+2014      3 2014-01-22 BNNBRC01G01H663Y  102.00 euro  
+2014      4 2014-01-25 WNYBRC01G01H663Y   51.00 euro  
+2014      5 2014-01-29 KNTCRK01G01H663Y  152.50 euro  
+
+# modalità legacy
+Questa modalità serve ad emulare il comportamento della versione 1.x di
+%(prog)s; in tal caso, non viene utilizzato il database.
 
 $ invoice legacy 'example/*.doc' -l
-invoice:                  'example/2014_001_bruce_wayne.doc'
-  year/number:            2014/1
-  city/date:              Gotham City/2014-01-03
-  name:                   Bruce Wayne
-  tax code:               WNYBRC01G01H663Y
-  total income:           51.00 [euro]
-invoice:                  'example/2014_002_peter_parker.doc'
+fattura:                  'example/2014_001_bruce_wayne.doc'
+  anno/numero:            2014/1
+  città/data:             Gotham City/2014-01-03
+  nome:                   Bruce Wayne
+  codice fiscale:         WNYBRC01G01H663Y
+  importo:                51.00 [euro]
 ...
 
 """.format(db_filename=DB_FILE_VAR, version=VERSION),
-        epilog="""\
-Please, donate 10% of the your income to the author of this nice tool!
-""".format(__author__),
+        epilog="",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=(common_parser, ),
     )

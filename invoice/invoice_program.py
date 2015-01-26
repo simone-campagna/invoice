@@ -36,7 +36,7 @@ class InvoiceProgram(object):
 
     def db_init(self, *, patterns, reset, partial_update, remove_orphaned):
         if reset and os.path.exists(self.db_filename):
-            self.logger.info("removing db {!r}".format(self.db_filename))
+            self.logger.info("cancellazione del db {!r}...".format(self.db_filename))
             os.remove(self.db_filename)
         self.db.initialize()
         self.db.configure(
@@ -88,9 +88,9 @@ class InvoiceProgram(object):
 
     def db_filter(self, invoice_collection, filters):
         if filters:
-            self.logger.info("filtering {} invoices...".format(len(invoice_collection)))
+            self.logger.debug("applicazione filtri su {} fatture...".format(len(invoice_collection)))
             for filter_source in filters:
-                self.logger.info("applying filter {!r} to {} invoices...".format(filter_source, len(invoice_collection)))
+                self.logger.debug("applicazione filtro {!r} su {} fatture...".format(filter_source, len(invoice_collection)))
                 invoice_collection = invoice_collection.filter(filter_source)
         return invoice_collection
 
@@ -119,20 +119,20 @@ class InvoiceProgram(object):
 
         try:
             if validate:
-                self.logger.info("validating {} invoices...".format(len(invoice_collection)))
+                self.logger.debug("validazione di {} fatture...".format(len(invoice_collection)))
                 validation_result = invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
                 if validation_result.num_errors():
-                    self.logger.error("found #{} errors - exiting".format(validation_result.num_errors()))
+                    self.logger.error("trovati #{} errori!".format(validation_result.num_errors()))
                     return 1
     
             invoice_collection = self.db_filter(invoice_collection, filters)
     
             if list:
-                self.logger.info("listing {} invoices...".format(len(invoice_collection)))
+                self.logger.debug("lista di {} fatture...".format(len(invoice_collection)))
                 invoice_collection.dump(print_function=self.print_function)
     
             if report:
-                self.logger.info("producing report for {} invoices...".format(len(invoice_collection)))
+                self.logger.debug("report di {} fatture...".format(len(invoice_collection)))
                 invoice_collection.report(print_function=self.print_function)
     
         except Exception as err:

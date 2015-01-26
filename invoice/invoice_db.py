@@ -230,7 +230,7 @@ END"""
                     except Exception as err:
                         if self.trace:
                             traceback.print_exc()
-                        self.logger.error("cannot read invoice from {!r}: {}: {}".format(doc_filename, type(err).__name__, err))
+                        self.logger.error("fattura {!r}: {}: {}".format(doc_filename, type(err).__name__, err))
                         continue
                     updated_invoice_collection.add(invoice_reader(doc_filename))
                     if existing:
@@ -240,14 +240,14 @@ END"""
                     scan_date_times.append(self.ScanDateTime(doc_filename=invoice.doc_filename, scan_date_time=file_date_times[invoice.doc_filename]))
                 validation_result = updated_invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
                 if validation_result.num_errors():
-                    message = "validation failed - {} errors found".format(validation_result.num_errors())
+                    message = "validazione fallita - {} errori".format(validation_result.num_errors())
                     if not partial_update:
                         raise InvoiceError(message)
                     else:
                         old_invoices = validation_result.filter_validated_invoices(old_invoices)
                         new_invoices = validation_result.filter_validated_invoices(new_invoices)
                         if old_invoices or new_invoices or removed_doc_filenames:
-                            self.logger.warning(message + ' - partial update')
+                            self.logger.warning(message + ' - update parziale')
                 if old_invoices:
                     self.update('invoices', 'doc_filename', old_invoices, connection=connection)
                 if new_invoices:

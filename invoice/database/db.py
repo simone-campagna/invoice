@@ -31,11 +31,11 @@ class Db(object):
     def __init__(self, db_filename, logger):
         self.logger = logger
         self.db_filename = db_filename
-        self.logger.info("db file is {}".format(self.db_filename))
+        self.logger.info("il db file è {}".format(self.db_filename))
 
     def check(self):
         if not os.path.exists(self.db_filename):
-            raise DbError("db file {!r} not initialized".format(self.db_filename))
+            raise DbError("db file {!r} non inizializzato".format(self.db_filename))
 
     def connect(self, connection=None):
         if connection:
@@ -45,10 +45,10 @@ class Db(object):
 
     def execute(self, cursor, sql, values=None):
         if values is None:
-            self.logger.debug("executing query {!r}...".format(sql))
+            self.logger.debug("esecuzione della query {!r}...".format(sql))
             return cursor.execute(sql)
         else:
-            self.logger.debug("executing query {!r} with values {!r}...".format(sql, values))
+            self.logger.debug("esecuzione della query {!r} con valori {!r}...".format(sql, values))
             return cursor.execute(sql, values)
 
     def get_table_names(self, connection=None):
@@ -60,7 +60,7 @@ class Db(object):
         with self.connect(connection) as connection:
             cursor = connection.cursor()
     
-            self.logger.info("creating {} table...".format(table_name))
+            self.logger.info("creazione della tabella {!r}...".format(table_name))
             sql = """CREATE TABLE {table_name} ({table_fields});""".format(
                 table_name=table_name,
                 table_fields=', '.join("{} {} {}".format(field, field_type.db_typename(), " ".join(field_type.db_create_args())) for field, field_type in table_fields.items())

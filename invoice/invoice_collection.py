@@ -47,6 +47,18 @@ class InvoiceCollection(object):
     LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
     LIST_FIELD_NAMES_FULL = Invoice._fields
 
+    FIELD_HEADERS = {
+        'doc_filename': 'documento',
+        'year':         'anno',
+        'number':       'numero',
+        'name':         'nome',
+        'tax_code':     'codice_fiscale',
+        'city':         'città',
+        'date':         'data',
+        'income':       'importo',
+        'currency':     'valuta',
+    }
+
     def __init__(self, init=None, logger=None):
         self._invoices = []
         self._processed = False
@@ -62,9 +74,17 @@ class InvoiceCollection(object):
     @classmethod
     def compile_filter_function(cls, function_source):
         def filter(invoice):
-            locals().update(datetime=datetime, **invoice._asdict())
+            d = invoice._asdict()
+            for field_name, name in cls.FIELD_HEADERS.items():
+                if field_name != name:
+                    d[name] = d[field_name]
+            locals().update(datetime=datetime, **d)
             return eval(function_source)
         return filter
+
+    @classmethod
+    def get_field_name(cls, field_name):
+        return cls.FIELD_HEADERS.get(field_name, field_name)
 
     def __iter__(self):
         return iter(self._invoices)
@@ -145,11 +165,11 @@ class InvoiceCollection(object):
         for key in 'year', 'number', 'name', 'tax_code', 'date', 'income':
             val = getattr(invoice, key)
             if val is None:
-                log_error(invoice, InvoiceUndefinedFieldError, "invoice {}: {} is undefined".format(invoice.doc_filename, key))
+                log_error(invoice, InvoiceUndefinedFieldError, "fattura {}: il campo {!r} non è definito".format(invoice.doc_filename, self.get_field_name(key)))
         if invoice.currency != 'euro':
-            log_error(invoice, InvoiceUnsupportedCurrencyError, "invoice {}: unsupported currency {!r}".format(invoice.doc_filename, invoice.currency))
+            log_error(invoice, InvoiceUnsupportedCurrencyError, "fattura {}: la valuta {!r} non è supportata".format(invoice.doc_filename, invoice.currency))
         if invoice.date is not None and invoice.date.year != invoice.year:
-            log_error(invoice, InvoiceDateError, "invoice {}: date {} does not match with year {}".format(invoice.doc_filename, invoice.date, invoice.year))
+            log_error(invoice, InvoiceDateError, "fattura {}: data {} e anno {} sono incompatibili".format(invoice.doc_filename, invoice.date, invoice.year))
         return result
 
     def validate(self, warnings_mode=None, raise_on_error=False):
@@ -167,12 +187,12 @@ class InvoiceCollection(object):
             if invoice.tax_code in nd:
                 i_name, i_doc_filenames = nd[invoice.tax_code]
                 if i_name != invoice.name:
-                    log_warning(invoice, InvoiceMultipleNamesError, "tax_code {!r} refers to name {!r} in {!r}, but it was used with a different name {!r} in #{} invoices".format(
-                        invoice.tax_code,
-                        invoice.name,
-                        invoice.doc_filename,
-                        i_name,
-                        len(i_doc_filenames),
+                    log_warning(invoice, InvoiceMultipleNamesError, "fattura {f}: il codice_fiscale {t!r} è associato al nome {n!r}, mentre è stato associato ad un altro nome {pn!r} in #{c} fatture".format(
+                        f=invoice.doc_filename,
+                        t=invoice.tax_code,
+                        n=invoice.name,
+                        pn=i_name,
+                        c=len(i_doc_filenames),
                     ))
             else:
                 nd[invoice.tax_code] = (invoice.name, [invoice.doc_filename])
@@ -188,15 +208,15 @@ class InvoiceCollection(object):
                 if invoice.number != expected_number:
                     if invoice.number in numbers:
                         log_error(invoice, InvoiceDuplicatedNumberError,
-                            "invoice {}: number {} is duplicated".format(invoice.doc_filename, invoice.number, year, expected_number))
+                            "fattura {}: il numero {} è duplicato".format(invoice.doc_filename, invoice.number, year, expected_number))
                     else:
                         log_error(invoice, InvoiceWrongNumberError,
-                            "invoice {}: number {} is not valid (expected number for year {} is {})".format(invoice.doc_filename, invoice.number, year, expected_number))
+                            "fattura {}: il numero {} non è valido (il numero atteso per l'anno {} è {})".format(invoice.doc_filename, invoice.number, year, expected_number))
                 else:
                     numbers.add(invoice.number)
                 if prev_date is not None:
                     if invoice.date < prev_date:
-                        log_error(invoice, InvoiceDateError, "invoice {}: date {} is lower than previous invoice {} ({})".format(invoice.doc_filename, invoice.date, prev_doc, prev_date))
+                        log_error(invoice, InvoiceDateError, "fattura {}: la data {} precede quella della precedente fattura {} ({})".format(invoice.doc_filename, invoice.date, prev_doc, prev_date))
                 prev_doc, prev_date = invoice.doc_filename, invoice.date
 
         
@@ -217,7 +237,7 @@ class InvoiceCollection(object):
             'income': '>',
         }
         if header:
-            data.append(field_names)
+            data.append(tuple(self.get_field_name(field_name) for field_name in field_names))
         for invoice in self._invoices:
             data.append(tuple(converters.get(field_name, str)(getattr(invoice, field_name)) for field_name in field_names))
         if data:
@@ -231,12 +251,12 @@ class InvoiceCollection(object):
         digits = 1 + int(math.log10(max(1, len(self._invoices))))
         for invoice in self._invoices:
             print_function("""\
-invoice:                  {doc_filename!r}
-  year/number:            {year}/{number:0{digits}d}
-  city/date:              {city}/{date}
-  name:                   {name}
-  tax code:               {tax_code}
-  total income:           {income:.2f} [{currency}]""".format(digits=digits, **invoice._asdict()))
+fattura:                   {doc_filename!r}
+  anno/numero:             {year}/{number:0{digits}d}
+  città/data:              {city}/{date}
+  nome:                    {name}
+  codice fiscale:          {tax_code}
+  importo:                 {income:.2f} [{currency}]""".format(digits=digits, **invoice._asdict()))
 
     def report(self, print_function=print):
         self.process()
@@ -248,9 +268,9 @@ invoice:                  {doc_filename!r}
                 td.setdefault(invoice.tax_code, []).append(invoice)
                 wd.setdefault(self.get_week_number(invoice.date), []).append(invoice)
             print_function("""\
-year {year}:
-  * number_of invoices:   {num_invoices}
-  * number of clients:    {num_clients}\
+anno                       {year}
+  * numero di fatture:     {num_invoices}
+  * numero di clienti:     {num_clients}\
 """.format(
                 year=year,
                 num_invoices=len(year_invoices),
@@ -265,11 +285,11 @@ year {year}:
                     client_income_percentage = 0.0
                 client_weeks = sorted(set(self.get_week_number(invoice.date) for invoice in invoices))
                 print_function("""\
-    + client:             {tax_code} ({name}):
-      number of invoices: {num_invoices}
-      total income:       {client_total_income}
-      income percentage:  {client_income_percentage:.2%}
-      weeks:              {client_weeks}
+    + cliente:             {tax_code} ({name}):
+      numero di fatture:   {num_invoices}
+      incasso totale:      {client_total_income}
+      incasso percentuale: {client_income_percentage:.2%}
+      settimane:           {client_weeks}
 """.format(
                     tax_code=tax_code,
                     name='|'.join(name for name in set(invoice.name for invoice in invoices)),
@@ -280,7 +300,7 @@ year {year}:
                     client_weeks=', '.join(repr(week) for week in client_weeks),
                 ))
             print_function("""\
-  * number of weeks:      {num_weeks}\
+  * numero di settimane:   {num_weeks}\
 """.format(
                 num_weeks=len(wd),
             ))
@@ -293,10 +313,10 @@ year {year}:
                     week_income_percentage = 0.0
                 first_date, last_date = self.get_week_range(year, week)
                 print_function("""\
-    + week:               {week} [{first_date} -> {last_date}]:
-      number of invoices: {num_invoices}
-      total income:       {week_total_income}
-      income percentage:  {week_income_percentage:.2%}
+    + settimana:           {week} [{first_date} -> {last_date}]:
+      numero di fatture:   {num_invoices}
+      incasso totale:      {week_total_income}
+      incasso percentuale: {week_income_percentage:.2%}
 """.format(
                     week=week,
                     num_invoices=len(invoices),

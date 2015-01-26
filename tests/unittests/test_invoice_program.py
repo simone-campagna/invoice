@@ -47,81 +47,81 @@ class Print(object):
 
 class TestInvoiceProgram(unittest.TestCase):
     DUMP_OUTPUT = """\
-invoice:                  '<DIRNAME>/2014_001_bruce_wayne.doc'
-  year/number:            2014/1
-  city/date:              Gotham City/2014-01-03
-  name:                   Bruce Wayne
-  tax code:               WNYBRC01G01H663Y
-  total income:           51.00 [euro]
-invoice:                  '<DIRNAME>/2014_002_peter_parker.doc'
-  year/number:            2014/2
-  city/date:              New York City/2014-01-03
-  name:                   Peter B. Parker
-  tax code:               PRKPRT01G01H663Y
-  total income:           76.50 [euro]
-invoice:                  '<DIRNAME>/2014_003_bruce_banner.doc'
-  year/number:            2014/3
-  city/date:              Greenville/2014-01-22
-  name:                   Robert Bruce Banner
-  tax code:               BNNBRC01G01H663Y
-  total income:           102.00 [euro]
-invoice:                  '<DIRNAME>/2014_004_bruce_wayne.doc'
-  year/number:            2014/4
-  city/date:              Gotham City/2014-01-25
-  name:                   Bruce Wayne
-  tax code:               WNYBRC01G01H663Y
-  total income:           51.00 [euro]
-invoice:                  '<DIRNAME>/2014_005_clark_kent.doc'
-  year/number:            2014/5
-  city/date:              Smallville/2014-01-29
-  name:                   Clark Kent
-  tax code:               KNTCRK01G01H663Y
-  total income:           152.50 [euro]
+fattura:                   '<DIRNAME>/2014_001_bruce_wayne.doc'
+  anno/numero:             2014/1
+  città/data:              Gotham City/2014-01-03
+  nome:                    Bruce Wayne
+  codice fiscale:          WNYBRC01G01H663Y
+  importo:                 51.00 [euro]
+fattura:                   '<DIRNAME>/2014_002_peter_parker.doc'
+  anno/numero:             2014/2
+  città/data:              New York City/2014-01-03
+  nome:                    Peter B. Parker
+  codice fiscale:          PRKPRT01G01H663Y
+  importo:                 76.50 [euro]
+fattura:                   '<DIRNAME>/2014_003_bruce_banner.doc'
+  anno/numero:             2014/3
+  città/data:              Greenville/2014-01-22
+  nome:                    Robert Bruce Banner
+  codice fiscale:          BNNBRC01G01H663Y
+  importo:                 102.00 [euro]
+fattura:                   '<DIRNAME>/2014_004_bruce_wayne.doc'
+  anno/numero:             2014/4
+  città/data:              Gotham City/2014-01-25
+  nome:                    Bruce Wayne
+  codice fiscale:          WNYBRC01G01H663Y
+  importo:                 51.00 [euro]
+fattura:                   '<DIRNAME>/2014_005_clark_kent.doc'
+  anno/numero:             2014/5
+  città/data:              Smallville/2014-01-29
+  nome:                    Clark Kent
+  codice fiscale:          KNTCRK01G01H663Y
+  importo:                 152.50 [euro]
 """
 
     REPORT_OUTPUT = """\
-year 2014:
-  * number_of invoices:   5
-  * number of clients:    4
-    + client:             WNYBRC01G01H663Y (Bruce Wayne):
-      number of invoices: 2
-      total income:       102.0
-      income percentage:  23.56%
-      weeks:              1, 4
+anno                       2014
+  * numero di fatture:     5
+  * numero di clienti:     4
+    + cliente:             WNYBRC01G01H663Y (Bruce Wayne):
+      numero di fatture:   2
+      incasso totale:      102.0
+      incasso percentuale: 23.56%
+      settimane:           1, 4
 
-    + client:             PRKPRT01G01H663Y (Peter B. Parker):
-      number of invoices: 1
-      total income:       76.5
-      income percentage:  17.67%
-      weeks:              1
+    + cliente:             PRKPRT01G01H663Y (Peter B. Parker):
+      numero di fatture:   1
+      incasso totale:      76.5
+      incasso percentuale: 17.67%
+      settimane:           1
 
-    + client:             BNNBRC01G01H663Y (Robert Bruce Banner):
-      number of invoices: 1
-      total income:       102.0
-      income percentage:  23.56%
-      weeks:              4
+    + cliente:             BNNBRC01G01H663Y (Robert Bruce Banner):
+      numero di fatture:   1
+      incasso totale:      102.0
+      incasso percentuale: 23.56%
+      settimane:           4
 
-    + client:             KNTCRK01G01H663Y (Clark Kent):
-      number of invoices: 1
-      total income:       152.5
-      income percentage:  35.22%
-      weeks:              5
+    + cliente:             KNTCRK01G01H663Y (Clark Kent):
+      numero di fatture:   1
+      incasso totale:      152.5
+      incasso percentuale: 35.22%
+      settimane:           5
 
-  * number of weeks:      3
-    + week:               1 [2014-01-01 -> 2014-01-05]:
-      number of invoices: 2
-      total income:       127.5
-      income percentage:  29.45%
+  * numero di settimane:   3
+    + settimana:           1 [2014-01-01 -> 2014-01-05]:
+      numero di fatture:   2
+      incasso totale:      127.5
+      incasso percentuale: 29.45%
 
-    + week:               4 [2014-01-20 -> 2014-01-26]:
-      number of invoices: 2
-      total income:       153.0
-      income percentage:  35.33%
+    + settimana:           4 [2014-01-20 -> 2014-01-26]:
+      numero di fatture:   2
+      incasso totale:      153.0
+      incasso percentuale: 35.33%
 
-    + week:               5 [2014-01-27 -> 2014-02-02]:
-      number of invoices: 1
-      total income:       152.5
-      income percentage:  35.22%
+    + settimana:           5 [2014-01-27 -> 2014-02-02]:
+      numero di fatture:   1
+      incasso totale:      152.5
+      incasso percentuale: 35.22%
 
 """
 
@@ -160,7 +160,7 @@ year 2014:
             )
 
             self.assertEqual(p.string(), """\
-tax_code         year number
+codice_fiscale   anno numero
 WNYBRC01G01H663Y 2014      1
 PRKPRT01G01H663Y 2014      2
 BNNBRC01G01H663Y 2014      3

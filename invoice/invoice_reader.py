@@ -93,7 +93,7 @@ class InvoiceReader(object):
                     store(data, converters, match)
                     continue
         invoice = Invoice(**data)
-        self.logger.info("scanned {}".format(invoice))
+        self.logger.info("fattura {} letta con successo".format(invoice))
         return invoice
 
     @classmethod
