@@ -24,6 +24,7 @@ import datetime
 import unittest
 
 from invoice.log import get_null_logger
+from invoice.error import InvoiceNumberingError
 from invoice.invoice import Invoice
 from invoice.invoice_collection import InvoiceCollection
 
@@ -124,6 +125,9 @@ class TestInvoiceCollection(unittest.TestCase):
         self.assertEqual(validation_result.num_warnings(), 0)
         for doc_filename, errors in validation_result.errors().items():
             self.assertEqual(doc_filename, self._invoice_004_peter_parker_wrong_number.doc_filename)
+            self.assertEqual(len(errors), 1)
+            exc_type, message = errors[0]
+            self.assertIs(exc_type, InvoiceNumberingError)
 
     def test_InvoiceCollection_validate_error_duplicated_number(self):
         invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_peter_parker_duplicated_number], logger=self.logger)
@@ -132,5 +136,8 @@ class TestInvoiceCollection(unittest.TestCase):
         self.assertEqual(validation_result.num_warnings(), 0)
         for doc_filename, errors in validation_result.errors().items():
             self.assertEqual(doc_filename, self._invoice_004_peter_parker_duplicated_number.doc_filename)
+            self.assertEqual(len(errors), 1)
+            exc_type, message = errors[0]
+            self.assertIs(exc_type, InvoiceNumberingError)
         
 

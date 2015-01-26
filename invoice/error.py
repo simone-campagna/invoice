@@ -18,7 +18,31 @@
 __author__ = "Simone Campagna"
 __all__ = [
     'InvoiceError',
+    'InvoiceValidationError',
+    'InvoiceMultipleNamesError',
+    'InvoiceUndefinedFieldError',
+    'InvoiceDateError',
+    'InvoiceNumberingError',
+    'InvoiceUnsupportedCurrencyError',
 ]
 
 class InvoiceError(Exception):
+    pass
+
+class InvoiceValidationError(InvoiceError):
+    pass
+
+class InvoiceUndefinedFieldError(InvoiceValidationError):
+    pass
+
+class InvoiceDateError(InvoiceValidationError):
+    pass
+
+class InvoiceNumberingError(InvoiceValidationError):
+    pass
+
+class InvoiceUnsupportedCurrencyError(InvoiceValidationError):
+    pass
+
+class InvoiceMultipleNamesError(InvoiceValidationError):
     pass

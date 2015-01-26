@@ -38,12 +38,12 @@ class ValidationResult(object):
     def failing_invoices(self):
         return self._failing_invoices
 
-    def add_error(self, invoice, message):
-        self._errors.setdefault(invoice.doc_filename, []).append(message)
+    def add_error(self, invoice, exc_type, message):
+        self._errors.setdefault(invoice.doc_filename, []).append((exc_type, message))
         self._failing_invoices.add(invoice.doc_filename)
 
-    def add_warning(self, invoice, message):
-        self._warnings.setdefault(invoice.doc_filename, []).append(message)
+    def add_warning(self, invoice, exc_type, message):
+        self._warnings.setdefault(invoice.doc_filename, []).append((exc_type, message))
 
     def __bool__(self):
         return len(self._errors) == 0
