@@ -25,6 +25,7 @@ import datetime
 import math
 
 from .error import InvoiceError, \
+                   InvoiceSyntaxError, \
                    InvoiceMultipleNamesError, \
                    InvoiceUndefinedFieldError, \
                    InvoiceDateError, \
@@ -73,13 +74,17 @@ class InvoiceCollection(object):
 
     @classmethod
     def compile_filter_function(cls, function_source):
+        try:
+            function_code = compile(function_source, '<string>', 'eval')
+        except SyntaxError as err:
+            raise InvoiceSyntaxError("invalid filter function {!r}".format(function_source), "invalid filter function", function_source, err)
         def filter(invoice):
             d = invoice._asdict()
             for field_name, name in cls.FIELD_HEADERS.items():
                 if field_name != name:
                     d[name] = d[field_name]
             locals().update(datetime=datetime, **d)
-            return eval(function_source)
+            return eval(function_code)
         return filter
 
     @classmethod
