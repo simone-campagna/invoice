@@ -38,6 +38,18 @@ from .validation_result import ValidationResult
 from .log import get_default_logger
 from .week import WeekManager
 
+_FIELD_HEADERS = {
+    'doc_filename': 'documento',
+    'year':         'anno',
+    'number':       'numero',
+    'name':         'nome',
+    'tax_code':     'codice_fiscale',
+    'city':         'città',
+    'date':         'data',
+    'income':       'importo',
+    'currency':     'valuta',
+}
+
 class InvoiceCollection(object):
     WARNINGS_MODE_DEFAULT = 'default'
     WARNINGS_MODE_ERROR = 'error'
@@ -48,17 +60,9 @@ class InvoiceCollection(object):
     LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
     LIST_FIELD_NAMES_FULL = Invoice._fields
 
-    FIELD_HEADERS = {
-        'doc_filename': 'documento',
-        'year':         'anno',
-        'number':       'numero',
-        'name':         'nome',
-        'tax_code':     'codice_fiscale',
-        'city':         'città',
-        'date':         'data',
-        'income':       'importo',
-        'currency':     'valuta',
-    }
+    FIELD_HEADERS = _FIELD_HEADERS
+    REV_FIELD_NAMES = dict((_FIELD_HEADERS.get(field_name, field_name), field_name) for field_name in Invoice._fields)
+    ALL_FIELD_NAMES = tuple(Invoice._fields) + tuple(REV_FIELD_NAMES.keys())
 
     def __init__(self, init=None, logger=None):
         self._invoices = []
@@ -230,6 +234,7 @@ class InvoiceCollection(object):
     def list(self, field_names, header=True, print_function=print):
         if field_names is None:
             field_names = Invoice._fields
+        field_names = [self.REV_FIELD_NAMES.get(field_name, field_name) for field_name in field_names]
         self.process()
         data = []
         digits =1 + int(math.log10(max(1, len(self._invoices))))

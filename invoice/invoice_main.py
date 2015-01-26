@@ -38,6 +38,13 @@ def invoice_main(print_function=print, logger=None, args=None):
     if logger is None:
         logger = get_default_logger()
 
+    all_field_names = []
+    for field_name in Invoice._fields:
+        all_field_names.append(field_name)
+        n = InvoiceCollection.get_field_name(field_name)
+        if n != field_name:
+            all_field_names.append(n)
+
     default_validate = True
     default_warnings_mode = InvoiceCollection.WARNINGS_MODE_DEFAULT
     default_list_field_names = InvoiceCollection.LIST_FIELD_NAMES_LONG
@@ -47,7 +54,7 @@ def invoice_main(print_function=print, logger=None, args=None):
         field_names = []
         for field_name in s.split(','):
             field_name = field_name.strip()
-            if not field_name in Invoice._fields:
+            if not field_name in InvoiceCollection.ALL_FIELD_NAMES:
                 raise ValueError("campo {!r} non valido".format(field_name))
             field_names.append(field_name)
         return field_names
@@ -273,7 +280,7 @@ Show a report about the invoices stored on the db.
     )
     report_parser.set_defaults(
         function_name="db_report",
-        function_arguments=(),
+        function_arguments=('filters', ),
     )
 
     ### legacy_parser ###
@@ -323,7 +330,7 @@ use the db.
         dest="field_names",
         type=type_fields,
         default=default_list_field_names,
-        help="manually select fields, for instance 'year,number,tax_code' [{}]".format('|'.join(Invoice._fields)))
+        help="manually select fields, for instance 'year,number,tax_code' [{}]".format('|'.join(all_field_names)))
 
     ### config list option
     config_parser.add_argument("--show", "-s",
@@ -331,7 +338,7 @@ use the db.
         default=False,
         help="show configuration")
 
-    ### year and filter option
+    ### year filter option
     for parser in list_parser, dump_parser, legacy_parser, report_parser:
         parser.add_argument("--year", "-y",
             metavar="Y",
@@ -341,6 +348,8 @@ use the db.
             default=default_filters,
             help="filter invoices by year")
 
+    ### generic filter option
+    for parser in list_parser, dump_parser, legacy_parser:
         parser.add_argument("--filter", "-F",
             metavar="F",
             dest="filters",
