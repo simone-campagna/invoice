@@ -87,7 +87,7 @@ class Int(BaseType):
 
 class Float(BaseType):
     DB_TYPENAME = 'REAL'
-    PY_TYPE = int
+    PY_TYPE = float
 
 class Date(BaseType):
     DB_TYPENAME = 'TEXT'

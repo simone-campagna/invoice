@@ -129,11 +129,11 @@ class InvoiceProgram(object):
     
             if list:
                 self.logger.info("listing {} invoices...".format(len(invoice_collection)))
-                invoice_collection.dump()
+                invoice_collection.dump(print_function=self.print_function)
     
             if report:
                 self.logger.info("producing report for {} invoices...".format(len(invoice_collection)))
-                invoice_collection.report()
+                invoice_collection.report(print_function=self.print_function)
     
         except Exception as err:
             if self.trace:

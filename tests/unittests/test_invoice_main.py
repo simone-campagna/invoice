@@ -45,9 +45,87 @@ class Print(object):
         return self._s.getvalue()
 
 class Test_main(unittest.TestCase):
+    DUMP_OUTPUT = """\
+invoice:                  '<DIRNAME>/2014_001_bruce_wayne.doc'
+  year/number:            2014/1
+  city/date:              Gotham City/2014-01-03
+  name:                   Bruce Wayne
+  tax code:               WNYBRC01G01H663Y
+  total income:           51.00 [euro]
+invoice:                  '<DIRNAME>/2014_002_peter_parker.doc'
+  year/number:            2014/2
+  city/date:              New York City/2014-01-03
+  name:                   Peter B. Parker
+  tax code:               PRKPRT01G01H663Y
+  total income:           76.50 [euro]
+invoice:                  '<DIRNAME>/2014_003_bruce_banner.doc'
+  year/number:            2014/3
+  city/date:              Greenville/2014-01-22
+  name:                   Robert Bruce Banner
+  tax code:               BNNBRC01G01H663Y
+  total income:           102.00 [euro]
+invoice:                  '<DIRNAME>/2014_004_bruce_wayne.doc'
+  year/number:            2014/4
+  city/date:              Gotham City/2014-01-25
+  name:                   Bruce Wayne
+  tax code:               WNYBRC01G01H663Y
+  total income:           51.00 [euro]
+invoice:                  '<DIRNAME>/2014_005_clark_kent.doc'
+  year/number:            2014/5
+  city/date:              Smallville/2014-01-29
+  name:                   Clark Kent
+  tax code:               KNTCRK01G01H663Y
+  total income:           152.50 [euro]
+"""
+    REPORT_OUTPUT = """\
+year 2014:
+  * number_of invoices:   5
+  * number of clients:    4
+    + client:             WNYBRC01G01H663Y (Bruce Wayne):
+      number of invoices: 2
+      total income:       102.0
+      income percentage:  23.56%
+      weeks:              1, 4
+
+    + client:             PRKPRT01G01H663Y (Peter B. Parker):
+      number of invoices: 1
+      total income:       76.5
+      income percentage:  17.67%
+      weeks:              1
+
+    + client:             BNNBRC01G01H663Y (Robert Bruce Banner):
+      number of invoices: 1
+      total income:       102.0
+      income percentage:  23.56%
+      weeks:              4
+
+    + client:             KNTCRK01G01H663Y (Clark Kent):
+      number of invoices: 1
+      total income:       152.5
+      income percentage:  35.22%
+      weeks:              5
+
+  * number of weeks:      3
+    + week:               1 [2014-01-01 -> 2014-01-05]:
+      number of invoices: 2
+      total income:       127.5
+      income percentage:  29.45%
+
+    + week:               4 [2014-01-20 -> 2014-01-26]:
+      number of invoices: 2
+      total income:       153.0
+      income percentage:  35.33%
+
+    + week:               5 [2014-01-27 -> 2014-02-02]:
+      number of invoices: 1
+      total income:       152.5
+      income percentage:  35.22%
+
+"""
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
         self.logger = get_null_logger()
+        self.maxDiff = None
 
     # invoice
     def test_Main(self):
@@ -84,7 +162,6 @@ BNNBRC01G01H663Y 2014      3
 WNYBRC01G01H663Y 2014      4
 KNTCRK01G01H663Y 2014      5
 """)
-            p.reset()
 
             p.reset()
             invoice_main(
@@ -92,39 +169,7 @@ KNTCRK01G01H663Y 2014      5
                 logger=self.logger,
                 args=['-d', db_filename.name, 'dump'],
             )
-            p_cmp = """\
-invoice:                  '<DIRNAME>/2014_001_bruce_wayne.doc'
-  year/number:            2014/1
-  city/date:              Gotham City/2014-01-03
-  name:                   Bruce Wayne
-  tax code:               WNYBRC01G01H663Y
-  total income:           51.00 [euro]
-invoice:                  '<DIRNAME>/2014_002_peter_parker.doc'
-  year/number:            2014/2
-  city/date:              New York City/2014-01-03
-  name:                   Peter B. Parker
-  tax code:               PRKPRT01G01H663Y
-  total income:           76.00 [euro]
-invoice:                  '<DIRNAME>/2014_003_bruce_banner.doc'
-  year/number:            2014/3
-  city/date:              Greenville/2014-01-22
-  name:                   Robert Bruce Banner
-  tax code:               BNNBRC01G01H663Y
-  total income:           102.00 [euro]
-invoice:                  '<DIRNAME>/2014_004_bruce_wayne.doc'
-  year/number:            2014/4
-  city/date:              Gotham City/2014-01-25
-  name:                   Bruce Wayne
-  tax code:               WNYBRC01G01H663Y
-  total income:           51.00 [euro]
-invoice:                  '<DIRNAME>/2014_005_clark_kent.doc'
-  year/number:            2014/5
-  city/date:              Smallville/2014-01-29
-  name:                   Clark Kent
-  tax code:               KNTCRK01G01H663Y
-  total income:           152.00 [euro]
-"""
-            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), p_cmp)
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.DUMP_OUTPUT)
 
             p.reset()
             invoice_main(
@@ -132,51 +177,22 @@ invoice:                  '<DIRNAME>/2014_005_clark_kent.doc'
                 logger=self.logger,
                 args=['-d', db_filename.name, 'report'],
             )
-            p_cmp = """\
-year 2014:
-  * number_of invoices:   5
-  * number of clients:    4
-    + client:             WNYBRC01G01H663Y (Bruce Wayne):
-      number of invoices: 2
-      total income:       102
-      income percentage:  23.61%
-      weeks:              1, 4
+            print("---")
+            a = p.string().replace(self.dirname, '<DIRNAME>')
+            print(a)
+            print("---")
+            self.assertEqual(p.string(), self.REPORT_OUTPUT)
 
-    + client:             PRKPRT01G01H663Y (Peter B. Parker):
-      number of invoices: 1
-      total income:       76
-      income percentage:  17.59%
-      weeks:              1
+    def test_MainLegacy(self):
+            p = Print()
 
-    + client:             BNNBRC01G01H663Y (Robert Bruce Banner):
-      number of invoices: 1
-      total income:       102
-      income percentage:  23.61%
-      weeks:              4
+            pattern = os.path.join(self.dirname, '*.doc')
 
-    + client:             KNTCRK01G01H663Y (Clark Kent):
-      number of invoices: 1
-      total income:       152
-      income percentage:  35.19%
-      weeks:              5
-
-  * number of weeks:      3
-    + week:               1 [2014-01-01 -> 2014-01-05]:
-      number of invoices: 2
-      total income:       127
-      income percentage:  29.40%
-
-    + week:               4 [2014-01-20 -> 2014-01-26]:
-      number of invoices: 2
-      total income:       153
-      income percentage:  35.42%
-
-    + week:               5 [2014-01-27 -> 2014-02-02]:
-      number of invoices: 1
-      total income:       152
-      income percentage:  35.19%
-
-"""
-            self.assertEqual(p.string(), p_cmp)
-
-    #def test_Main(self):
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['legacy', pattern, '-l']
+            )
+            
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.DUMP_OUTPUT)
