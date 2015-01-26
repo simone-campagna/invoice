@@ -32,7 +32,7 @@ class InvoiceProgram(object):
         self.logger = logger
         self.print_function = print_function
         self.trace = trace
-        self.db = InvoiceDb(self.db_filename, self.logger)
+        self._db = InvoiceDb(self.db_filename, self.logger)
 
     def db_init(self, *, patterns, reset, partial_update, remove_orphaned):
         if reset and os.path.exists(self.db_filename):
@@ -87,7 +87,6 @@ class InvoiceProgram(object):
         return validation_result.num_errors()
 
     def db_filter(self, invoice_collection, filters):
-        self.db.check()
         if filters:
             self.logger.info("filtering {} invoices...".format(len(invoice_collection)))
             for filter_source in filters:

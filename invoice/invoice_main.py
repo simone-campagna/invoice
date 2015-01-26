@@ -122,9 +122,9 @@ $ invoice -d x.db list --short
 year number date       tax_code         income currency
 2014      1 2014-01-03 WNYBRC01G01H663Y  51.00 euro    
 2014      2 2014-01-03 PRKPRT01G01H663Y  76.00 euro    
-2014      3 2014-01-22 WNYBRC01G01H663Y 102.00 euro    
+2014      3 2014-01-22 BNNBRC01G01H663Y 102.00 euro    
 2014      4 2014-01-25 WNYBRC01G01H663Y  51.00 euro    
-2014      5 2014-01-29 PRKPRT01G01H663Y  76.00 euro    
+2014      5 2014-01-29 KNTCRK01G01H663Y 152.00 euro    
 
 [legacy mode]
 
@@ -135,6 +135,7 @@ invoice:                  'example/2014_001_bruce_wayne.doc'
   name:                   Bruce Wayne
   tax code:               WNYBRC01G01H663Y
   total income:           51.00 [euro]
+invoice:                  'example/2014_002_peter_parker.doc'
 ...
 
 """.format(db_filename=DB_FILE_VAR, version=VERSION),

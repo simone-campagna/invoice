@@ -35,7 +35,7 @@ class Db(object):
 
     def check(self):
         if not os.path.exists(self.db_filename):
-            raise DbError("db file {!r} not initialized")
+            raise DbError("db file {!r} not initialized".format(self.db_filename))
 
     def connect(self, connection=None):
         if connection:
