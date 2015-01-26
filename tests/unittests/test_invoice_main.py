@@ -44,7 +44,7 @@ class Print(object):
     def string(self):
         return self._s.getvalue()
 
-class Test_main(unittest.TestCase):
+class Test_invoice_main(unittest.TestCase):
     DUMP_OUTPUT = """\
 invoice:                  '<DIRNAME>/2014_001_bruce_wayne.doc'
   year/number:            2014/1
@@ -146,7 +146,7 @@ configuration:
         self.maxDiff = None
 
     # invoice
-    def test_Main(self):
+    def test_invoice_main(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = Print()
 
@@ -155,6 +155,14 @@ configuration:
                 print_function=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'scan'],
             )
             self.assertEqual(p.string(), '')
 
@@ -201,9 +209,132 @@ KNTCRK01G01H663Y 2014      5
             invoice_main(
                 print_function=p,
                 logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--filter', 'number % 2 == 0', '--filter=tax_code.startswith("P")'],
+            )
+            self.assertEqual(p.string(), """\
+tax_code         year number
+PRKPRT01G01H663Y 2014      2
+""")
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'validate'],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'clear'],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
+            )
+            self.assertEqual(p.string(), '')
+
+    def test_invoice_main_err(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = Print()
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'scan'],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number'],
+            )
+            self.assertEqual(p.string(), """\
+tax_code         year number
+WNYBRC01G01H663Y 2014      1
+PRKPRT01G01H663Y 2014      2
+BNNBRC01G01H663Y 2014      3
+WNYBRC01G01H663Y 2014      4
+KNTCRK01G01H663Y 2014      5
+""")
+
+    def test_invoice_main_err_partial_update_off(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = Print()
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', '--partial-update=off', os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'scan'],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
+            )
+            self.assertEqual(p.string(), '')
+
+    def test_invoice_main_config_partial_update_on(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = Print()
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
                 args=['-d', db_filename.name, 'config', '--partial-update=on', '--show'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
+
+    def test_invoice_main_config_partial_update_off(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = Print()
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
 
             p.reset()
             invoice_main(
@@ -213,7 +344,47 @@ KNTCRK01G01H663Y 2014      5
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_OFF)
 
-    def test_MainLegacy(self):
+    def test_invoice_main_config_partial_update(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = Print()
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'config', '--partial-update', '--show'],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
+
+    def test_invoice_main_config(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = Print()
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'config', '--show'],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
+
+    def test_invoice_main_legacy(self):
             p = Print()
 
             pattern = os.path.join(self.dirname, '*.doc')
