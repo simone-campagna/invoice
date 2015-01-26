@@ -196,3 +196,12 @@ KNTCRK01G01H663Y 2014      5
             )
             
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.DUMP_OUTPUT)
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['legacy', pattern, '-r']
+            )
+            
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.REPORT_OUTPUT)
