@@ -27,6 +27,7 @@ import tempfile
 import unittest
 
 from invoice.log import get_null_logger
+from invoice.error import InvoiceDuplicatedNumberError
 from invoice.invoice_collection import InvoiceCollection
 from invoice.invoice_program import InvoiceProgram
 from invoice.database.db_types import Path
@@ -175,4 +176,34 @@ KNTCRK01G01H663Y 2014      5
             p.reset()
             invoice_program.db_report()
             self.assertEqual(p.string(), self.REPORT_OUTPUT)
+
+    # invoice
+    def test_InvoiceProgramError(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = Print()
+
+            invoice_program = InvoiceProgram(
+                db_filename=db_filename.name,
+                logger=self.logger,
+                trace=False,
+                print_function=p,
+            )
+
+            p.reset()
+            invoice_program.db_init(
+                patterns=[os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_duplicated_number/*.doc')],
+                reset=True,
+                partial_update=True,
+                remove_orphaned=True,
+            )
+
+            p.reset()
+            with self.assertRaises(InvoiceDuplicatedNumberError):
+                invoice_program.db_scan(
+                    warnings_mode=InvoiceCollection.WARNINGS_MODE_DEFAULT,
+                    raise_on_error=True,
+                    partial_update=None,
+                    remove_orphaned=None,
+                )
+
 

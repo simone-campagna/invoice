@@ -107,7 +107,7 @@ class InvoiceCollection(object):
     def log_critical(self, invoice, exc_type, message, result):
         self.logger.critical(message)
         result.add_error(invoice, exc_type, message)
-        raise InvoiceError(message)
+        raise exc_type(message)
         
     def log_error(self, invoice, exc_type, message, result):
         self.logger.error(message)

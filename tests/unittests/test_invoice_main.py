@@ -142,7 +142,7 @@ configuration:
 
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
-        self.logger = get_null_logger()
+        self.logger = get_default_logger()
         self.maxDiff = None
 
     # invoice
@@ -162,7 +162,7 @@ configuration:
             invoice_main(
                 print_function=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan', '-vvv'],
+                args=['-d', db_filename.name, 'scan'],
             )
             self.assertEqual(p.string(), '')
 
