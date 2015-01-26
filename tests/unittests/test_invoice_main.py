@@ -193,7 +193,7 @@ KNTCRK01G01H663Y 2014      5
             invoice_main(
                 print_function=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'report'],
+                args=['-d', db_filename.name, 'report', '-y', '2014'],
             )
             self.assertEqual(p.string(), self.REPORT_OUTPUT)
 

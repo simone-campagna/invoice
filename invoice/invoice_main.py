@@ -326,7 +326,7 @@ use the db.
         help="show configuration")
 
     ### year and filter option
-    for parser in list_parser, dump_parser, legacy_parser:
+    for parser in list_parser, dump_parser, legacy_parser, report_parser:
         parser.add_argument("--year", "-y",
             metavar="Y",
             dest="filters",
