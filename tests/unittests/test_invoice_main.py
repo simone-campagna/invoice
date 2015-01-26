@@ -122,6 +122,24 @@ year 2014:
       income percentage:  35.22%
 
 """
+
+    CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
+patterns:
+  + Pattern(pattern='<DIRNAME>/*.doc')
+
+configuration:
+  + remove_orphaned      = False
+  + partial_update       = True
+"""
+    CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
+patterns:
+  + Pattern(pattern='<DIRNAME>/*.doc')
+
+configuration:
+  + remove_orphaned      = False
+  + partial_update       = False
+"""
+
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
         self.logger = get_null_logger()
@@ -177,11 +195,23 @@ KNTCRK01G01H663Y 2014      5
                 logger=self.logger,
                 args=['-d', db_filename.name, 'report'],
             )
-            print("---")
-            a = p.string().replace(self.dirname, '<DIRNAME>')
-            print(a)
-            print("---")
             self.assertEqual(p.string(), self.REPORT_OUTPUT)
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'config', '--partial-update=on', '--show'],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'config', '--partial-update=off', '--show'],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_OFF)
 
     def test_MainLegacy(self):
             p = Print()
