@@ -22,10 +22,7 @@ __all__ = [
 
 import collections
 import datetime
-import glob
-import os
 import sqlite3
-import time
 
 from .error import InvoiceError
 from .invoice import Invoice
@@ -34,18 +31,6 @@ from .invoice_collection import InvoiceCollection
 from .database.db import Db
 from .database.table import Table
 from .database.db_types import Str, Int, Float, Date, DateTime, Path, Bool
-
-class FileDateTimes(object):
-    def __init__(self):
-        self._date_times = {}
-
-    def __getitem__(self, filename):
-        if not filename in self._date_times:
-            if os.path.exists(filename):
-                self._date_times[filename] = datetime.datetime(*time.localtime(os.stat(filename).st_ctime)[:6])
-            else:
-                self._date_times[filename] = datetime.datetime.now()
-        return self._date_times[filename]
 
 class InvoiceDb(Db):
     Pattern = collections.namedtuple('Pattern', ('pattern'))
@@ -151,6 +136,7 @@ END"""
                 configuration = self.DEFAULT_CONFIGURATION
             else:
                 configuration = configurations[-1]
+        self.warn_remove_orphaned(configuration.remove_orphaned)
         return configuration
 
     def store_invoice_collection(self, invoice_collection, connection=None):
@@ -169,91 +155,3 @@ END"""
         if remove_orphaned:
             self.logger.warning("l'opzione remove_orphaned è pericolosa, in quanto può compromettere la validazione del database!")
 
-    def scan(self, warnings_mode=InvoiceCollection.WARNINGS_MODE_DEFAULT, raise_on_error=False, partial_update=None, remove_orphaned=None, connection=None):
-        found_doc_filenames = set()
-        file_date_times = FileDateTimes()
-        updated_invoice_collection = InvoiceCollection()
-        removed_doc_filenames = []
-        with self.connect(connection) as connection:
-            configuration = self.load_configuration(connection)
-            if remove_orphaned is None:
-                remove_orphaned = configuration.remove_orphaned
-            self.warn_remove_orphaned(remove_orphaned)
-            if partial_update is None:
-                partial_update = configuration.partial_update
-
-            for pattern in self.load_patterns(connection=connection):
-                for doc_filename in glob.glob(pattern.pattern):
-                    found_doc_filenames.add(Path.db_to(doc_filename))
-            doc_filename_d = {}
-            for scan_date_time in self.read('scan_date_times', connection=connection):
-                doc_filename_d[scan_date_time.doc_filename] = scan_date_time.scan_date_time
-
-            result = []
-            scanned_doc_filenames = set()
-
-            # update scanned invoices
-            invoice_collection = self.load_invoice_collection()
-            for invoice in invoice_collection:
-                scanned_doc_filenames.add(invoice.doc_filename)
-                to_remove = False
-                if not os.path.exists(invoice.doc_filename):
-                    to_update = False
-                    if remove_orphaned:
-                        to_remove = True
-                elif not invoice.doc_filename in doc_filename_d:
-                    to_update = True
-                elif doc_filename_d[invoice.doc_filename] < file_date_times[invoice.doc_filename]:
-                    to_update = True
-                else:
-                    to_update = False
-                if to_remove:
-                    removed_doc_filenames.append(invoice.doc_filename)
-                else:
-                    if to_update:
-                        result.append((True, invoice.doc_filename))
-                    else:
-                        updated_invoice_collection.add(invoice)
-          
-            # unscanned invoices
-            for doc_filename in found_doc_filenames.difference(scanned_doc_filenames):
-                result.append((False, doc_filename))
-
-            if result:
-                invoice_reader = InvoiceReader(logger=self.logger)
-                new_invoices = []
-                old_invoices = []
-                scan_date_times = []
-                for existing, doc_filename in result:
-                    try:
-                        invoice = invoice_reader(doc_filename)
-                    except Exception as err:
-                        if self.trace:
-                            traceback.print_exc()
-                        self.logger.error("fattura {!r}: {}: {}".format(doc_filename, type(err).__name__, err))
-                        continue
-                    updated_invoice_collection.add(invoice_reader(doc_filename))
-                    if existing:
-                        old_invoices.append(invoice)
-                    else:
-                        new_invoices.append(invoice)
-                    scan_date_times.append(self.ScanDateTime(doc_filename=invoice.doc_filename, scan_date_time=file_date_times[invoice.doc_filename]))
-                validation_result = updated_invoice_collection.validate(warnings_mode=warnings_mode, raise_on_error=raise_on_error)
-                if validation_result.num_errors():
-                    message = "validazione fallita - {} errori".format(validation_result.num_errors())
-                    if not partial_update:
-                        raise InvoiceError(message)
-                    else:
-                        old_invoices = validation_result.filter_validated_invoices(old_invoices)
-                        new_invoices = validation_result.filter_validated_invoices(new_invoices)
-                        if old_invoices or new_invoices or removed_doc_filenames:
-                            self.logger.warning(message + ' - update parziale')
-                if old_invoices:
-                    self.update('invoices', 'doc_filename', old_invoices, connection=connection)
-                if new_invoices:
-                    self.write('invoices', new_invoices, connection=connection)
-                self.update('scan_date_times', 'doc_filename', scan_date_times, connection=connection)
-            if removed_doc_filenames:
-                for doc_filename in removed_doc_filenames:
-                    self.delete('invoices', '''doc_filename == {!r}'''.format(doc_filename), connection=connection)
-        return updated_invoice_collection

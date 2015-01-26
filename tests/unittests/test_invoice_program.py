@@ -28,7 +28,6 @@ import unittest
 
 from invoice.log import get_null_logger
 from invoice.error import InvoiceDuplicatedNumberError
-from invoice.invoice_collection import InvoiceCollection
 from invoice.invoice_program import InvoiceProgram
 from invoice.database.db_types import Path
 
@@ -147,7 +146,7 @@ anno                       2014
             )
 
             invoice_program.db_scan(
-                warnings_mode=InvoiceCollection.WARNINGS_MODE_DEFAULT,
+                warnings_mode=InvoiceProgram.WARNINGS_MODE_DEFAULT,
                 raise_on_error=False,
                 partial_update=None,
                 remove_orphaned=None,
@@ -200,7 +199,7 @@ KNTCRK01G01H663Y 2014      5
             p.reset()
             with self.assertRaises(InvoiceDuplicatedNumberError):
                 invoice_program.db_scan(
-                    warnings_mode=InvoiceCollection.WARNINGS_MODE_DEFAULT,
+                    warnings_mode=InvoiceProgram.WARNINGS_MODE_DEFAULT,
                     raise_on_error=True,
                     partial_update=None,
                     remove_orphaned=None,
