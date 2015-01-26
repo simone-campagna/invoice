@@ -25,3 +25,10 @@ notifications:
       - simone.campagna11@gmail.com
     on_success: change
     on_failure: always
+
+# branches:
+branches:
+  only:
+    - master
+    - devel
+    - 
