@@ -29,7 +29,6 @@ from .error import InvoiceSyntaxError
 from .conf import VERSION, DB_FILE, DB_FILE_VAR
 from .log import get_default_logger, set_verbose_level
 from .invoice import Invoice
-from .invoice_collection import InvoiceCollection
 from .invoice_program import InvoiceProgram
 
 def invoice_main(print_function=print, logger=None, args=None):
@@ -41,20 +40,20 @@ def invoice_main(print_function=print, logger=None, args=None):
     all_field_names = []
     for field_name in Invoice._fields:
         all_field_names.append(field_name)
-        n = InvoiceCollection.get_field_name(field_name)
+        n = InvoiceProgram.get_field_translation(field_name)
         if n != field_name:
             all_field_names.append(n)
 
     default_validate = True
-    default_warnings_mode = InvoiceCollection.WARNINGS_MODE_DEFAULT
-    default_list_field_names = InvoiceCollection.LIST_FIELD_NAMES_LONG
+    default_warnings_mode = InvoiceProgram.WARNINGS_MODE_DEFAULT
+    default_list_field_names = InvoiceProgram.LIST_FIELD_NAMES_LONG
     default_filters = []
 
     def type_fields(s):
         field_names = []
         for field_name in s.split(','):
             field_name = field_name.strip()
-            if not field_name in InvoiceCollection.ALL_FIELD_NAMES:
+            if not field_name in InvoiceProgram.ALL_FIELDS:
                 raise ValueError("campo {!r} non valido".format(field_name))
             field_names.append(field_name)
         return field_names
@@ -308,21 +307,21 @@ use the db.
     list_argument_group.add_argument("--short", "-s",
         dest="field_names",
         action="store_const",
-        const=InvoiceCollection.LIST_FIELD_NAMES_SHORT,
+        const=InvoiceProgram.LIST_FIELD_NAMES_SHORT,
         default=default_list_field_names,
         help="short listing")
 
     list_argument_group.add_argument("--long", "-l",
         dest="field_names",
         action="store_const",
-        const=InvoiceCollection.LIST_FIELD_NAMES_LONG,
+        const=InvoiceProgram.LIST_FIELD_NAMES_LONG,
         default=default_list_field_names,
         help="long listing")
 
     list_argument_group.add_argument("--full", "-f",
         dest="field_names",
         action="store_const",
-        const=InvoiceCollection.LIST_FIELD_NAMES_FULL,
+        const=InvoiceProgram.LIST_FIELD_NAMES_FULL,
         default=default_list_field_names,
         help="full listing")
 
@@ -363,14 +362,14 @@ use the db.
         parser.add_argument("--werror", "-we",
             dest="warnings_mode",
             action="store_const",
-            const=InvoiceCollection.WARNINGS_MODE_ERROR,
+            const=InvoiceProgram.WARNINGS_MODE_ERROR,
             default=default_warnings_mode,
             help="make all warnings into errors")
 
         parser.add_argument("--wignore", "-wi",
             dest="warnings_mode",
             action="store_const",
-            const=InvoiceCollection.WARNINGS_MODE_IGNORE,
+            const=InvoiceProgram.WARNINGS_MODE_IGNORE,
             default=default_warnings_mode,
             help="ignore warnings")
 
