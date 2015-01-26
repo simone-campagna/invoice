@@ -26,7 +26,7 @@ import os
 import tempfile
 import unittest
 
-from invoice.log import get_null_logger
+from invoice.log import get_default_logger, get_null_logger
 from invoice.invoice_collection import InvoiceCollection
 from invoice.invoice_main import invoice_main
 from invoice.database.db_types import Path
@@ -66,7 +66,7 @@ class Test_main(unittest.TestCase):
             invoice_main(
                 print_function=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
+                args=['-d', db_filename.name, 'scan', '-vvv'],
             )
             self.assertEqual(p.string(), '')
 

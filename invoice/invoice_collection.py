@@ -28,7 +28,8 @@ from .error import InvoiceError, \
                    InvoiceMultipleNamesError, \
                    InvoiceUndefinedFieldError, \
                    InvoiceDateError, \
-                   InvoiceNumberingError, \
+                   InvoiceDuplicatedNumberError, \
+                   InvoiceWrongNumberError, \
                    InvoiceUnsupportedCurrencyError
 
 from .invoice import Invoice
@@ -82,7 +83,9 @@ class InvoiceCollection(object):
     def filter(self, function):
         if isinstance(function, str):
             function = self.compile_filter_function(function)
-        return InvoiceCollection(filter(function, self._invoices), logger=self.logger)
+        invoice_collection = InvoiceCollection(filter(function, self._invoices), logger=self.logger)
+        invoice_collection.process()
+        return invoice_collection
 
     @classmethod
     def subst_None(cls, value, substitution):
@@ -177,12 +180,20 @@ class InvoiceCollection(object):
         # verify numbering and dates per year
         for year in self.years():
             invoices = self.filter(lambda invoice: invoice.year == year)
+            numbers = set()
             expected_number = 0
             prev_doc, prev_date = None, None
             for invoice in invoices:
                 expected_number += 1
                 if invoice.number != expected_number:
-                    log_error(invoice, InvoiceNumberingError, "invoice {}: number {} is not valid (expected number for year {} is {})".format(invoice.doc_filename, invoice.number, year, expected_number))
+                    if invoice.number in numbers:
+                        log_error(invoice, InvoiceDuplicatedNumberError,
+                            "invoice {}: number {} is duplicated".format(invoice.doc_filename, invoice.number, year, expected_number))
+                    else:
+                        log_error(invoice, InvoiceWrongNumberError,
+                            "invoice {}: number {} is not valid (expected number for year {} is {})".format(invoice.doc_filename, invoice.number, year, expected_number))
+                else:
+                    numbers.add(invoice.number)
                 if prev_date is not None:
                     if invoice.date < prev_date:
                         log_error(invoice, InvoiceDateError, "invoice {}: date {} is lower than previous invoice {} ({})".format(invoice.doc_filename, invoice.date, prev_doc, prev_date))

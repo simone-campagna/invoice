@@ -32,7 +32,7 @@ class InvoiceProgram(object):
         self.logger = logger
         self.print_function = print_function
         self.trace = trace
-        self._db = InvoiceDb(self.db_filename, self.logger)
+        self.db = InvoiceDb(self.db_filename, self.logger)
 
     def db_init(self, *, patterns, reset, partial_update, remove_orphaned):
         if reset and os.path.exists(self.db_filename):

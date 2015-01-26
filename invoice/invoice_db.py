@@ -168,6 +168,7 @@ END"""
     def warn_remove_orphaned(self, remove_orphaned):
         if remove_orphaned:
             self.logger.warning("remove_orphaned option can threaten db validation!")
+
     def scan(self, warnings_mode=InvoiceCollection.WARNINGS_MODE_DEFAULT, raise_on_error=False, partial_update=None, remove_orphaned=None, connection=None):
         found_doc_filenames = set()
         file_date_times = FileDateTimes()

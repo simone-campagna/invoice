@@ -23,6 +23,8 @@ __all__ = [
     'InvoiceUndefinedFieldError',
     'InvoiceDateError',
     'InvoiceNumberingError',
+    'InvoiceDuplicatedNumberError',
+    'InvoiceWrongNumberError',
     'InvoiceUnsupportedCurrencyError',
 ]
 
@@ -39,6 +41,12 @@ class InvoiceDateError(InvoiceValidationError):
     pass
 
 class InvoiceNumberingError(InvoiceValidationError):
+    pass
+
+class InvoiceDuplicatedNumberError(InvoiceNumberingError):
+    pass
+
+class InvoiceWrongNumberError(InvoiceNumberingError):
     pass
 
 class InvoiceUnsupportedCurrencyError(InvoiceValidationError):
