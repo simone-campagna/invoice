@@ -161,6 +161,19 @@ $ %(prog)s init 'docs/*.doc'
         function_arguments=('patterns', 'reset', 'remove_orphaned', 'partial_update'),
     )
 
+    ### config ###
+    config_parser = subparsers.add_parser(
+        "config",
+        parents=(common_parser, ),
+        description="""\
+Configure db.
+""",
+    )
+    config_parser.set_defaults(
+        function_name="db_config",
+        function_arguments=('show', 'patterns', 'remove_orphaned', 'partial_update'),
+    )
+
     ### scan_parser ###
     scan_parser = subparsers.add_parser(
         "scan",
@@ -305,6 +318,12 @@ use the db.
         default=default_list_field_names,
         help="manually select fields, for instance 'year,number,tax_code' [{}]".format('|'.join(Invoice._fields)))
 
+    ### config list option
+    config_parser.add_argument("--show", "-s",
+        action="store_true",
+        default=False,
+        help="show configuration")
+
     ### year and filter option
     for parser in list_parser, dump_parser, legacy_parser:
         parser.add_argument("--year", "-y",
@@ -352,7 +371,7 @@ use the db.
         help="reset db if it already exists")
 
     ### partial_update option
-    for parser in init_parser, scan_parser:
+    for parser in init_parser, config_parser, scan_parser:
         #parser.add_argument("--remove-orphaned", "-O",
         #    metavar="on/off",
         #    type=type_onoff,
@@ -362,7 +381,7 @@ use the db.
         #    help="remove orphaned database entries (invoices whose DOC file was removed from disk)")
         parser.set_defaults(remove_orphaned=False)
 
-        parser.add_argument("--partial-update", "-P",
+        parser.add_argument("--partial-update", "-U",
             metavar="on/off",
             type=type_onoff,
             const=type_onoff("on"),
@@ -374,8 +393,21 @@ use the db.
     for parser in init_parser, legacy_parser:
         parser.add_argument("patterns",
             nargs='+',
-            help='doc patterns',
-        )
+            help='doc patterns')
+
+    config_parser.add_argument("--add-pattern", "-p",
+        metavar="P",
+        dest="patterns",
+        default=[],
+        type=lambda x: ('+', x),
+        help="add pattern")
+
+    config_parser.add_argument("--remove-pattern", "-x",
+        metavar="P",
+        dest="patterns",
+        default=[],
+        type=lambda x: ('-', x),
+        help="remove pattern")
 
     ### legacy options
     legacy_parser.add_argument("--disable-validation", "-V",

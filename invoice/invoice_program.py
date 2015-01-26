@@ -44,6 +44,28 @@ class InvoiceProgram(object):
             remove_orphaned=remove_orphaned,
             partial_update=partial_update,
         )
+       
+
+    def db_config(self, *, patterns, show, partial_update, remove_orphaned):
+        new_patterns = []
+        del_patterns = []
+        for sign, pattern in patterns:
+            if sign == '+':
+                new_patterns.append(self.db.Pattern(pattern=pattern))
+            elif sign == '-':
+                del_patterns.append(self.db.Pattern(pattern=pattern))
+        if new_patterns:
+            self.db.write('patterns', new_patterns)
+        if del_patterns:
+            for pattern in del_patterns:
+                self.db.delete('patterns', "pattern == {!r}".format(pattern.pattern))
+        self.db.configure(
+                patterns=None,
+                remove_orphaned=remove_orphaned,
+                partial_update=partial_update,
+            )
+        if show:
+            self.db.show_configuration(print_function=self.print_function)
 
     def db_scan(self, *, warnings_mode, raise_on_error, partial_update, remove_orphaned):
         self.db.check()
