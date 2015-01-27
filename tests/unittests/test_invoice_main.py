@@ -384,6 +384,41 @@ KNTCRK01G01H663Y 2014      5
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
+    def test_invoice_main_dry_run(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = Print()
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
+            )
+            self.assertEqual(p.string(), "")
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'scan', '--dry-run'],
+            )
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
+            )
+            self.assertEqual(p.string(), "")
+
     def test_invoice_main_legacy(self):
             p = Print()
 
