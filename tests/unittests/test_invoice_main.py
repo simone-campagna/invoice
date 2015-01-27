@@ -219,6 +219,14 @@ KNTCRK01G01H663Y 2014      5
             invoice_main(
                 print_function=p,
                 logger=self.logger,
+                args=['-d', db_filename.name, 'report', '-y', '2014,2015'],
+            )
+            self.assertEqual(p.string(), self.REPORT_OUTPUT)
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
                 args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--filter', 'number % 2 == 0', '--filter=tax_code.startswith("P")'],
             )
             self.assertEqual(p.string(), """\
@@ -248,6 +256,14 @@ PRKPRT01G01H663Y 2014      2
                 print_function=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header', '--filter', 'città == Rome'], # InvoiceSyntaxError
             )
             self.assertEqual(p.string(), '')
 
