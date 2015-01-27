@@ -25,6 +25,7 @@ import os
 import sys
 import traceback
 
+from .database.filecopy import tempcopy, nocopy
 from .error import InvoiceSyntaxError
 from .conf import VERSION, DB_FILE, DB_FILE_VAR
 from .log import get_default_logger, set_verbose_level
@@ -89,6 +90,11 @@ def invoice_main(print_function=print, logger=None, args=None):
         action="count",
         default=0,
         help="increase verbose level")
+
+    common_parser.add_argument("--dry-run", "-D",
+        action="store_true",
+        default=False,
+        help="dry run (do not change db)")
 
     common_parser.add_argument('--version',
         action='version',
@@ -448,30 +454,36 @@ use the db.
 
     set_verbose_level(logger, args.verbose_level)
 
-    ip = InvoiceProgram(
-        db_filename=args.db_filename,
-        logger=logger,
-        print_function=print_function,
-        trace=args.trace,
-    )
+    if args.dry_run:
+        file_context_manager = tempcopy
+    else:
+        file_context_manager = nocopy
 
-    function_argdict = {}
-    for argument in args.function_arguments:
-        function_argdict[argument] = getattr(args, argument)
-
-    function = getattr(ip, args.function_name)
-    try:
-        return function(**function_argdict)
-    except InvoiceSyntaxError as err:
-        if args.trace:
-            traceback.print_exc()
-        message, function_source, syntax_error = err.args[1:]
-        logger.error("{}:".format(message))
-        logger.error("    {}".format(function_source))
-        logger.error("    {}".format(" " * max(0, syntax_error.offset - 1) + '^'))
-
-    except Exception as err:
-        if args.trace:
-            traceback.print_exc()
-        logger.error("{}: {}\n".format(type(err).__name__, err))
+    with file_context_manager(args.db_filename) as fcm:
+        ip = InvoiceProgram(
+            db_filename=fcm.get_filename(),
+            logger=logger,
+            print_function=print_function,
+            trace=args.trace,
+        )
+    
+        function_argdict = {}
+        for argument in args.function_arguments:
+            function_argdict[argument] = getattr(args, argument)
+    
+        function = getattr(ip, args.function_name)
+        try:
+            return function(**function_argdict)
+        except InvoiceSyntaxError as err:
+            if args.trace:
+                traceback.print_exc()
+            message, function_source, syntax_error = err.args[1:]
+            logger.error("{}:".format(message))
+            logger.error("    {}".format(function_source))
+            logger.error("    {}".format(" " * max(0, syntax_error.offset - 1) + '^'))
+    
+        except Exception as err:
+            if args.trace:
+                traceback.print_exc()
+            logger.error("{}: {}\n".format(type(err).__name__, err))
 
