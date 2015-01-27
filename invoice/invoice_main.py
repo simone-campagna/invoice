@@ -83,27 +83,28 @@ def invoice_main(print_function=print, logger=None, args=None):
         metavar="F",
         dest="db_filename",
         default=DB_FILE,
-        help="db filename")
+        help="file contenete il database")
 
     common_parser.add_argument("--verbose", "-v",
         dest="verbose_level",
         action="count",
         default=0,
-        help="increase verbose level")
+        help="aumenta il livello di verbosità")
 
     common_parser.add_argument("--dry-run", "-D",
         action="store_true",
         default=False,
-        help="dry run (do not change db)")
+        help="dry run (il database non viene modificato)")
 
     common_parser.add_argument('--version',
         action='version',
-        version='%(prog)s {}'.format(VERSION))
+        version='%(prog)s {}'.format(VERSION),
+        help='mostra la versione ed esce')
 
     common_parser.add_argument("--trace", "-t",
         action="store_true",
         default=False,
-        help="show traceback on errors invoices")
+        help="in caso di errori, mostra un traceback")
 
     top_level_parser = argparse.ArgumentParser(
         description="""\
@@ -160,8 +161,8 @@ fattura:                  'example/2014_001_bruce_wayne.doc'
 
 """.format(db_filename=DB_FILE_VAR, version=VERSION),
         epilog="",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=(common_parser, ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     subparsers = top_level_parser.add_subparsers()
@@ -170,8 +171,10 @@ fattura:                  'example/2014_001_bruce_wayne.doc'
     init_parser = subparsers.add_parser(
         "init",
         parents=(common_parser, ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-Initialize the db. At least one pattern must be provided, for instance:
+Inizializza il database. Deve essere fornito almeno un pattern, ad
+esempio:
 $ %(prog)s init 'docs/*.doc'
 """,
     )
@@ -184,8 +187,10 @@ $ %(prog)s init 'docs/*.doc'
     config_parser = subparsers.add_parser(
         "config",
         parents=(common_parser, ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-Configure db.
+Accesso alla configurazione del database. Questo comando permette di
+vedere configurazione e pattern (opzione --show/-s) e/o di modificarli.
 """,
     )
     config_parser.set_defaults(
@@ -197,25 +202,29 @@ Configure db.
     scan_parser = subparsers.add_parser(
         "scan",
         parents=(common_parser, ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-Read new or recently updated invoice DOC files and retrieves the
-following information:
-  * 'year'
-  * 'number'
-  * 'city'
-  * 'date'
-  * 'name'
-  * 'tax_code'
-  * 'income'
-  * 'currency'
+Esegue una scansione alla ricerca di DOC di fattura nuovi o modificati
+di recente. Le fatture trovate vengono lette, validate, ed (in caso di
+successo) archiviate.
+Le informazioni lette sono:
+  * anno		(year)
+  * numero		(number)
+  * città		(city)
+  * data		(date)
+  * nome		(name)
+  * codice_fiscale	(tax_code)
+  * importo		(income)
+  * valuta		(currency)
 
-The read invoices are validated in order to detect typical errors, such
-as:
-  * wrong dates ordering
-  * wrong numbering
-  * missing information
+Le fatture lette vengono validate per riconoscere tipici errori, come:
+  * errato ordinamento delle date
+  * errata numerazione
+  * informazioni mancanti
 
-If validation is successfull, the read invoices are stored onto the db.
+Se la validazione ha successo, le fatture vengono archiviate nel
+database; alle successive scansioni non saranno lette, a meno che
+il relativo DOC file non sia stato modificato.
 """,
     )
     scan_parser.set_defaults(
@@ -227,8 +236,9 @@ If validation is successfull, the read invoices are stored onto the db.
     clear_parser = subparsers.add_parser(
         "clear",
         parents=(common_parser, ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-Remove all invoices stored on the db.
+Rimuove tutte le fatture dal database.
 """,
     )
     clear_parser.set_defaults(
@@ -240,8 +250,9 @@ Remove all invoices stored on the db.
     validate_parser = subparsers.add_parser(
         "validate",
         parents=(common_parser, ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-Validate the invoices stored on the db.
+Esegue una validazione del contenuto del database.
 """,
     )
     validate_parser.set_defaults(
@@ -253,8 +264,9 @@ Validate the invoices stored on the db.
     list_parser = subparsers.add_parser(
         "list",
         parents=(common_parser, ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-List the invoices stored on the db.
+Mostra una lista delle fatture contenute nel database.
 """,
     )
     list_parser.set_defaults(
@@ -266,8 +278,9 @@ List the invoices stored on the db.
     dump_parser = subparsers.add_parser(
         "dump",
         parents=(common_parser, ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-Dump the content of the db.
+Mostra tutti i dettagli delle fatture contenute nel database.
 """,
     )
     dump_parser.set_defaults(
@@ -279,8 +292,24 @@ Dump the content of the db.
     report_parser = subparsers.add_parser(
         "report",
         parents=(common_parser, ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-Show a report about the invoices stored on the db.
+Mostra un report per anno delle fatture contenute nel database.
+
+Per ciascun anno, vengono mostrate le seguenti informazioni:
+ * numero di fatture
+ * numero di clienti
+ * per ciascun cliente:
+   * numero di fatture
+   * incasso totale
+   * incasso percentuale
+   * numero di settimane in cui è stata emessa fattura
+   * elenco delle settimane in cui è stata emessa fattura
+ * numero di settimane in  cui è stata emessa fattura
+ * per ciascuna settimana:
+   * numero di fatture
+   * incasso totale
+   * incasso percentuale
 """,
     )
     report_parser.set_defaults(
@@ -292,9 +321,11 @@ Show a report about the invoices stored on the db.
     legacy_parser = subparsers.add_parser(
         "legacy",
         parents=(common_parser, ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-Legacy mode: it has the same interface as the 1.0 version, and does not
-use the db.
+Modalità 'legacy': emula l'interfaccia della versione 1.X di %(prog)s,
+e non fa uso del db. Tutti i DOC di fattura vengono letti, processati
+e validati.
 """,
     )
     legacy_parser.set_defaults(
@@ -307,7 +338,7 @@ use the db.
         dest="header",
         action="store_false",
         default=True,
-        help="do not show header")
+        help="non mostra l'header")
 
     list_argument_group = list_parser.add_mutually_exclusive_group()
     list_argument_group.add_argument("--short", "-s",
@@ -315,33 +346,33 @@ use the db.
         action="store_const",
         const=InvoiceProgram.LIST_FIELD_NAMES_SHORT,
         default=default_list_field_names,
-        help="short listing")
+        help="lista breve (mostra i campi {}".format(','.join(InvoiceProgram.LIST_FIELD_NAMES_SHORT)))
 
     list_argument_group.add_argument("--long", "-l",
         dest="field_names",
         action="store_const",
         const=InvoiceProgram.LIST_FIELD_NAMES_LONG,
         default=default_list_field_names,
-        help="long listing")
+        help="lista lunga (mostra i campi {}".format(','.join(InvoiceProgram.LIST_FIELD_NAMES_LONG)))
 
     list_argument_group.add_argument("--full", "-f",
         dest="field_names",
         action="store_const",
         const=InvoiceProgram.LIST_FIELD_NAMES_FULL,
         default=default_list_field_names,
-        help="full listing")
+        help="lista lunga (mostra i tutti i campi: {}".format(','.join(InvoiceProgram.LIST_FIELD_NAMES_FULL)))
 
     list_argument_group.add_argument("--fields", "-o",
         dest="field_names",
         type=type_fields,
         default=default_list_field_names,
-        help="manually select fields, for instance 'year,number,tax_code' [{}]".format('|'.join(all_field_names)))
+        help="selezione manuale dei campi, ad esempio 'anno,codice_fiscale,città' [{}]".format('|'.join(all_field_names)))
 
     ### config list option
     config_parser.add_argument("--show", "-s",
         action="store_true",
         default=False,
-        help="show configuration")
+        help="mostra la configurazione del database")
 
     ### year filter option
     for parser in list_parser, dump_parser, legacy_parser, report_parser:
@@ -351,7 +382,7 @@ use the db.
             type=type_years_filter,
             action="append",
             default=default_filters,
-            help="filter invoices by year")
+            help="filtra le fatture in base all'anno")
 
     ### generic filter option
     for parser in list_parser, dump_parser, legacy_parser:
@@ -361,7 +392,7 @@ use the db.
             type=str,
             action="append",
             default=default_filters,
-            help="add a filter (e.g. 'year == 2014')")
+            help="aggiunge un filtro sulle fatture (ad esempio 'anno == 2014')")
 
     ### warnings and error options
     for parser in scan_parser, validate_parser, legacy_parser:
@@ -370,26 +401,26 @@ use the db.
             action="store_const",
             const=InvoiceProgram.WARNINGS_MODE_ERROR,
             default=default_warnings_mode,
-            help="make all warnings into errors")
+            help="converte warning in errori")
 
         parser.add_argument("--wignore", "-wi",
             dest="warnings_mode",
             action="store_const",
             const=InvoiceProgram.WARNINGS_MODE_IGNORE,
             default=default_warnings_mode,
-            help="ignore warnings")
+            help="ignora gli warning")
 
         parser.add_argument("--raise", "-R",
             dest="raise_on_error",
             action="store_true",
             default=False,
-            help="make first error be fatal")
+            help="rende fatale il primo errore incontrato (per default, %(prog)s tenta di continuare)")
     
     ### reset option
     init_parser.add_argument("--reset", "-r",
         action="store_true",
         default=False,
-        help="reset db if it already exists")
+        help="elimina il database se già esistente")
 
     ### partial_update option
     for parser in init_parser, config_parser, scan_parser:
@@ -399,7 +430,7 @@ use the db.
         #    const=type_onoff("on"),
         #    default=None,
         #    nargs='?',
-        #    help="remove orphaned database entries (invoices whose DOC file was removed from disk)")
+        #    help="abilita/disabilita la rimozione dal database le fatture 'orphane', ovvero quelle il cui documento è stato rimosso dal disco")
         parser.set_defaults(remove_orphaned=False)
 
         parser.add_argument("--partial-update", "-U",
@@ -408,46 +439,46 @@ use the db.
             const=type_onoff("on"),
             default=None,
             nargs='?',
-            help="enable/disable partial update (in case of validation errors, correct invoices are added)")
+            help="abilita/disabilita l'update parziale del database (in caso di errori di validazione, l'update parziale fa in modo che le fatture corrette vengano comunque archiviate)")
 
     ### patterns option
     for parser in init_parser, legacy_parser:
         parser.add_argument("patterns",
             nargs='+',
-            help='doc patterns')
+            help='pattern per la ricerca dei DOC delle fatture')
 
     config_parser.add_argument("--add-pattern", "-p",
         metavar="P",
         dest="patterns",
         default=[],
         type=lambda x: ('+', x),
-        help="add pattern")
+        help='aggiunge un pattern per la ricerca dei DOC delle fatture')
 
     config_parser.add_argument("--remove-pattern", "-x",
         metavar="P",
         dest="patterns",
         default=[],
         type=lambda x: ('-', x),
-        help="remove pattern")
+        help='rimuove un pattern per la ricerca dei DOC delle fatture')
 
     ### legacy options
     legacy_parser.add_argument("--disable-validation", "-V",
         dest="validate",
         action="store_false",
         default=default_validate,
-        help="do not validate invoices")
+        help="non esegue la validazione delle fatture")
 
     legacy_action_group = legacy_parser.add_mutually_exclusive_group()
 
     legacy_action_group.add_argument("--list", "-l",
         action="store_true",
         default=False,
-        help="list invoices")
+        help="mostra tutte le fatture")
 
     legacy_action_group.add_argument("--report", "-r",
         action="store_true",
         default=False,
-        help="show invoice report")
+        help="mostra un report delle fatture per anno")
 
 
     args = top_level_parser.parse_args(args)
