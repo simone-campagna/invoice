@@ -42,10 +42,11 @@ class InvoiceCollectionReader(object):
             for doc_filename in glob.glob(doc_filename_pattern):
                 try:
                     invoice_collection.add(invoice_reader(doc_filename))
-                except Exception as err:
+                except Exception as err: # pragma: no cover
                     if self.trace:
                         traceback.print_exc()
                     self.logger.error("fattura {!r}: {}: {}".format(doc_filename, type(err).__name__, err))
+                    raise
         return invoice_collection
           
 

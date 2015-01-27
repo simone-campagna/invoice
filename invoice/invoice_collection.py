@@ -54,7 +54,7 @@ class InvoiceCollection(object):
         return self._invoices[index]
 
     def add(self, invoice):
-        if not isinstance(invoice, Invoice):
+        if not isinstance(invoice, Invoice): # pragma: no cover
             raise TypeError("{}.add(...): oggetto {!r} di tipo {} non valido".format(self.__class__.__name__, invoice, type(invoice).__name__))
         self._invoices.append(invoice)
 
