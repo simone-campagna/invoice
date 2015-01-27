@@ -457,6 +457,27 @@ KNTCRK01G01H663Y 2014      5
             )
             self.assertEqual(p.string(), "")
 
+    def _test_invoice_main_global_options(self, *global_options):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = Print()
+
+            args = list(global_options) + ['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')]
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=args,
+            )
+
+    def test_invoice_main_v(self):
+        self._test_invoice_main_global_options('-v')
+
+    def test_invoice_main_vv(self):
+        self._test_invoice_main_global_options('-vv')
+
+    def test_invoice_main_vvv(self):
+        self._test_invoice_main_global_options('-vvv')
+
     def test_invoice_main_legacy(self):
             p = Print()
 
