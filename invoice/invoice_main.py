@@ -451,6 +451,7 @@ e validati.
         metavar="P",
         dest="patterns",
         default=[],
+        action="append",
         type=lambda x: ('+', x),
         help='aggiunge un pattern per la ricerca dei DOC delle fatture')
 
@@ -458,6 +459,7 @@ e validati.
         metavar="P",
         dest="patterns",
         default=[],
+        action="append",
         type=lambda x: ('-', x),
         help='rimuove un pattern per la ricerca dei DOC delle fatture')
 

@@ -24,7 +24,9 @@ import datetime
 import unittest
 
 from invoice.log import get_null_logger
-from invoice.error import InvoiceDuplicatedNumberError, InvoiceWrongNumberError
+from invoice.error import InvoiceDuplicatedNumberError, \
+                          InvoiceWrongNumberError, \
+                          InvoiceSyntaxError
 from invoice.invoice import Invoice
 from invoice.invoice_collection import InvoiceCollection
 from invoice.invoice_program import InvoiceProgram
@@ -75,6 +77,8 @@ class TestInvoiceCollection(unittest.TestCase):
         invoice_collection_5 = invoice_collection.filter(InvoiceProgram.compile_filter_function("city != 'Gotham City'"))
         invoice_collection_6 = invoice_collection.filter(InvoiceProgram.compile_filter_function("città != 'Gotham City'"))
         self.assertEqual(len(invoice_collection_5), len(invoice_collection_6))
+        with self.assertRaises(InvoiceSyntaxError):
+            invoice_collection_7 = invoice_collection.filter(InvoiceProgram.compile_filter_function("città = 'Gotham City'"))
 
         
 

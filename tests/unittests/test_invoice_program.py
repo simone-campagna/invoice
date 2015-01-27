@@ -27,7 +27,10 @@ import tempfile
 import unittest
 
 from invoice.log import get_null_logger
-from invoice.error import InvoiceDuplicatedNumberError, InvoiceWrongNumberError
+from invoice.error import InvoiceDuplicatedNumberError, \
+                          InvoiceWrongNumberError, \
+                          InvoiceUndefinedFieldError, \
+                          InvoiceMultipleNamesError
 from invoice.invoice_program import InvoiceProgram
 from invoice.invoice_collection import InvoiceCollection
 from invoice.invoice import Invoice
@@ -343,4 +346,60 @@ KNTCRK01G01H663Y 2014      5
                 exc_type, message = errors[0]
                 self.assertIs(exc_type, InvoiceDuplicatedNumberError)
         
+    def _test_InvoiceProgram_undefined_field(self, warnings_mode):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = Print()
+            invoice_program = InvoiceProgram(
+                db_filename=db_filename.name,
+                logger=self.logger,
+                trace=False,
+                print_function=p,
+            )
+    
+            invoice_a = Invoice(
+                doc_filename='2015_004_parker_peter.doc',
+                year=2015, number=4,
+                name='Parker B. Peter', tax_code='PRKPRT01A01B123C', 
+                city='New York', date=datetime.date(2015, 1, 4),
+                income=None, currency='euro')
+            invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
+        
+            validation_result = invoice_program.validate_invoice_collection(invoice_collection, warnings_mode=warnings_mode)
+            #print("warnings_mode={}".format(warnings_mode))
+            #print("errors=", validation_result.errors())
+            #print("warnings=", validation_result.warnings())
 
+            expected_errors = []
+            expected_warnings = []
+            expected_errors.append(InvoiceUndefinedFieldError)
+            if warnings_mode == InvoiceProgram.WARNINGS_MODE_DEFAULT:
+                expected_warnings.append(InvoiceMultipleNamesError)
+            elif warnings_mode == InvoiceProgram.WARNINGS_MODE_ERROR:
+                expected_errors.append(InvoiceMultipleNamesError)
+            elif warnings_mode == InvoiceProgram.WARNINGS_MODE_IGNORE:
+                pass
+
+            self.assertEqual(validation_result.num_errors(), len(expected_errors))
+            for doc_filename, errors in validation_result.errors().items():
+                self.assertEqual(doc_filename, invoice_a.doc_filename)
+                self.assertEqual(len(errors), len(expected_errors))
+                exc_types = [error[0] for error in errors]
+                for exc_type in exc_types:
+                    self.assertIn(exc_type, expected_errors)
+
+            self.assertEqual(validation_result.num_warnings(), len(expected_warnings))
+            for doc_filename, warnings in validation_result.warnings().items():
+                self.assertEqual(doc_filename, invoice_a.doc_filename)
+                self.assertEqual(len(warnings), len(expected_warnings))
+                exc_types = [warning[0] for warning in warnings]
+                for exc_type in exc_types:
+                    self.assertIn(exc_type, expected_warnings)
+           
+    def test_InvoiceProgram_undefined_field_default(self):
+        self._test_InvoiceProgram_undefined_field(warnings_mode=InvoiceProgram.WARNINGS_MODE_DEFAULT)
+    
+    def test_InvoiceProgram_undefined_field_error(self):
+        self._test_InvoiceProgram_undefined_field(warnings_mode=InvoiceProgram.WARNINGS_MODE_ERROR)
+
+    def test_InvoiceProgram_undefined_field_ignore(self):
+        self._test_InvoiceProgram_undefined_field(warnings_mode=InvoiceProgram.WARNINGS_MODE_IGNORE)

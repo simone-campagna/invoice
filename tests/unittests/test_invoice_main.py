@@ -139,6 +139,16 @@ configuration:
   + remove_orphaned      = False
   + partial_update       = False
 """
+    CONFIG_ADD_PATTERNS = """\
+patterns:
+  + Pattern(pattern='<DIRNAME>/*.doc')
+  + Pattern(pattern='<DIRNAME>/*.Doc')
+  + Pattern(pattern='<DIRNAME>/*.DOC')
+
+configuration:
+  + remove_orphaned      = False
+  + partial_update       = True
+"""
 
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
@@ -381,6 +391,34 @@ KNTCRK01G01H663Y 2014      5
                 print_function=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'config', '--show'],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
+
+    def test_invoice_main_config_add_remove_patterns(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = Print()
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'config', '-p', 'example/*.Doc', '-p', 'example/*.DOC', '--show'],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_ADD_PATTERNS)
+
+            p.reset()
+            invoice_main(
+                print_function=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'config', '-x', 'example/*.Doc', '-x', 'example/*.DOC', '--show'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 

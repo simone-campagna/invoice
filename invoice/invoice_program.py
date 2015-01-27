@@ -156,10 +156,6 @@ class InvoiceProgram(object):
             raise ValueError("warnings_mode {!r} non valido (i valori leciti sono {})".format(warnings_mode, '|'.joi(self.WARNINGS_MODES)))
         return log_error, log_warning
 
-    def validate_invoice(self, result, warnings_mode=None, raise_on_error=False):
-        log_error, log_warning = self.log_functions(result=result, warnings_mode=warnings_mode, raise_on_error=raise_on_error)
-        return self.impl_validate_invoice(invoice, result, log_error, log_warning)
-
     def impl_validate_invoice(self, invoice, result, log_error, log_warning):
         for key in 'year', 'number', 'name', 'tax_code', 'date', 'income':
             val = getattr(invoice, key)
@@ -348,9 +344,9 @@ anno                       {year}
         del_patterns = []
         for sign, pattern in patterns:
             if sign == '+':
-                new_patterns.append(self.db.Pattern(pattern=pattern))
+                new_patterns.append(self.db.Pattern(pattern=Path.db_to(pattern)))
             elif sign == '-':
-                del_patterns.append(self.db.Pattern(pattern=pattern))
+                del_patterns.append(self.db.Pattern(pattern=Path.db_to(pattern)))
         if new_patterns:
             self.db.write('patterns', new_patterns)
         if del_patterns:
