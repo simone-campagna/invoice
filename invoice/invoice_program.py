@@ -170,17 +170,21 @@ class InvoiceProgram(object):
         tax_code = invoice.tax_code
         if tax_code:
             expected_ch = 'LLLLLLNNLNNLNNNL'
+            error_fmt = '[{}]'
+            success_fmt = '{}'
             error_l = []
             num_errors = 0
             for ch, expected_ch in zip(tax_code, expected_ch):
+                error = False
                 if expected_ch == 'L' and not (ord('A') <= ord(ch) <= ord('Z')):
-                    error_l.append(ch)
-                    num_errors += 1
+                    error = True
                 elif expected_ch == 'N' and not (ord('0') <= ord(ch) <= ord('9')):
-                    error_l.append(ch)
+                    error = True
+                if error:
+                    error_l.append(error_fmt.format(ch))
                     num_errors += 1
                 else:
-                    error_l.append('_')
+                    error_l.append(success_fmt.format(ch))
             if num_errors:
                 log_error(invoice, InvoiceMalformedTaxCodeError, "fattura {}: codice fiscale {!r} non corretto: i caratteri non corretti sono {!r}".format(
                     invoice.doc_filename,
