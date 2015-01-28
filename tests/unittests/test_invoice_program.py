@@ -185,7 +185,7 @@ anno                       2014
             income=200.0, currency='euro')
 
     # invoice
-    def XXXtest_InvoiceProgram(self):
+    def test_InvoiceProgram(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = Print()
             invoice_program = InvoiceProgram(
@@ -257,7 +257,7 @@ KNTCRK01G01H663Y 2014      5
                     error_mode=ValidationResult.ERROR_MODE_RAISE,
                 )
 
-    def XXXtest_InvoiceProgram_validate_ok(self):
+    def test_InvoiceProgram_validate_ok(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = Print()
             invoice_program = InvoiceProgram(
@@ -273,7 +273,7 @@ KNTCRK01G01H663Y 2014      5
             self.assertEqual(validation_result.num_errors(), 0)
             self.assertEqual(validation_result.num_warnings(), 0)
     
-    def XXXtest_InvoiceProgram_validate_warning_multiple_names(self):
+    def test_InvoiceProgram_validate_warning_multiple_names(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = Print()
             invoice_program = InvoiceProgram(
@@ -291,7 +291,7 @@ KNTCRK01G01H663Y 2014      5
             for doc_filename, warnings in validation_result.warnings().items():
                 self.assertEqual(doc_filename, self._invoice_004_parker_peter.doc_filename)
     
-    def XXXtest_InvoiceProgram_validate_error_wrong_date(self):
+    def test_InvoiceProgram_validate_error_wrong_date(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = Print()
             invoice_program = InvoiceProgram(
@@ -311,7 +311,7 @@ KNTCRK01G01H663Y 2014      5
                 for error in errors:
                     self.assertIs(error.exc_type, InvoiceDateError)
     
-    def XXXtest_InvoiceProgram_validate_error_wrong_number(self):
+    def test_InvoiceProgram_validate_error_wrong_number(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = Print()
             invoice_program = InvoiceProgram(
@@ -332,7 +332,7 @@ KNTCRK01G01H663Y 2014      5
                 exc_type, message = errors[0]
                 self.assertIs(exc_type, InvoiceWrongNumberError)
     
-    def XXXtest_InvoiceProgram_validate_error_duplicated_number(self):
+    def test_InvoiceProgram_validate_error_duplicated_number(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = Print()
             invoice_program = InvoiceProgram(
@@ -400,16 +400,16 @@ KNTCRK01G01H663Y 2014      5
                 for exc_type in exc_types:
                     self.assertIn(exc_type, expected_warnings)
            
-    def XXXtest_InvoiceProgram_undefined_field_default(self):
+    def test_InvoiceProgram_undefined_field_default(self):
         self._test_InvoiceProgram_undefined_field(warning_mode=ValidationResult.WARNING_MODE_DEFAULT)
     
-    def XXXtest_InvoiceProgram_undefined_field_error(self):
+    def test_InvoiceProgram_undefined_field_error(self):
         self._test_InvoiceProgram_undefined_field(warning_mode=ValidationResult.WARNING_MODE_ERROR)
 
-    def XXXtest_InvoiceProgram_undefined_field_ignore(self):
+    def test_InvoiceProgram_undefined_field_ignore(self):
         self._test_InvoiceProgram_undefined_field(warning_mode=ValidationResult.WARNING_MODE_IGNORE)
 
-    def XXXtest_InvoiceProgram_malformed_tax_code(self):
+    def test_InvoiceProgram_malformed_tax_code(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = Print()
             invoice_program = InvoiceProgram(
