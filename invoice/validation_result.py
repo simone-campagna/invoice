@@ -23,6 +23,7 @@ __all__ = [
 import collections
 
 class ValidationResult(object):
+    Entry = collections.namedtuple('Entry', ('exc_type', 'message'))
     def __init__(self):
         self._failing_invoices = set()
         self._errors = collections.OrderedDict()
@@ -39,11 +40,11 @@ class ValidationResult(object):
         return self._failing_invoices
 
     def add_error(self, invoice, exc_type, message):
-        self._errors.setdefault(invoice.doc_filename, []).append((exc_type, message))
+        self._errors.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
         self._failing_invoices.add(invoice.doc_filename)
 
     def add_warning(self, invoice, exc_type, message):
-        self._warnings.setdefault(invoice.doc_filename, []).append((exc_type, message))
+        self._warnings.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
 
     def __bool__(self):
         return len(self._errors) == 0

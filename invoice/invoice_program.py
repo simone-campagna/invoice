@@ -35,6 +35,7 @@ from .error import InvoiceSyntaxError, \
                    InvoiceMultipleNamesError, \
                    InvoiceWrongNumberError, \
                    InvoiceDuplicatedNumberError, \
+                   InvoiceMalformedTaxCodeError, \
                    InvoiceValidationError
 
 from .invoice_collection import InvoiceCollection
@@ -165,6 +166,27 @@ class InvoiceProgram(object):
             log_error(invoice, InvoiceUnsupportedCurrencyError, "fattura {}: la valuta {!r} non è supportata".format(invoice.doc_filename, invoice.currency))
         if invoice.date is not None and invoice.date.year != invoice.year:
             log_error(invoice, InvoiceDateError, "fattura {}: data {} e anno {} sono incompatibili".format(invoice.doc_filename, invoice.date, invoice.year))
+        
+        tax_code = invoice.tax_code
+        if tax_code:
+            expected_ch = 'LLLLLLNNLNNLNNNL'
+            error_l = []
+            num_errors = 0
+            for ch, expected_ch in zip(tax_code, expected_ch):
+                if expected_ch == 'L' and not (ord('A') <= ord(ch) <= ord('Z')):
+                    error_l.append(ch)
+                    num_errors += 1
+                elif expected_ch == 'N' and not (ord('0') <= ord(ch) <= ord('9')):
+                    error_l.append(ch)
+                    num_errors += 1
+                else:
+                    error_l.append('_')
+            if num_errors:
+                log_error(invoice, InvoiceMalformedTaxCodeError, "fattura {}: codice fiscale {!r} non corretto: i caratteri non corretti sono {!r}".format(
+                    invoice.doc_filename,
+                    tax_code,
+                    ''.join(error_l),
+                ))
         return result
 
     def validate_invoice_collection(self, invoice_collection, warnings_mode=None, raise_on_error=False):
@@ -362,12 +384,13 @@ anno                       {year}
 
     def db_scan(self, *, warnings_mode, raise_on_error, partial_update, remove_orphaned):
         self.db.check()
-        invoice_collection = self.scan(
+        validation_result, invoice_collection = self.scan(
             warnings_mode=warnings_mode,
             raise_on_error=raise_on_error,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
         )
+        return validation_result, invoice_collection
 
     def db_clear(self):
         self.db.check()
@@ -530,4 +553,4 @@ anno                       {year}
             if removed_doc_filenames:
                 for doc_filename in removed_doc_filenames:
                     db.delete('invoices', '''doc_filename == {!r}'''.format(doc_filename), connection=connection)
-        return updated_invoice_collection
+        return validation_result, updated_invoice_collection

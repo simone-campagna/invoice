@@ -30,7 +30,9 @@ from invoice.log import get_null_logger
 from invoice.error import InvoiceDuplicatedNumberError, \
                           InvoiceWrongNumberError, \
                           InvoiceUndefinedFieldError, \
-                          InvoiceMultipleNamesError
+                          InvoiceMultipleNamesError, \
+                          InvoiceMalformedTaxCodeError
+
 from invoice.invoice_program import InvoiceProgram
 from invoice.invoice_collection import InvoiceCollection
 from invoice.invoice import Invoice
@@ -403,3 +405,34 @@ KNTCRK01G01H663Y 2014      5
 
     def test_InvoiceProgram_undefined_field_ignore(self):
         self._test_InvoiceProgram_undefined_field(warnings_mode=InvoiceProgram.WARNINGS_MODE_IGNORE)
+
+    def test_InvoiceProgram_malformed_tax_code(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = Print()
+            invoice_program = InvoiceProgram(
+                db_filename=db_filename.name,
+                logger=self.logger,
+                trace=False,
+                print_function=p,
+            )
+    
+            invoice_program.db_init(
+                patterns=[os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_malformed_tax_code', '*.doc')],
+                reset=True,
+                partial_update=True,
+                remove_orphaned=True,
+            )
+
+            validation_result, invoice_collection = invoice_program.db_scan(
+                warnings_mode=InvoiceProgram.WARNINGS_MODE_DEFAULT,
+                raise_on_error=False,
+                partial_update=None,
+                remove_orphaned=None,
+            )
+
+            self.assertEqual(validation_result.num_warnings(), 0)
+            self.assertEqual(validation_result.num_errors(), 1)
+            for doc_filename, errors in validation_result.errors().items():
+                for error in errors:
+                    self.assertIs(error.exc_type, InvoiceMalformedTaxCodeError)
+                    self.assertEqual(error.message.replace(self.dirname, '<DIRNAME>'), "fattura <DIRNAME>/error_malformed_tax_code/2013_001_bruce_wayne.doc: codice fiscale 'WNYBRCO1GO10663Y' non corretto: i caratteri non corretti sono '______O__O_0____'")

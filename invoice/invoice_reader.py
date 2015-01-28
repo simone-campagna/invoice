@@ -30,7 +30,8 @@ from .log import get_default_logger
 class InvoiceReader(object):
     RE_INVOICE_NUMBER = re.compile("^[Ff]attura\s+n.\s+(?P<year>\d+)/(?P<number>\d+)\s*$")
     RE_NAME = re.compile("^\s*[Ss]pett\.(?:\s*[Ss]ig\.?)?\s*(?P<name>[\w\s'\.]+)\s*$")
-    RE_TAX_CODE = re.compile("^.*(?P<tax_code>[A-Z]{6,6}\d\d[A-Z]\d\d[A-Z]\d\d\d[A-Z])\s*$")
+    RE_TAX_CODE = re.compile("^.*[^\w](?P<tax_code>[A-Z]{6,6}\d{2,2}[A-Z]\d{2,2}[A-Z]\d{3,3}[A-Z])\s*$")
+    RE_MALFORMED_TAX_CODE = re.compile("^.*[^\w](?P<tax_code>[A-Za-z0]{6,6}[\dO]{2,2}[A-Za-z0][\dO]{2,2}[A-Za-z0][\dO]{3,3}[A-Za-z0])\s*$")
     RE_DATE = re.compile("^\s*(?P<city>[^,]+)(?:,|\s)\s*(?P<date>\d{1,2}/\d{1,2}/\d\d\d\d)\s*$")
     RE_TOTAL = re.compile("Totale\s+fattura\s+(?P<income>[\d,\.]*)\s+(?P<currency>\w+)\s*$")
     DATE_FORMATS = (
@@ -59,6 +60,7 @@ class InvoiceReader(object):
             'income': self.convert_income,
             'currency': str,
         }
+        malformed_tax_code = None
         def store(data, converters, match):
             data.update({key: converters[key](val) for key, val in match.groupdict().items()})
         for line in self.read_text(doc_filename).split('\n'):
@@ -78,6 +80,10 @@ class InvoiceReader(object):
                 match = self.RE_TAX_CODE.match(line)
                 if match:
                     got_tax_code = True
+                    store(data, converters, match)
+                    continue
+                match = self.RE_MALFORMED_TAX_CODE.match(line)
+                if match:
                     store(data, converters, match)
                     continue
             if not got_date:
