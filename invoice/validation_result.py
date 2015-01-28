@@ -41,17 +41,17 @@ class ValidationResult(object):
         self._errors = collections.OrderedDict()
         self._warnings = collections.OrderedDict()
 
-        if error_mode is None:
+        if error_mode is None: # pragma: no cover
             error_mode = self.ERROR_MODE_DEFAULT
 
         if error_mode == self.ERROR_MODE_LOG:
             self._function_error = self._add_error
         elif error_mode == self.ERROR_MODE_RAISE:
             self._function_error = self._add_critical
-        else:
+        else: # pragma: no cover
             raise ValueError("error_mode {!r} non valido (i valori leciti sono {})".format(error_mode, '|'.join(self.ERROR_MODES)))
           
-        if warning_mode is None:
+        if warning_mode is None: # pragma: no cover
             warning_mode = self.WARNING_MODE_DEFAULT
 
         if warning_mode == self.WARNING_MODE_LOG:
@@ -60,7 +60,7 @@ class ValidationResult(object):
             self._function_warning = self._function_error
         elif warning_mode == self.WARNING_MODE_IGNORE:
             self._function_warning = self._ignore
-        else:
+        else: # pragma: no cover
             raise ValueError("warning_mode {!r} non valido (i valori leciti sono {})".format(warning_mode, '|'.join(self.WARNING_MODES)))
 
         self.warning_mode = warning_mode
@@ -114,18 +114,3 @@ class ValidationResult(object):
 
     def warnings(self):
         return self._warnings
-
-    def log_critical(self, invoice, exc_type, message):
-        self.logger.critical(message)
-        self.add_error(invoice, exc_type, message)
-
-    def log_error(self, invoice, exc_type, message):
-        self.logger.error(message)
-        self.add_error(invoice, exc_type, message)
-
-    def log_warning(self, invoice, exc_type, message):
-        self.logger.warning(message)
-        self.add_warning(invoice, exc_type, message)
-
-    def log_ignore(self, invoice, exc_type, message):
-        pass
