@@ -24,7 +24,6 @@ from .error import InvoiceError, \
                    InvoiceSyntaxError, \
                    InvoiceMultipleNamesError, \
                    InvoiceUndefinedFieldError, \
-                   InvoiceDateError, \
                    InvoiceDuplicatedNumberError, \
                    InvoiceWrongNumberError, \
                    InvoiceUnsupportedCurrencyError

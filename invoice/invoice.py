@@ -24,7 +24,7 @@ import collections
 
 from .error import InvoiceUndefinedFieldError, \
                    InvoiceUnsupportedCurrencyError, \
-                   InvoiceDateError, \
+                   InvoiceYearError, \
                    InvoiceMalformedTaxCodeError
 
 from .validation_result import ValidationResult
@@ -90,7 +90,7 @@ class Invoice(InvoiceNamedTuple):
         if self.date is not None and self.date.year != self.year:
             validation_result.add_error(
                     invoice=self,
-                    exc_type=InvoiceDateError,
+                    exc_type=InvoiceYearError,
                     message="fattura {}: data {} e anno {} sono incompatibili".format(self.doc_filename, self.date, self.year))
 
         tax_code = self.tax_code
@@ -117,7 +117,7 @@ class Invoice(InvoiceNamedTuple):
                     tax_code,
                     ''.join(error_l),
                 )
-                log_error(
+                validation_result.add_error(
                     invoice=self,
                     exc_type=InvoiceMalformedTaxCodeError,
                     message=message)

@@ -23,7 +23,12 @@ __all__ = [
 import datetime
 import unittest
 
+from invoice.error import InvoiceUndefinedFieldError, \
+                          InvoiceYearError, \
+                          InvoiceMalformedTaxCodeError
 from invoice.invoice import Invoice
+from invoice.log import get_null_logger
+from invoice.validation_result import ValidationResult
 
 class TestInvoice(unittest.TestCase):
     def setUp(self):
@@ -34,3 +39,31 @@ class TestInvoice(unittest.TestCase):
         invoice = Invoice(doc_filename='x.doc', year=2015, number=1, name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
             city='New York', date=datetime.date(2015, 1, 1), income=200.0, currency='euro')
 
+    def test_InvoiceValidateOk(self):
+        invoice = Invoice(doc_filename='x.doc', year=2015, number=1, name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
+            city='New York', date=datetime.date(2015, 1, 1), income=200.0, currency='euro')
+        validation_result = ValidationResult(logger=get_null_logger(), error_mode=ValidationResult.ERROR_MODE_RAISE)
+        invoice.validate(validation_result)
+        self.assertEqual(validation_result.num_errors(), 0)
+        self.assertEqual(validation_result.num_warnings(), 0)
+
+    def test_InvoiceValidateUndefinedField(self):
+        invoice = Invoice(doc_filename='x.doc', year=None, number=1, name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
+            city='New York', date=datetime.date(2015, 1, 1), income=200.0, currency='euro')
+        validation_result = ValidationResult(logger=get_null_logger(), error_mode=ValidationResult.ERROR_MODE_RAISE)
+        with self.assertRaises(InvoiceUndefinedFieldError):
+            invoice.validate(validation_result)
+
+    def test_InvoiceValidateYearError(self):
+        invoice = Invoice(doc_filename='x.doc', year=2013, number=1, name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
+            city='New York', date=datetime.date(2015, 1, 1), income=200.0, currency='euro')
+        validation_result = ValidationResult(logger=get_null_logger(), error_mode=ValidationResult.ERROR_MODE_RAISE)
+        with self.assertRaises(InvoiceYearError):
+            invoice.validate(validation_result)
+
+    def test_InvoiceValidateMalformedTaxCode(self):
+        invoice = Invoice(doc_filename='x.doc', year=2015, number=1, name='Peter B. Parker', tax_code='PRKPRTO1A01B123C', 
+            city='New York', date=datetime.date(2015, 1, 1), income=200.0, currency='euro')
+        validation_result = ValidationResult(logger=get_null_logger(), error_mode=ValidationResult.ERROR_MODE_RAISE)
+        with self.assertRaises(InvoiceMalformedTaxCodeError):
+            invoice.validate(validation_result)

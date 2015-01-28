@@ -28,6 +28,7 @@ import unittest
 
 from invoice.log import get_null_logger
 from invoice.error import InvoiceDuplicatedNumberError, \
+                          InvoiceDateError, \
                           InvoiceWrongNumberError, \
                           InvoiceUndefinedFieldError, \
                           InvoiceMultipleNamesError, \
@@ -307,6 +308,8 @@ KNTCRK01G01H663Y 2014      5
             self.assertEqual(validation_result.num_warnings(), 0)
             for doc_filename, errors in validation_result.errors().items():
                 self.assertEqual(doc_filename, self._invoice_004_peter_parker_wrong_date.doc_filename)
+                for error in errors:
+                    self.assertIs(error.exc_type, InvoiceDateError)
     
     def XXXtest_InvoiceProgram_validate_error_wrong_number(self):
         with tempfile.NamedTemporaryFile() as db_filename:
