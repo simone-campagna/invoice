@@ -435,4 +435,4 @@ KNTCRK01G01H663Y 2014      5
             for doc_filename, errors in validation_result.errors().items():
                 for error in errors:
                     self.assertIs(error.exc_type, InvoiceMalformedTaxCodeError)
-                    self.assertEqual(error.message.replace(self.dirname, '<DIRNAME>'), "fattura <DIRNAME>/error_malformed_tax_code/2013_001_bruce_wayne.doc: codice fiscale 'WNYBRCO1GO10663Y' non corretto: i caratteri non corretti sono '______O__O_0____'")
+                    self.assertEqual(error.message.replace(self.dirname, '<DIRNAME>'), "fattura <DIRNAME>/error_malformed_tax_code/2013_001_bruce_wayne.doc: codice fiscale 'WnYBRCO1GO10663Y' non corretto: i caratteri non corretti sono '_n____O__O_0____'")

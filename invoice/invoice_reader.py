@@ -108,7 +108,7 @@ class InvoiceReader(object):
 
     @classmethod
     def convert_tax_code(cls, income_s):
-        return income_s.upper().strip()
+        return income_s.strip()
 
     @classmethod
     def convert_income(cls, income_s):
