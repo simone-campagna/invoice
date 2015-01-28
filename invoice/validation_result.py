@@ -23,11 +23,48 @@ __all__ = [
 import collections
 
 class ValidationResult(object):
+    WARNING_MODE_LOG = 'log'
+    WARNING_MODE_ERROR = 'error'
+    WARNING_MODE_IGNORE = 'ignore'
+    WARNING_MODES = (WARNING_MODE_LOG, WARNING_MODE_ERROR, WARNING_MODE_IGNORE)
+    WARNING_MODE_DEFAULT = WARNING_MODE_LOG
+
+    ERROR_MODE_LOG = 'log'
+    ERROR_MODE_RAISE = 'raise'
+    ERROR_MODES = (ERROR_MODE_LOG, ERROR_MODE_RAISE)
+    ERROR_MODE_DEFAULT = ERROR_MODE_LOG
+
     Entry = collections.namedtuple('Entry', ('exc_type', 'message'))
-    def __init__(self):
+    def __init__(self, logger, warning_mode=WARNING_MODE_DEFAULT, error_mode=ERROR_MODE_DEFAULT):
         self._failing_invoices = set()
+        self.logger = logger
         self._errors = collections.OrderedDict()
         self._warnings = collections.OrderedDict()
+
+        if error_mode is None:
+            error_mode = self.ERROR_MODE_DEFAULT
+
+        if error_mode == self.ERROR_MODE_LOG:
+            self._function_error = self._add_error
+        elif error_mode == self.ERROR_MODE_RAISE:
+            self._function_error = self._add_critical
+        else:
+            raise ValueError("error_mode {!r} non valido (i valori leciti sono {})".format(error_mode, '|'.join(self.ERROR_MODES)))
+          
+        if warning_mode is None:
+            warning_mode = self.WARNING_MODE_DEFAULT
+
+        if warning_mode == self.WARNING_MODE_LOG:
+            self._function_warning = self._add_warning
+        elif warning_mode == self.WARNING_MODE_ERROR:
+            self._function_warning = self._function_error
+        elif warning_mode == self.WARNING_MODE_IGNORE:
+            self._function_warning = self._ignore
+        else:
+            raise ValueError("warning_mode {!r} non valido (i valori leciti sono {})".format(warning_mode, '|'.join(self.WARNING_MODES)))
+
+        self.warning_mode = warning_mode
+        self.error_mode = error_mode
 
     def filter_validated_invoices(self, invoices):
         validated_invoices = []
@@ -39,12 +76,29 @@ class ValidationResult(object):
     def failing_invoices(self):
         return self._failing_invoices
 
-    def add_error(self, invoice, exc_type, message):
+    def _add_critical(self, invoice, exc_type, message):
         self._errors.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
         self._failing_invoices.add(invoice.doc_filename)
+        self.logger.critical(message)
+        raise exc_type(message)
+
+    def _add_error(self, invoice, exc_type, message):
+        self._errors.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
+        self._failing_invoices.add(invoice.doc_filename)
+        self.logger.error(message)
+
+    def _add_warning(self, invoice, exc_type, message):
+        self._warnings.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
+        self.logger.warning(message)
+
+    def _ignore(self, invoice, exc_type, message):
+        pass
+
+    def add_error(self, invoice, exc_type, message):
+        self._function_error(invoice, exc_type, message)
 
     def add_warning(self, invoice, exc_type, message):
-        self._warnings.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
+        self._function_warning(invoice, exc_type, message)
 
     def __bool__(self):
         return len(self._errors) == 0
@@ -60,3 +114,18 @@ class ValidationResult(object):
 
     def warnings(self):
         return self._warnings
+
+    def log_critical(self, invoice, exc_type, message):
+        self.logger.critical(message)
+        self.add_error(invoice, exc_type, message)
+
+    def log_error(self, invoice, exc_type, message):
+        self.logger.error(message)
+        self.add_error(invoice, exc_type, message)
+
+    def log_warning(self, invoice, exc_type, message):
+        self.logger.warning(message)
+        self.add_warning(invoice, exc_type, message)
+
+    def log_ignore(self, invoice, exc_type, message):
+        pass

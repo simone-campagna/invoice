@@ -30,6 +30,7 @@ from .error import InvoiceSyntaxError
 from .conf import VERSION, DB_FILE, DB_FILE_VAR
 from .log import get_default_logger, set_verbose_level
 from .invoice import Invoice
+from .validation_result import ValidationResult
 from .invoice_program import InvoiceProgram
 
 def invoice_main(print_function=print, logger=None, args=None):
@@ -41,12 +42,13 @@ def invoice_main(print_function=print, logger=None, args=None):
     all_field_names = []
     for field_name in Invoice._fields:
         all_field_names.append(field_name)
-        n = InvoiceProgram.get_field_translation(field_name)
+        n = Invoice.get_field_translation(field_name)
         if n != field_name:
             all_field_names.append(n)
 
     default_validate = True
-    default_warnings_mode = InvoiceProgram.WARNINGS_MODE_DEFAULT
+    default_warning_mode = ValidationResult.WARNING_MODE_DEFAULT
+    default_error_mode = ValidationResult.ERROR_MODE_DEFAULT
     default_list_field_names = InvoiceProgram.LIST_FIELD_NAMES_LONG
     default_filters = []
 
@@ -229,7 +231,7 @@ il relativo DOC file non sia stato modificato.
     )
     scan_parser.set_defaults(
         function_name="db_scan",
-        function_arguments=('warnings_mode', 'raise_on_error', 'remove_orphaned', 'partial_update'),
+        function_arguments=('warning_mode', 'error_mode', 'remove_orphaned', 'partial_update'),
     )
 
     ### clear_parser ###
@@ -257,7 +259,7 @@ Esegue una validazione del contenuto del database.
     )
     validate_parser.set_defaults(
         function_name="db_validate",
-        function_arguments=('warnings_mode', 'raise_on_error'),
+        function_arguments=('warning_mode', 'error_mode'),
     )
 
     ### list_parser ###
@@ -330,7 +332,7 @@ e validati.
     )
     legacy_parser.set_defaults(
         function_name="legacy",
-        function_arguments=('patterns', 'filters', 'validate', 'list', 'report', 'warnings_mode', 'raise_on_error'),
+        function_arguments=('patterns', 'filters', 'validate', 'list', 'report', 'warning_mode', 'error_mode'),
     )
 
     ### list_mode option
@@ -397,23 +399,24 @@ e validati.
     ### warnings and error options
     for parser in scan_parser, validate_parser, legacy_parser:
         parser.add_argument("--werror", "-we",
-            dest="warnings_mode",
+            dest="warning_mode",
             action="store_const",
-            const=InvoiceProgram.WARNINGS_MODE_ERROR,
-            default=default_warnings_mode,
+            const=ValidationResult.WARNING_MODE_ERROR,
+            default=default_warning_mode,
             help="converte warning in errori")
 
         parser.add_argument("--wignore", "-wi",
-            dest="warnings_mode",
+            dest="warning_mode",
             action="store_const",
-            const=InvoiceProgram.WARNINGS_MODE_IGNORE,
-            default=default_warnings_mode,
+            const=ValidationResult.WARNING_MODE_IGNORE,
+            default=default_warning_mode,
             help="ignora gli warning")
 
-        parser.add_argument("--raise", "-R",
-            dest="raise_on_error",
-            action="store_true",
-            default=False,
+        parser.add_argument("--eraise", "-er",
+            dest="error_mode",
+            action="store_const",
+            const=ValidationResult.ERROR_MODE_RAISE,
+            default=default_error_mode,
             help="rende fatale il primo errore incontrato (per default, %(prog)s tenta di continuare)")
     
     ### reset option

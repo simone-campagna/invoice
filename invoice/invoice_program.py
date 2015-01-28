@@ -29,8 +29,6 @@ import time
 import traceback
 
 from .error import InvoiceSyntaxError, \
-                   InvoiceUndefinedFieldError, \
-                   InvoiceUnsupportedCurrencyError, \
                    InvoiceDateError, \
                    InvoiceMultipleNamesError, \
                    InvoiceWrongNumberError, \
@@ -72,11 +70,6 @@ class FileDateTimes(object):
         return self._date_times[filename]
 
 class InvoiceProgram(object):
-    WARNINGS_MODE_DEFAULT = 'default'
-    WARNINGS_MODE_ERROR = 'error'
-    WARNINGS_MODE_IGNORE = 'ignore'
-    WARNINGS_MODES = (WARNINGS_MODE_DEFAULT, WARNINGS_MODE_ERROR, WARNINGS_MODE_IGNORE)
-
     LIST_FIELD_NAMES_SHORT = ('year', 'number', 'date', 'tax_code', 'income', 'currency')
     LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
     LIST_FIELD_NAMES_FULL = Invoice._fields
@@ -110,100 +103,24 @@ class InvoiceProgram(object):
             return eval(function_code)
         return filter
 
-    @classmethod
-    def get_field_translation(cls, field_name):
-        return cls.FIELD_TRANSLATION.get(field_name, field_name)
-
-    @classmethod
-    def get_field_name_from_translation(cls, field_translation):
-        return cls.REV_FIELD_TRANSLATION.get(field_translation, field_translation)
-
     def get_week_number(self, day):
         return self._week_manager.week_number(day)
 
     def get_week_range(self, year, week_number):
         return self._week_manager.week_range(year=year, week_number=week_number)
 
-    def log_critical(self, invoice, exc_type, message, result):
-        self.logger.critical(message)
-        result.add_error(invoice, exc_type, message)
-        raise exc_type(message)
-        
-    def log_error(self, invoice, exc_type, message, result):
-        self.logger.error(message)
-        result.add_error(invoice, exc_type, message)
-        return result
-
-    def log_warning(self, invoice, exc_type, message, result):
-        self.logger.warning(message)
-        result.add_warning(invoice, exc_type, message)
-        return result
-
-    def log_functions(self, result, warnings_mode=None, raise_on_error=False):
-        if warnings_mode is None:
-            warnings_mode = self.WARNINGS_MODE_DEFAULT
-        if raise_on_error:
-            log_error = lambda invoice, exc_type, message: self.log_critical(invoice, exc_type, message, result=result)
-        else:
-            log_error = lambda invoice, exc_type, message: self.log_error(invoice, exc_type, message, result=result)
-        if warnings_mode == self.WARNINGS_MODE_ERROR:
-            log_warning = log_error
-        elif warnings_mode == self.WARNINGS_MODE_IGNORE:
-            def log_warning(invoice, exc_type, message):
-                pass
-        elif warnings_mode == self.WARNINGS_MODE_DEFAULT:
-            log_warning = lambda invoice, exc_type, message: self.log_warning(invoice, exc_type, message, result=result)
-        else:
-            raise ValueError("warnings_mode {!r} non valido (i valori leciti sono {})".format(warnings_mode, '|'.joi(self.WARNINGS_MODES)))
-        return log_error, log_warning
-
-    def impl_validate_invoice(self, invoice, result, log_error, log_warning):
-        for key in 'year', 'number', 'name', 'tax_code', 'date', 'income':
-            val = getattr(invoice, key)
-            if val is None:
-                log_error(invoice, InvoiceUndefinedFieldError, "fattura {}: il campo {!r} non è definito".format(invoice.doc_filename, self.get_field_translation(key)))
-        if invoice.currency != 'euro':
-            log_error(invoice, InvoiceUnsupportedCurrencyError, "fattura {}: la valuta {!r} non è supportata".format(invoice.doc_filename, invoice.currency))
-        if invoice.date is not None and invoice.date.year != invoice.year:
-            log_error(invoice, InvoiceDateError, "fattura {}: data {} e anno {} sono incompatibili".format(invoice.doc_filename, invoice.date, invoice.year))
-        
-        tax_code = invoice.tax_code
-        if tax_code:
-            expected_ch = 'LLLLLLNNLNNLNNNL'
-            error_fmt = '[{}]'
-            success_fmt = '{}'
-            error_l = []
-            num_errors = 0
-            for ch, expected_ch in zip(tax_code, expected_ch):
-                error = False
-                if expected_ch == 'L' and not (ord('A') <= ord(ch) <= ord('Z')):
-                    error = True
-                elif expected_ch == 'N' and not (ord('0') <= ord(ch) <= ord('9')):
-                    error = True
-                if error:
-                    error_l.append(error_fmt.format(ch))
-                    num_errors += 1
-                else:
-                    error_l.append(success_fmt.format(ch))
-            if num_errors:
-                log_error(invoice, InvoiceMalformedTaxCodeError, "fattura {}: codice fiscale {!r} non corretto: i caratteri non corretti sono {!r}".format(
-                    invoice.doc_filename,
-                    tax_code,
-                    ''.join(error_l),
-                ))
-        return result
-
-    def validate_invoice_collection(self, invoice_collection, warnings_mode=None, raise_on_error=False):
-        if warnings_mode is None:
-            warnings_mode = self.WARNINGS_MODE_DEFAULT
-
-        result = ValidationResult()
+    def create_validation_result(self, warning_mode=None, error_mode=None):
+        return ValidationResult(
+            logger=self.logger,
+            warning_mode=warning_mode,
+            error_mode=error_mode,
+        )
+    def validate_invoice_collection(self, validation_result, invoice_collection):
         invoice_collection.process()
-        log_error, log_warning = self.log_functions(result=result, warnings_mode=warnings_mode, raise_on_error=raise_on_error)
 
         # verify fields definition:
         for invoice in invoice_collection:
-            self.impl_validate_invoice(invoice, result, log_error, log_warning)
+            invoice.validate(validation_result=validation_result)
 
         # verify first/last name exchange:
         nd = {}
@@ -211,13 +128,14 @@ class InvoiceProgram(object):
             if invoice.tax_code in nd:
                 i_name, i_doc_filenames = nd[invoice.tax_code]
                 if i_name != invoice.name:
-                    log_warning(invoice, InvoiceMultipleNamesError, "fattura {f}: il codice_fiscale {t!r} è associato al nome {n!r}, mentre è stato associato ad un altro nome {pn!r} in #{c} fatture".format(
+                    message = "fattura {f}: il codice_fiscale {t!r} è associato al nome {n!r}, mentre è stato associato ad un altro nome {pn!r} in #{c} fatture".format(
                         f=invoice.doc_filename,
                         t=invoice.tax_code,
                         n=invoice.name,
                         pn=i_name,
                         c=len(i_doc_filenames),
-                    ))
+                    )
+                    validation_result.add_warning(invoice, InvoiceMultipleNamesError, message)
             else:
                 nd[invoice.tax_code] = (invoice.name, [invoice.doc_filename])
 
@@ -231,26 +149,26 @@ class InvoiceProgram(object):
                 expected_number += 1
                 if invoice.number != expected_number:
                     if invoice.number in numbers:
-                        log_error(invoice, InvoiceDuplicatedNumberError,
+                        validation_result.add_error(invoice, InvoiceDuplicatedNumberError,
                             "fattura {}: il numero {} è duplicato".format(invoice.doc_filename, invoice.number, year, expected_number))
                     else:
-                        log_error(invoice, InvoiceWrongNumberError,
+                        validation_result.add_error(invoice, InvoiceWrongNumberError,
                             "fattura {}: il numero {} non è valido (il numero atteso per l'anno {} è {})".format(invoice.doc_filename, invoice.number, year, expected_number))
                 else:
                     numbers.add(invoice.number)
                 if prev_date is not None:
                     if invoice.date < prev_date:
-                        log_error(invoice, InvoiceDateError, "fattura {}: la data {} precede quella della precedente fattura {} ({})".format(invoice.doc_filename, invoice.date, prev_doc, prev_date))
+                        validation_result.add_error(invoice, InvoiceDateError, "fattura {}: la data {} precede quella della precedente fattura {} ({})".format(invoice.doc_filename, invoice.date, prev_doc, prev_date))
                 prev_doc, prev_date = invoice.doc_filename, invoice.date
 
         
-        return result
+        return validation_result
 
     def list_invoice_collection(self, invoice_collection, field_names, header=True):
         invoice_collection.process()
         if field_names is None:
             field_names = Invoice._fields
-        field_names = [self.get_field_name_from_translation(field_name) for field_name in field_names]
+        field_names = [Invoice.get_field_name_from_translation(field_name) for field_name in field_names]
         data = []
         digits =1 + int(math.log10(max(1, len(invoice_collection))))
         converters = {
@@ -262,7 +180,7 @@ class InvoiceProgram(object):
             'income': '>',
         }
         if header:
-            data.append(tuple(self.get_field_translation(field_name) for field_name in field_names))
+            data.append(tuple(Invoice.get_field_translation(field_name) for field_name in field_names))
         for invoice in invoice_collection:
             data.append(tuple(converters.get(field_name, str)(getattr(invoice, field_name)) for field_name in field_names))
         if data:
@@ -353,7 +271,7 @@ anno                       {year}
                 ))
         
 
-    def db_init(self, *, patterns, reset, partial_update, remove_orphaned):
+    def db_init(self, *, patterns, reset, partial_update=True, remove_orphaned=False):
         if reset and os.path.exists(self.db_filename):
             self.logger.info("cancellazione del db {!r}...".format(self.db_filename))
             os.remove(self.db_filename)
@@ -365,7 +283,7 @@ anno                       {year}
         )
        
 
-    def db_config(self, *, patterns, show, partial_update, remove_orphaned):
+    def db_config(self, *, patterns, show, partial_update=True, remove_orphaned=False):
         new_patterns = []
         del_patterns = []
         for sign, pattern in patterns:
@@ -386,11 +304,11 @@ anno                       {year}
         if show:
             self.db.show_configuration(print_function=self.print_function)
 
-    def db_scan(self, *, warnings_mode, raise_on_error, partial_update, remove_orphaned):
+    def db_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=False):
         self.db.check()
         validation_result, invoice_collection = self.scan(
-            warnings_mode=warnings_mode,
-            raise_on_error=raise_on_error,
+            warning_mode=warning_mode,
+            error_mode=error_mode,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
         )
@@ -400,10 +318,11 @@ anno                       {year}
         self.db.check()
         self.db.delete('invoices')
 
-    def db_validate(self, *, warnings_mode, raise_on_error):
+    def db_validate(self, *, warning_mode, error_mmode):
         self.db.check()
         invoice_collection = self.db.load_invoice_collection()
-        validation_result = self.validate_invoice_collection(invoice_collection, warnings_mode=warnings_mode, raise_on_error=raise_on_error)
+        validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
+        self.validate_invoice_collection(validation_result, invoice_collection)
         return validation_result.num_errors()
 
     def db_filter(self, invoice_collection, filters):
@@ -436,7 +355,7 @@ anno                       {year}
         invoice_collection = self.db_filter(self.db.load_invoice_collection(), filters)
         self.report_invoice_collection(invoice_collection)
 
-    def legacy(self, patterns, filters, validate, list, report, warnings_mode, raise_on_error):
+    def legacy(self, patterns, filters, validate, list, report, warning_mode, error_mode):
         invoice_collection_reader = InvoiceCollectionReader(trace=self.trace)
 
         invoice_collection = invoice_collection_reader(*patterns)
@@ -447,7 +366,8 @@ anno                       {year}
         try:
             if validate:
                 self.logger.debug("validazione di {} fatture...".format(len(invoice_collection)))
-                validation_result = self.validate_invoice_collection(invoice_collection, warnings_mode=warnings_mode, raise_on_error=raise_on_error)
+                validation_result=self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
+                validation_result = self.validate_invoice_collection(validation_result, invoice_collection)
                 if validation_result.num_errors():
                     self.logger.error("trovati #{} errori!".format(validation_result.num_errors()))
                     return 1
@@ -467,7 +387,7 @@ anno                       {year}
                 traceback.print_exc()
             self.logger.error("{}: {}\n".format(type(err).__name__, err))
 
-    def scan(self, warnings_mode=None, raise_on_error=False, partial_update=None, remove_orphaned=None):
+    def scan(self, warning_mode=None, error_mode=None, partial_update=None, remove_orphaned=None):
         found_doc_filenames = set()
         db = self.db
         file_date_times = FileDateTimes()
@@ -517,6 +437,7 @@ anno                       {year}
             for doc_filename in found_doc_filenames.difference(scanned_doc_filenames):
                 result.append((False, doc_filename))
 
+            validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
             if result:
                 invoice_reader = InvoiceReader(logger=self.logger)
                 new_invoices = []
@@ -536,10 +457,7 @@ anno                       {year}
                     else:
                         new_invoices.append(invoice)
                     scan_date_times.append(db.ScanDateTime(doc_filename=invoice.doc_filename, scan_date_time=file_date_times[invoice.doc_filename]))
-                validation_result = self.validate_invoice_collection(
-                    invoice_collection=updated_invoice_collection,
-                    warnings_mode=warnings_mode,
-                    raise_on_error=raise_on_error)
+                self.validate_invoice_collection(validation_result, updated_invoice_collection)
                 if validation_result.num_errors():
                     message = "validazione fallita - {} errori".format(validation_result.num_errors())
                     if not partial_update:
