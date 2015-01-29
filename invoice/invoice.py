@@ -21,6 +21,7 @@ __all__ = [
 ]
 
 import collections
+import datetime
 
 from .error import InvoiceUndefinedFieldError, \
                    InvoiceUnsupportedCurrencyError, \
@@ -73,6 +74,21 @@ class Invoice(InvoiceNamedTuple):
     @classmethod
     def get_field_name_from_translation(cls, field_translation):
         return cls.REV_FIELD_TRANSLATION.get(field_translation, field_translation)
+
+    @classmethod
+    def compile_filter_function(cls, function_source):
+        try:
+            function_code = compile(function_source, '<string>', 'eval')
+        except SyntaxError as err:
+            raise InvoiceSyntaxError("funzione filtro {!r} non valida".format(function_source), "funzione filter non valida", function_source, err)
+        def filter(invoice):
+            d = invoice._asdict()
+            for field_name, name in cls.FIELD_TRANSLATION.items():
+                if field_name != name:
+                    d[name] = d[field_name]
+            locals().update(datetime=datetime, **d)
+            return eval(function_code)
+        return filter
 
     def validate(self, validation_result):
         for key in self._fields:

@@ -58,6 +58,8 @@ class InvoiceCollection(object):
         self._invoices.append(invoice)
 
     def filter(self, filter_function):
+        if isinstance(filter_function, str):
+            filter_function = Invoice.compile_filter_function(filter_function)
         invoice_collection = InvoiceCollection(filter(filter_function, self._invoices), logger=self.logger)
         invoice_collection.process()
         return invoice_collection

@@ -45,17 +45,6 @@ from .validation_result import ValidationResult
 from .week import WeekManager
 from .database.db_types import Path
 
-_FIELD_TRANSLATION = {
-    'doc_filename': 'documento',
-    'year':         'anno',
-    'number':       'numero',
-    'name':         'nome',
-    'tax_code':     'codice_fiscale',
-    'city':         'città',
-    'date':         'data',
-    'income':       'importo',
-    'currency':     'valuta',
-}
 
 class FileDateTimes(object):
     def __init__(self):
@@ -74,12 +63,6 @@ class InvoiceProgram(object):
     LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
     LIST_FIELD_NAMES_FULL = Invoice._fields
 
-    FIELD_TRANSLATION = _FIELD_TRANSLATION
-    REV_FIELD_TRANSLATION = dict(
-        (_FIELD_TRANSLATION.get(field_name, field_name), field_name) for field_name in Invoice._fields
-    )
-    ALL_FIELDS = set(tuple(Invoice._fields) + tuple(REV_FIELD_TRANSLATION.keys()))
-
     def __init__(self, db_filename, logger, print_function=print, trace=False):
         self.db_filename = db_filename
         self.logger = logger
@@ -87,21 +70,6 @@ class InvoiceProgram(object):
         self.trace = trace
         self.db = InvoiceDb(self.db_filename, self.logger)
         self._week_manager = WeekManager()
-
-    @classmethod
-    def compile_filter_function(cls, function_source):
-        try:
-            function_code = compile(function_source, '<string>', 'eval')
-        except SyntaxError as err:
-            raise InvoiceSyntaxError("funzione filtro {!r} non valida".format(function_source), "funzione filter non valida", function_source, err)
-        def filter(invoice):
-            d = invoice._asdict()
-            for field_name, name in cls.FIELD_TRANSLATION.items():
-                if field_name != name:
-                    d[name] = d[field_name]
-            locals().update(datetime=datetime, **d)
-            return eval(function_code)
-        return filter
 
     def get_week_number(self, day):
         return self._week_manager.week_number(day)
@@ -330,8 +298,7 @@ anno                       {year}
             self.logger.debug("applicazione filtri su {} fatture...".format(len(invoice_collection)))
             for filter_source in filters:
                 self.logger.debug("applicazione filtro {!r} su {} fatture...".format(filter_source, len(invoice_collection)))
-                filter_function = self.compile_filter_function(filter_source)
-                invoice_collection = invoice_collection.filter(filter_function)
+                invoice_collection = invoice_collection.filter(filter_source)
         return invoice_collection
 
     def db_list(self, *, field_names=None, header=True, filters=None):
