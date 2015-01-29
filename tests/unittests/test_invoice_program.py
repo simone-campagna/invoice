@@ -21,8 +21,10 @@ __all__ = [
 ]
 
 import datetime
+import glob
 import io
 import os
+import shutil
 import tempfile
 import unittest
 
@@ -203,10 +205,10 @@ anno                       2012
 
     # invoice
     def test_InvoiceProgram(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.NamedTemporaryFile() as db_file:
             p = Print()
             invoice_program = InvoiceProgram(
-                db_filename=db_filename.name,
+                db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
                 print_function=p,
@@ -258,11 +260,11 @@ KNTCRK01G01H663Y 2014      5
 
     # invoice
     def test_InvoiceProgramError(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.NamedTemporaryFile() as db_file:
             p = Print()
 
             invoice_program = InvoiceProgram(
-                db_filename=db_filename.name,
+                db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
                 print_function=p,
@@ -282,10 +284,10 @@ KNTCRK01G01H663Y 2014      5
                 )
 
     def test_InvoiceProgram_validate_ok(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.NamedTemporaryFile() as db_file:
             p = Print()
             invoice_program = InvoiceProgram(
-                db_filename=db_filename.name,
+                db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
                 print_function=p,
@@ -298,10 +300,10 @@ KNTCRK01G01H663Y 2014      5
             self.assertEqual(validation_result.num_warnings(), 0)
     
     def test_InvoiceProgram_validate_warning_multiple_names(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.NamedTemporaryFile() as db_file:
             p = Print()
             invoice_program = InvoiceProgram(
-                db_filename=db_filename.name,
+                db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
                 print_function=p,
@@ -316,10 +318,10 @@ KNTCRK01G01H663Y 2014      5
                 self.assertEqual(doc_filename, self._invoice_004_parker_peter.doc_filename)
     
     def test_InvoiceProgram_validate_error_wrong_date(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.NamedTemporaryFile() as db_file:
             p = Print()
             invoice_program = InvoiceProgram(
-                db_filename=db_filename.name,
+                db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
                 print_function=p,
@@ -336,10 +338,10 @@ KNTCRK01G01H663Y 2014      5
                     self.assertIs(error.exc_type, InvoiceDateError)
     
     def test_InvoiceProgram_validate_error_wrong_number(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.NamedTemporaryFile() as db_file:
             p = Print()
             invoice_program = InvoiceProgram(
-                db_filename=db_filename.name,
+                db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
                 print_function=p,
@@ -357,10 +359,10 @@ KNTCRK01G01H663Y 2014      5
                 self.assertIs(exc_type, InvoiceWrongNumberError)
     
     def test_InvoiceProgram_validate_error_duplicated_number(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.NamedTemporaryFile() as db_file:
             p = Print()
             invoice_program = InvoiceProgram(
-                db_filename=db_filename.name,
+                db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
                 print_function=p,
@@ -378,10 +380,10 @@ KNTCRK01G01H663Y 2014      5
                 self.assertIs(exc_type, InvoiceDuplicatedNumberError)
         
     def _test_InvoiceProgram_undefined_field(self, warning_mode):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.NamedTemporaryFile() as db_file:
             p = Print()
             invoice_program = InvoiceProgram(
-                db_filename=db_filename.name,
+                db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
                 print_function=p,
@@ -434,10 +436,10 @@ KNTCRK01G01H663Y 2014      5
         self._test_InvoiceProgram_undefined_field(warning_mode=ValidationResult.WARNING_MODE_IGNORE)
 
     def test_InvoiceProgram_malformed_tax_code(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.NamedTemporaryFile() as db_file:
             p = Print()
             invoice_program = InvoiceProgram(
-                db_filename=db_filename.name,
+                db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
                 print_function=p,
@@ -465,10 +467,10 @@ KNTCRK01G01H663Y 2014      5
                     self.assertEqual(error.message.replace(self.dirname, '<DIRNAME>'), "fattura <DIRNAME>/error_malformed_tax_code/2013_001_bruce_wayne.doc: codice fiscale 'WnYBRCO1GO10663Y' non corretto: i caratteri non corretti sono 'W[n]YBRC[O]1G[O]1[0]663Y'")
 
     def test_InvoiceProgram_zero_income(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.NamedTemporaryFile() as db_file:
             p = Print()
             invoice_program = InvoiceProgram(
-                db_filename=db_filename.name,
+                db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
                 print_function=p,
@@ -501,3 +503,76 @@ KNTCRK01G01H663Y 2014      5
             invoice_collection = invoice_collection.filter("anno == 2012")
             invoice_program.report_invoice_collection(invoice_collection)
             self.assertEqual(p.string(), self.REPORT_OUTPUT_2012)
+
+    def _test_InvoiceProgram_remove_orphaned(self, remove_orphaned):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_filename = os.path.join(tmpdir, "test.db")
+            example_dirname = os.path.join(tmpdir, "example")
+            staged_doc_filenames = []
+            os.makedirs(example_dirname)
+            for doc_filename in glob.glob(os.path.join(self.dirname, "*.doc")):
+                staged_doc_filename = os.path.join(example_dirname, os.path.basename(doc_filename))
+                staged_doc_filenames.append(staged_doc_filename)
+                shutil.copy(doc_filename, staged_doc_filename)
+
+            p = Print()
+            invoice_program = InvoiceProgram(
+                db_filename=db_filename,
+                logger=self.logger,
+                trace=False,
+                print_function=p,
+            )
+    
+            invoice_program.db_init(
+                patterns=[os.path.join(example_dirname, '*.doc')],
+                reset=True,
+                partial_update=True,
+                remove_orphaned=remove_orphaned,
+            )
+
+            validation_result, invoice_collection = invoice_program.db_scan(
+                warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                error_mode=None,
+                partial_update=None,
+                remove_orphaned=None,
+            )
+            self.assertEqual(validation_result.num_warnings(), 0)
+            self.assertEqual(validation_result.num_errors(), 0)
+
+            p.reset()
+            invoice_program.db_dump(
+                filters=(),
+            )
+            self.assertEqual(p.string().replace(example_dirname, '<DIRNAME>'), self.DUMP_OUTPUT)
+
+            p.reset()
+            invoice_program.db_report()
+            self.assertEqual(p.string(), self.REPORT_OUTPUT)
+
+            for staged_doc_filename in staged_doc_filenames:
+                os.remove(staged_doc_filename)
+            os.rmdir(example_dirname)
+
+            validation_result, invoice_collection = invoice_program.db_scan(
+                warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                error_mode=None,
+                partial_update=None,
+                remove_orphaned=None,
+            )
+            self.assertEqual(validation_result.num_warnings(), 0)
+            self.assertEqual(validation_result.num_errors(), 0)
+
+            p.reset()
+            invoice_program.db_dump(
+                filters=(),
+            )
+            if remove_orphaned:
+                self.assertEqual(p.string().replace(example_dirname, '<DIRNAME>'), "")
+            else:
+                self.assertEqual(p.string().replace(example_dirname, '<DIRNAME>'), self.DUMP_OUTPUT)
+
+    def test_InvoiceProgram_remove_orphaned_on(self):
+        self._test_InvoiceProgram_remove_orphaned(True)
+
+    def test_InvoiceProgram_remove_orphaned_off(self):
+        self._test_InvoiceProgram_remove_orphaned(False)
