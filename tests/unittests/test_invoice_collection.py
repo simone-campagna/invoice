@@ -29,7 +29,6 @@ from invoice.error import InvoiceDuplicatedNumberError, \
                           InvoiceSyntaxError
 from invoice.invoice import Invoice
 from invoice.invoice_collection import InvoiceCollection
-from invoice.invoice_program import InvoiceProgram
 
 class TestInvoiceCollection(unittest.TestCase):
     def setUp(self):
@@ -68,17 +67,17 @@ class TestInvoiceCollection(unittest.TestCase):
     def test_filter(self):
         invoice_collection = InvoiceCollection(self._invoices, logger=self.logger)
         self.assertEqual(len(invoice_collection), 3)
-        invoice_collection_2 = invoice_collection.filter(InvoiceProgram.compile_filter_function("number != 2"))
+        invoice_collection_2 = invoice_collection.filter("number != 2")
         self.assertEqual(len(invoice_collection_2), 2)
         invoice_collection_3 = invoice_collection.filter(lambda invoice: invoice.number != 2)
         self.assertEqual(len(invoice_collection_3), 2)
         with self.assertRaises(NameError):
-            invoice_collection_4 = invoice_collection.filter(InvoiceProgram.compile_filter_function("numer != 2"))
-        invoice_collection_5 = invoice_collection.filter(InvoiceProgram.compile_filter_function("city != 'Gotham City'"))
-        invoice_collection_6 = invoice_collection.filter(InvoiceProgram.compile_filter_function("città != 'Gotham City'"))
+            invoice_collection_4 = invoice_collection.filter("numer != 2")
+        invoice_collection_5 = invoice_collection.filter("city != 'Gotham City'")
+        invoice_collection_6 = invoice_collection.filter("città != 'Gotham City'")
         self.assertEqual(len(invoice_collection_5), len(invoice_collection_6))
         with self.assertRaises(InvoiceSyntaxError):
-            invoice_collection_7 = invoice_collection.filter(InvoiceProgram.compile_filter_function("città = 'Gotham City'"))
+            invoice_collection_7 = invoice_collection.filter("città = 'Gotham City'")
 
         
 

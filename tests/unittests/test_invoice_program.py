@@ -133,6 +133,23 @@ anno                       2014
 
 """
 
+    REPORT_OUTPUT_2012 = """\
+anno                       2012
+  * numero di fatture:     1
+  * numero di clienti:     1
+    + cliente:             PRKPRT01A01B123C (Peter B. Parker):
+      numero di fatture:   1
+      incasso totale:      0.0
+      incasso percentuale: 0.00%
+      settimane:           2
+
+  * numero di settimane:   1
+    + settimana:           2 [2012-01-02 -> 2012-01-08]:
+      numero di fatture:   1
+      incasso totale:      0.0
+      incasso percentuale: 0.00%
+
+"""
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
         self.logger = get_null_logger()
@@ -222,8 +239,8 @@ BNNBRC01G01H663Y 2014      3
 WNYBRC01G01H663Y 2014      4
 KNTCRK01G01H663Y 2014      5
 """)
-            p.reset()
 
+            p.reset()
             invoice_program.db_dump(
                 filters=(),
             )
@@ -231,6 +248,13 @@ KNTCRK01G01H663Y 2014      5
             p.reset()
             invoice_program.db_report()
             self.assertEqual(p.string(), self.REPORT_OUTPUT)
+
+            p.reset()
+            invoice_program.db_list(
+                field_names=None,
+                header=False,
+                filters=(),
+            )
 
     # invoice
     def test_InvoiceProgramError(self):
@@ -439,3 +463,41 @@ KNTCRK01G01H663Y 2014      5
                 for error in errors:
                     self.assertIs(error.exc_type, InvoiceMalformedTaxCodeError)
                     self.assertEqual(error.message.replace(self.dirname, '<DIRNAME>'), "fattura <DIRNAME>/error_malformed_tax_code/2013_001_bruce_wayne.doc: codice fiscale 'WnYBRCO1GO10663Y' non corretto: i caratteri non corretti sono 'W[n]YBRC[O]1G[O]1[0]663Y'")
+
+    def test_InvoiceProgram_zero_income(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = Print()
+            invoice_program = InvoiceProgram(
+                db_filename=db_filename.name,
+                logger=self.logger,
+                trace=False,
+                print_function=p,
+            )
+    
+            invoice_program.db_init(
+                patterns=[os.path.join(self.dirname, '*.doc')],
+                reset=True,
+                partial_update=True,
+                remove_orphaned=True,
+            )
+
+            validation_result, invoice_collection = invoice_program.db_scan(
+                warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                error_mode=None,
+                partial_update=None,
+                remove_orphaned=None,
+            )
+            self.assertEqual(validation_result.num_warnings(), 0)
+            self.assertEqual(validation_result.num_errors(), 0)
+
+            invoice_collection.add(Invoice(
+                doc_filename='2012_001_peter_parker.doc',
+                year=2012, number=1,
+                name='Peter B. Parker', tax_code='PRKPRT01A01B123C',
+                city='New York', date=datetime.date(2015, 1, 4),
+                income=0.0, currency='euro'))
+
+            p.reset()
+            invoice_collection = invoice_collection.filter("anno == 2012")
+            invoice_program.report_invoice_collection(invoice_collection)
+            self.assertEqual(p.string(), self.REPORT_OUTPUT_2012)

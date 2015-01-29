@@ -26,7 +26,8 @@ import datetime
 from .error import InvoiceUndefinedFieldError, \
                    InvoiceUnsupportedCurrencyError, \
                    InvoiceYearError, \
-                   InvoiceMalformedTaxCodeError
+                   InvoiceMalformedTaxCodeError, \
+                   InvoiceSyntaxError
 
 from .validation_result import ValidationResult
 

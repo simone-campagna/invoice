@@ -21,7 +21,6 @@ __all__ = [
 ]
 
 from .error import InvoiceError, \
-                   InvoiceSyntaxError, \
                    InvoiceMultipleNamesError, \
                    InvoiceUndefinedFieldError, \
                    InvoiceDuplicatedNumberError, \

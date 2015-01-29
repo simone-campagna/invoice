@@ -56,7 +56,7 @@ def invoice_main(print_function=print, logger=None, args=None):
         field_names = []
         for field_name in s.split(','):
             field_name = field_name.strip()
-            if not field_name in InvoiceProgram.ALL_FIELDS:
+            if not field_name in Invoice.ALL_FIELDS:
                 raise ValueError("campo {!r} non valido".format(field_name))
             field_names.append(field_name)
         return field_names
