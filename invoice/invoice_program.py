@@ -286,7 +286,7 @@ anno                       {year}
         self.db.check()
         self.db.delete('invoices')
 
-    def db_validate(self, *, warning_mode, error_mmode):
+    def db_validate(self, *, warning_mode, error_mode):
         self.db.check()
         invoice_collection = self.db.load_invoice_collection()
         validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)

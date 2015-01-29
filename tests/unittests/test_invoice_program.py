@@ -258,7 +258,39 @@ KNTCRK01G01H663Y 2014      5
                 filters=(),
             )
 
-    # invoice
+    def test_InvoiceProgramOk(self):
+        with tempfile.NamedTemporaryFile() as db_file:
+            p = Print()
+
+            invoice_program = InvoiceProgram(
+                db_filename=db_file.name,
+                logger=self.logger,
+                trace=False,
+                print_function=p,
+            )
+
+            p.reset()
+            invoice_program.db_init(
+                patterns=[os.path.join(self.dirname, '*.doc')],
+                reset=True,
+            )
+
+            p.reset()
+            validation_result, invoice_collection = invoice_program.db_scan(
+                warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                error_mode=ValidationResult.ERROR_MODE_RAISE,
+            )
+            self.assertEqual(validation_result.num_errors(), 0)
+            self.assertEqual(validation_result.num_warnings(), 0)
+
+            p.reset()
+            invoice_program.db_validate(
+                warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                error_mode=ValidationResult.ERROR_MODE_RAISE,
+            )
+            self.assertEqual(validation_result.num_errors(), 0)
+            self.assertEqual(validation_result.num_warnings(), 0)
+
     def test_InvoiceProgramError(self):
         with tempfile.NamedTemporaryFile() as db_file:
             p = Print()
