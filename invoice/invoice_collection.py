@@ -55,6 +55,7 @@ class InvoiceCollection(object):
         if not isinstance(invoice, Invoice): # pragma: no cover
             raise TypeError("{}.add(...): oggetto {!r} di tipo {} non valido".format(self.__class__.__name__, invoice, type(invoice).__name__))
         self._invoices.append(invoice)
+        self._processed = False
 
     def filter(self, filter_function):
         if isinstance(filter_function, str):

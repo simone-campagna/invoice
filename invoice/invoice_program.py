@@ -95,6 +95,18 @@ class InvoiceProgram(object):
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
         )
+        if validation_result.num_errors():
+            max_errors = 5
+            self.logger.error("first {} errors are:".format(max_errors))
+            failing_invoices = InvoiceCollection(validation_result.filter_failing_invoices(invoice_collection))
+            failing_invoices.process()
+            for c, invoice in enumerate(failing_invoices):
+                self.logger.error(" {:2d}) {!r}".format(c, invoice.doc_filename))
+                errors = validation_result.errors().get(invoice.doc_filename, [])
+                for error in errors:
+                    self.logger.error(" {:2s}  {}".format('', error.message))
+                if (c + 1) >= max_errors:
+                    break
         return validation_result.num_errors()
 
     def program_clear(self):
@@ -282,7 +294,7 @@ class InvoiceProgram(object):
                 invoice_reader = InvoiceReader(logger=self.logger)
                 new_invoices = []
                 old_invoices = []
-                scan_date_times = []
+                scan_date_times = collections.OrderedDict()
                 for existing, doc_filename in result:
                     try:
                         invoice = invoice_reader(doc_filename)
@@ -296,7 +308,9 @@ class InvoiceProgram(object):
                         old_invoices.append(invoice)
                     else:
                         new_invoices.append(invoice)
-                    scan_date_times.append(db.ScanDateTime(doc_filename=invoice.doc_filename, scan_date_time=file_date_times[invoice.doc_filename]))
+                    scan_date_times[invoice.doc_filename] = db.ScanDateTime(
+                        doc_filename=invoice.doc_filename,
+                        scan_date_time=file_date_times[invoice.doc_filename])
                 self.validate_invoice_collection(validation_result, updated_invoice_collection)
                 if validation_result.num_errors():
                     message = "validazione fallita - {} errori".format(validation_result.num_errors())
@@ -307,11 +321,16 @@ class InvoiceProgram(object):
                         new_invoices = validation_result.filter_validated_invoices(new_invoices)
                         if old_invoices or new_invoices or removed_doc_filenames:
                             self.logger.warning(message + ' - update parziale')
+                scan_date_times_l = []
                 if old_invoices:
                     db.update('invoices', 'doc_filename', old_invoices, connection=connection)
+                    for invoice in old_invoices:
+                        scan_date_times_l.append(scan_date_times[invoice.doc_filename])
                 if new_invoices:
                     db.write('invoices', new_invoices, connection=connection)
-                db.update('scan_date_times', 'doc_filename', scan_date_times, connection=connection)
+                    for invoice in new_invoices:
+                        scan_date_times_l.append(scan_date_times[invoice.doc_filename])
+                db.update('scan_date_times', 'doc_filename', scan_date_times_l, connection=connection)
             if removed_doc_filenames:
                 for doc_filename in removed_doc_filenames:
                     db.delete('invoices', '''doc_filename == {!r}'''.format(doc_filename), connection=connection)
@@ -327,6 +346,7 @@ class InvoiceProgram(object):
         return invoice_collection
 
     def validate_invoice_collection(self, validation_result, invoice_collection):
+        self.logger.debug("validation of {} invoices...".format(len(invoice_collection)))
         invoice_collection.process()
 
         # verify fields definition:
@@ -352,27 +372,35 @@ class InvoiceProgram(object):
 
         # verify numbering and dates per year
         for year in invoice_collection.years():
-            invoices = invoice_collection.filter(lambda invoice: invoice.year == year)
+            invoices = validation_result.filter_validated_invoices(invoice_collection.filter(lambda invoice: invoice.year == year))
             numbers = set()
-            expected_number = 0
+            expected_number = 1
             prev_doc, prev_date = None, None
             for invoice in invoices:
-                expected_number += 1
+                failed = False
                 if invoice.number != expected_number:
                     if invoice.number in numbers:
                         validation_result.add_error(invoice, InvoiceDuplicatedNumberError,
                             "fattura {}: il numero {} è duplicato".format(invoice.doc_filename, invoice.number, year, expected_number))
+                        failed = True
                     else:
                         validation_result.add_error(invoice, InvoiceWrongNumberError,
                             "fattura {}: il numero {} non è valido (il numero atteso per l'anno {} è {})".format(invoice.doc_filename, invoice.number, year, expected_number))
-                else:
-                    numbers.add(invoice.number)
+                        failed = True
                 if prev_date is not None:
                     if invoice.date is not None and invoice.date < prev_date:
                         validation_result.add_error(invoice, InvoiceDateError, "fattura {}: la data {} precede quella della precedente fattura {} ({})".format(invoice.doc_filename, invoice.date, prev_doc, prev_date))
-                prev_doc, prev_date = invoice.doc_filename, invoice.date
+                        failed = True
+                if not failed:
+                    expected_number += 1
+                    numbers.add(invoice.number)
+                    prev_doc, prev_date = invoice.doc_filename, invoice.date
 
         
+        self.logger.debug("validation of {} invoices completed with {} errors and {} warnings".format(
+            len(invoice_collection),
+            validation_result.num_errors(),
+            validation_result.num_warnings()))
         return validation_result
 
     def list_invoice_collection(self, invoice_collection, field_names, header=True):

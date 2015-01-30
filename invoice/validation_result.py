@@ -45,9 +45,9 @@ class ValidationResult(object):
             error_mode = self.ERROR_MODE_DEFAULT
 
         if error_mode == self.ERROR_MODE_LOG:
-            self._function_error = self._add_error
+            self._function_error = self.impl_add_error
         elif error_mode == self.ERROR_MODE_RAISE:
-            self._function_error = self._add_critical
+            self._function_error = self.impl_add_critical
         else: # pragma: no cover
             raise ValueError("error_mode {!r} non valido (i valori leciti sono {})".format(error_mode, '|'.join(self.ERROR_MODES)))
           
@@ -55,43 +55,52 @@ class ValidationResult(object):
             warning_mode = self.WARNING_MODE_DEFAULT
 
         if warning_mode == self.WARNING_MODE_LOG:
-            self._function_warning = self._add_warning
+            self._function_warning = self.impl_add_warning
         elif warning_mode == self.WARNING_MODE_ERROR:
             self._function_warning = self._function_error
         elif warning_mode == self.WARNING_MODE_IGNORE:
-            self._function_warning = self._ignore
+            self._function_warning = self.impl_ignore
         else: # pragma: no cover
             raise ValueError("warning_mode {!r} non valido (i valori leciti sono {})".format(warning_mode, '|'.join(self.WARNING_MODES)))
 
         self.warning_mode = warning_mode
         self.error_mode = error_mode
 
-    def filter_validated_invoices(self, invoices):
+    def filter_invoices(self, invoices):
         validated_invoices = []
+        failing_invoices = []
         for invoice in invoices:
-            if not invoice.doc_filename in self._failing_invoices:
+            if invoice.doc_filename in self._failing_invoices:
+                failing_invoices.append(invoice)
+            else:
                 validated_invoices.append(invoice)
-        return validated_invoices
+        return validated_invoices, failing_invoices
+
+    def filter_validated_invoices(self, invoices):
+        return self.filter_invoices(invoices)[0]
+
+    def filter_failing_invoices(self, invoices):
+        return self.filter_invoices(invoices)[1]
 
     def failing_invoices(self):
         return self._failing_invoices
 
-    def _add_critical(self, invoice, exc_type, message):
+    def impl_add_critical(self, invoice, exc_type, message):
         self._errors.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
         self._failing_invoices.add(invoice.doc_filename)
         self.logger.critical(message)
         raise exc_type(message)
 
-    def _add_error(self, invoice, exc_type, message):
+    def impl_add_error(self, invoice, exc_type, message):
         self._errors.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
         self._failing_invoices.add(invoice.doc_filename)
         self.logger.error(message)
 
-    def _add_warning(self, invoice, exc_type, message):
+    def impl_add_warning(self, invoice, exc_type, message):
         self._warnings.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
         self.logger.warning(message)
 
-    def _ignore(self, invoice, exc_type, message):
+    def impl_ignore(self, invoice, exc_type, message):
         pass
 
     def add_error(self, invoice, exc_type, message):
