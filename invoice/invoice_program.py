@@ -125,7 +125,7 @@ class InvoiceProgram(object):
                 else:
                     numbers.add(invoice.number)
                 if prev_date is not None:
-                    if invoice.date < prev_date:
+                    if invoice.date is not None and invoice.date < prev_date:
                         validation_result.add_error(invoice, InvoiceDateError, "fattura {}: la data {} precede quella della precedente fattura {} ({})".format(invoice.doc_filename, invoice.date, prev_doc, prev_date))
                 prev_doc, prev_date = invoice.doc_filename, invoice.date
 
@@ -198,7 +198,7 @@ anno                       {year}
                 self.print_function("""\
     + cliente:             {tax_code} ({name}):
       numero di fatture:   {num_invoices}
-      incasso totale:      {client_total_income}
+      incasso totale:      {client_total_income:.2f}
       incasso percentuale: {client_income_percentage:.2%}
       settimane:           {client_weeks}
 """.format(
@@ -226,7 +226,7 @@ anno                       {year}
                 self.print_function("""\
     + settimana:           {week} [{first_date} -> {last_date}]:
       numero di fatture:   {num_invoices}
-      incasso totale:      {week_total_income}
+      incasso totale:      {week_total_income:.2f}
       incasso percentuale: {week_income_percentage:.2%}
 """.format(
                     week=week,
@@ -280,6 +280,8 @@ anno                       {year}
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
         )
+        for doc_filename in validation_result.errors():
+            print("   ", doc_filename)
         return validation_result, invoice_collection
 
     def db_clear(self):
