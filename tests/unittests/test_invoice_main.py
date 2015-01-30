@@ -515,17 +515,19 @@ KNTCRK01G01H663Y 2014      5
             args=["help"]
         )
 
-    def test_invoice_main_default_subcommand(self):
+    def test_invoice_main_missing_subcommand(self):
         p = StringPrinter()
 
         p.reset()
-        if sys.version_info.minor >= 4:
+        if sys.version_info.minor >= 3:
+            # since python 3.3, missing subcommand does not raise
             invoice_main(
                 printer=p,
                 logger=self.logger,
                 args=[],
             )
         else:
+            # before python 3.2, missing subcommand raises SystemExit
             with self.assertRaises(SystemExit) as cm:
                 invoice_main(
                     printer=p,

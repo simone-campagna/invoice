@@ -550,7 +550,7 @@ e validati.
         )
     
         if not hasattr(args, 'function_name'):
-            return invoice_program.program_default_subcommand(parser=top_level_parser)
+            return invoice_program.program_missing_subcommand(parser=top_level_parser)
 
         function_argdict = {}
         for argument in args.function_arguments:

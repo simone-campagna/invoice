@@ -88,7 +88,7 @@ class InvoiceProgram(object):
         parser.print_help(file=self.printer.stream)
         return 0
 
-    def program_default_subcommand(self, *, parser):
+    def program_missing_subcommand(self, *, parser):
         parser.print_help(file=self.printer.stream)
         self.logger.error("deve essere specificato un comando")
         return 1
