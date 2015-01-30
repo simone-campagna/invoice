@@ -23,8 +23,11 @@ __all__ = [
     'VERSION',
     'RC_DIR_VAR',
     'DB_FILE_VAR',
+    'RC_DIR_EXPR',
+    'DB_FILE_EXPR',
     'RC_DIR',
     'DB_FILE',
+    'setup',
 ]
 
 import os
@@ -35,8 +38,24 @@ VERSION_PATCH = 0
 
 VERSION = '{}.{}.{}'.format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 
-RC_DIR_VAR = os.environ.get('INVOICE_RC_DIR', os.path.join('~', '.invoice'))
-DB_FILE_VAR = os.environ.get('INVOICE_DB_FILE', os.path.join(RC_DIR_VAR, 'invoices.db'))
+RC_DIR_VAR = 'INVOICE_RC_DIR'
+DB_FILE_VAR = 'INVOICE_DB_FILE'
 
-RC_DIR = os.path.expandvars(os.path.expanduser(RC_DIR_VAR))
-DB_FILE = os.path.expandvars(os.path.expanduser(DB_FILE_VAR))
+
+def setup():
+    global RC_DIR_EXPR
+    global DB_FILE_EXPR
+    global RC_DIR
+    global DB_FILE
+    RC_DIR_EXPR = os.environ.get(RC_DIR_VAR, os.path.join('~', '.invoice'))
+    DB_FILE_EXPR = os.environ.get(DB_FILE_VAR, 'invoices.db')
+    RC_DIR = os.path.expandvars(os.path.expanduser(RC_DIR_EXPR))
+    DB_FILE = os.path.expandvars(os.path.expanduser(DB_FILE_EXPR))
+
+    if not os.path.isabs(RC_DIR):
+        RC_DIR = os.path.abspath(RC_DIR)
+
+    if not os.path.isabs(DB_FILE):
+        DB_FILE = os.path.join(RC_DIR, DB_FILE)
+
+setup()

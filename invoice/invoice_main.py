@@ -27,7 +27,13 @@ import traceback
 
 from .database.filecopy import tempcopy, nocopy
 from .error import InvoiceSyntaxError
-from .conf import VERSION, DB_FILE, DB_FILE_VAR
+from .conf import VERSION, \
+                  DB_FILE_VAR, \
+                  DB_FILE_EXPR, \
+                  DB_FILE, \
+                  RC_DIR_VAR, \
+                  RC_DIR_EXPR, \
+                  RC_DIR
 from .log import get_default_logger, set_verbose_level
 from .invoice import Invoice
 from .validation_result import ValidationResult
@@ -81,6 +87,10 @@ def invoice_main(print_function=print, logger=None, args=None):
         add_help=False,
     )
 
+    common_parser.add_argument("--help", "-h",
+        action="help",
+        help="mostra questo help e termina")
+
     common_parser.add_argument("--db", "-d",
         metavar="F",
         dest="db_filename",
@@ -123,7 +133,12 @@ La directory 'example' contiene alcuni file di esempio.
 Le fatture lette e processsate vengono archiviate in un database SQLite;
 questo database è normalmente in
 
-{db_filename}
+{db_file_expr}
+
+Due variabili d'ambiente controllano questo path:
+* {rc_dir_var} (default={rc_dir_expr}):
+  directory contenente il db file
+* {db_file_var} (default=[${rc_dir_var}/]{db_file_expr}):
 
 Il comando 'init' inizializza il database; in questa fase vengono
 fissate alcune opzioni, in particolare i pattern utilizzati per la
@@ -161,9 +176,14 @@ fattura:                  'example/2014_001_bruce_wayne.doc'
   importo:                51.00 [euro]
 ...
 
-""".format(db_filename=DB_FILE_VAR, version=VERSION),
+""".format(db_file_var=DB_FILE_VAR,
+           db_file_expr=DB_FILE_EXPR,
+           rc_dir_var=RC_DIR_VAR,
+           rc_dir_expr=RC_DIR_EXPR,
+           version=VERSION),
         epilog="",
         parents=(common_parser, ),
+        add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
@@ -173,6 +193,7 @@ fattura:                  'example/2014_001_bruce_wayne.doc'
     init_parser = subparsers.add_parser(
         "init",
         parents=(common_parser, ),
+        add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Inizializza il database. Deve essere fornito almeno un pattern, ad
@@ -189,6 +210,7 @@ $ %(prog)s init 'docs/*.doc'
     config_parser = subparsers.add_parser(
         "config",
         parents=(common_parser, ),
+        add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Accesso alla configurazione del database. Questo comando permette di
@@ -204,6 +226,7 @@ vedere configurazione e pattern (opzione --show/-s) e/o di modificarli.
     scan_parser = subparsers.add_parser(
         "scan",
         parents=(common_parser, ),
+        add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Esegue una scansione alla ricerca di DOC di fattura nuovi o modificati
@@ -238,6 +261,7 @@ il relativo DOC file non sia stato modificato.
     clear_parser = subparsers.add_parser(
         "clear",
         parents=(common_parser, ),
+        add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Rimuove tutte le fatture dal database.
@@ -252,6 +276,7 @@ Rimuove tutte le fatture dal database.
     validate_parser = subparsers.add_parser(
         "validate",
         parents=(common_parser, ),
+        add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Esegue una validazione del contenuto del database.
@@ -266,6 +291,7 @@ Esegue una validazione del contenuto del database.
     list_parser = subparsers.add_parser(
         "list",
         parents=(common_parser, ),
+        add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Mostra una lista delle fatture contenute nel database.
@@ -280,6 +306,7 @@ Mostra una lista delle fatture contenute nel database.
     dump_parser = subparsers.add_parser(
         "dump",
         parents=(common_parser, ),
+        add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Mostra tutti i dettagli delle fatture contenute nel database.
@@ -294,6 +321,7 @@ Mostra tutti i dettagli delle fatture contenute nel database.
     report_parser = subparsers.add_parser(
         "report",
         parents=(common_parser, ),
+        add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Mostra un report per anno delle fatture contenute nel database.
@@ -323,6 +351,7 @@ Per ciascun anno, vengono mostrate le seguenti informazioni:
     legacy_parser = subparsers.add_parser(
         "legacy",
         parents=(common_parser, ),
+        add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Modalità 'legacy': emula l'interfaccia della versione 1.X di %(prog)s,

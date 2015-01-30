@@ -155,7 +155,6 @@ configuration:
         self.logger = get_null_logger()
         self.maxDiff = None
 
-    # invoice
     def test_invoice_main(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = Print()
