@@ -138,7 +138,7 @@ END"""
         self.warn_remove_orphaned(configuration.remove_orphaned)
         return configuration
 
-    def store_invoice_collection(self, invoice_collection, connection=None):
+    def store_invoice_collection(self, invoice_collection, connection=None): # pragma: no cover
         with self.connect(connection) as connection:
             self.write('invoices', invoice_collection, connection=connection)
             
