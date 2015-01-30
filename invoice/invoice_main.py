@@ -95,7 +95,7 @@ def invoice_main(print_function=print, logger=None, args=None):
         metavar="F",
         dest="db_filename",
         default=DB_FILE,
-        help="file contenete il database")
+        help="file contenente il database")
 
     common_parser.add_argument("--verbose", "-v",
         dest="verbose_level",
