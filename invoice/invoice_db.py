@@ -95,16 +95,16 @@ DELETE FROM scan_date_times WHERE doc_filename == old.doc_filename;
 END"""
             self.execute(cursor, sql)
 
-    def show_configuration(self, print_function=print, connection=None):
+    def show_configuration(self, printer=print, connection=None):
         with self.connect(connection) as connection:
-            print_function("patterns:")
+            printer("patterns:")
             for pattern in self.load_patterns(connection=connection):
-                print_function("  + {!r}".format(pattern))
-            print_function()
-            print_function("configuration:")
+                printer("  + {!r}".format(pattern))
+            printer()
+            printer("configuration:")
             configuration = self.load_configuration(connection=connection)
             for field_name in self.Configuration._fields:
-                print_function("  + {:20s} = {!r}".format(field_name, getattr(configuration, field_name)))
+                printer("  + {:20s} = {!r}".format(field_name, getattr(configuration, field_name)))
 
     def configure(self, patterns, partial_update=None, remove_orphaned=None, connection=None):
         with self.connect(connection) as connection:

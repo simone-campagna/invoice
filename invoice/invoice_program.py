@@ -63,10 +63,10 @@ class InvoiceProgram(object):
     LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
     LIST_FIELD_NAMES_FULL = Invoice._fields
 
-    def __init__(self, db_filename, logger, print_function=print, trace=False):
+    def __init__(self, db_filename, logger, printer=print, trace=False):
         self.db_filename = db_filename
         self.logger = logger
-        self.print_function = print_function
+        self.printer = printer
         self.trace = trace
         self.db = InvoiceDb(self.db_filename, self.logger)
         self._week_manager = WeekManager()
@@ -84,12 +84,12 @@ class InvoiceProgram(object):
             error_mode=error_mode,
         )
 
-    def program_help(self, *, parser, stream):
-        parser.print_help(file=stream)
+    def program_help(self, *, parser):
+        parser.print_help(file=self.printer.stream)
         return 0
 
-    def program_default_subcommand(self, *, parser, stream):
-        parser.print_help(file=stream)
+    def program_default_subcommand(self, *, parser):
+        parser.print_help(file=self.printer.stream)
         self.logger.error("deve essere specificato un comando")
         return 1
 
@@ -181,7 +181,7 @@ class InvoiceProgram(object):
                 partial_update=partial_update,
             )
         if show:
-            self.db.show_configuration(print_function=self.print_function)
+            self.db.show_configuration(printer=self.printer)
 
     def impl_clear(self):
         self.db.check()
@@ -443,13 +443,13 @@ class InvoiceProgram(object):
             lengths = [max(len(row[c]) for row in data) for c, f in enumerate(field_names)]
             fmt = " ".join("{{row[{i}]:{align}{{lengths[{i}]}}s}}".format(i=i, align=aligns.get(f, '<')) for i, f in enumerate(field_names))
             for row in data:
-                self.print_function(fmt.format(row=row, lengths=lengths))
+                self.printer(fmt.format(row=row, lengths=lengths))
 
     def dump_invoice_collection(self, invoice_collection):
         invoice_collection.process()
         digits = 1 + int(math.log10(max(1, len(invoice_collection))))
         for invoice in invoice_collection:
-            self.print_function("""\
+            self.printer("""\
 fattura:                   {doc_filename!r}
   anno/numero:             {year}/{number:0{digits}d}
   città/data:              {city}/{date}
@@ -466,7 +466,7 @@ fattura:                   {doc_filename!r}
             for invoice in year_invoices:
                 td.setdefault(invoice.tax_code, []).append(invoice)
                 wd.setdefault(self.get_week_number(invoice.date), []).append(invoice)
-            self.print_function("""\
+            self.printer("""\
 anno                       {year}
   * numero di fatture:     {num_invoices}
   * numero di clienti:     {num_clients}\
@@ -483,7 +483,7 @@ anno                       {year}
                 else:
                     client_income_percentage = 0.0
                 client_weeks = sorted(set(self.get_week_number(invoice.date) for invoice in invoices))
-                self.print_function("""\
+                self.printer("""\
     + cliente:             {tax_code} ({name}):
       numero di fatture:   {num_invoices}
       incasso totale:      {client_total_income:.2f}
@@ -498,7 +498,7 @@ anno                       {year}
                     client_income_percentage=client_income_percentage,
                     client_weeks=', '.join(repr(week) for week in client_weeks),
                 ))
-            self.print_function("""\
+            self.printer("""\
   * numero di settimane:   {num_weeks}\
 """.format(
                 num_weeks=len(wd),
@@ -511,7 +511,7 @@ anno                       {year}
                 else:
                     week_income_percentage = 0.0
                 first_date, last_date = self.get_week_range(year, week)
-                self.print_function("""\
+                self.printer("""\
     + settimana:           {week} [{first_date} -> {last_date}]:
       numero di fatture:   {num_invoices}
       incasso totale:      {week_total_income:.2f}

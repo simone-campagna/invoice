@@ -38,8 +38,9 @@ from .log import get_default_logger, set_verbose_level
 from .invoice import Invoice
 from .validation_result import ValidationResult
 from .invoice_program import InvoiceProgram
+from .stream_printer import StreamPrinter
 
-def invoice_main(print_function=print, logger=None, args=None, stream=sys.stdout):
+def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     if args is None:
         args = sys.argv[1:]
     if logger is None:
@@ -202,7 +203,6 @@ Stampa l'help
     help_parser.set_defaults(
         function_name="program_help",
         parser=top_level_parser,
-        stream=stream,
         function_arguments=('parser', ),
     )
 
@@ -545,12 +545,12 @@ e validati.
         invoice_program = InvoiceProgram(
             db_filename=fcm.get_filename(),
             logger=logger,
-            print_function=print_function,
+            printer=printer,
             trace=args.trace,
         )
     
         if not hasattr(args, 'function_name'):
-            return invoice_program.program_default_subcommand(parser=top_level_parser, stream=stream)
+            return invoice_program.program_default_subcommand(parser=top_level_parser)
 
         function_argdict = {}
         for argument in args.function_arguments:

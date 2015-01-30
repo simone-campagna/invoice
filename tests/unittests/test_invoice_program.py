@@ -41,19 +41,7 @@ from invoice.invoice_collection import InvoiceCollection
 from invoice.invoice import Invoice
 from invoice.database.db_types import Path
 from invoice.validation_result import ValidationResult
-
-class Print(object):
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self._s = io.StringIO()
-
-    def __call__(self, *p_args, **n_args):
-        return print(file=self._s, *p_args, **n_args)
-
-    def string(self):
-        return self._s.getvalue()
+from invoice.string_printer import StringPrinter
 
 class TestInvoiceProgram(unittest.TestCase):
     DUMP_OUTPUT = """\
@@ -206,12 +194,12 @@ anno                       2012
     # invoice
     def test_InvoiceProgram(self):
         with tempfile.NamedTemporaryFile() as db_file:
-            p = Print()
+            p = StringPrinter()
             invoice_program = InvoiceProgram(
                 db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
-                print_function=p,
+                printer=p,
             )
             invoice_program.impl_init(
                 patterns=[os.path.join(self.dirname, '*.doc')],
@@ -260,13 +248,13 @@ KNTCRK01G01H663Y 2014      5
 
     def test_InvoiceProgramOk(self):
         with tempfile.NamedTemporaryFile() as db_file:
-            p = Print()
+            p = StringPrinter()
 
             invoice_program = InvoiceProgram(
                 db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
-                print_function=p,
+                printer=p,
             )
 
             p.reset()
@@ -293,13 +281,13 @@ KNTCRK01G01H663Y 2014      5
 
     def test_InvoiceProgramError(self):
         with tempfile.NamedTemporaryFile() as db_file:
-            p = Print()
+            p = StringPrinter()
 
             invoice_program = InvoiceProgram(
                 db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
-                print_function=p,
+                printer=p,
             )
 
             p.reset()
@@ -317,12 +305,12 @@ KNTCRK01G01H663Y 2014      5
 
     def test_InvoiceProgram_validate_ok(self):
         with tempfile.NamedTemporaryFile() as db_file:
-            p = Print()
+            p = StringPrinter()
             invoice_program = InvoiceProgram(
                 db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
-                print_function=p,
+                printer=p,
             )
     
             invoice_collection = InvoiceCollection(self._invoices, logger=self.logger)
@@ -333,12 +321,12 @@ KNTCRK01G01H663Y 2014      5
     
     def test_InvoiceProgram_validate_warning_multiple_names(self):
         with tempfile.NamedTemporaryFile() as db_file:
-            p = Print()
+            p = StringPrinter()
             invoice_program = InvoiceProgram(
                 db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
-                print_function=p,
+                printer=p,
             )
     
             invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_parker_peter], logger=self.logger)
@@ -351,12 +339,12 @@ KNTCRK01G01H663Y 2014      5
     
     def test_InvoiceProgram_validate_error_wrong_date(self):
         with tempfile.NamedTemporaryFile() as db_file:
-            p = Print()
+            p = StringPrinter()
             invoice_program = InvoiceProgram(
                 db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
-                print_function=p,
+                printer=p,
             )
     
             invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_peter_parker_wrong_date], logger=self.logger)
@@ -371,12 +359,12 @@ KNTCRK01G01H663Y 2014      5
     
     def test_InvoiceProgram_validate_error_wrong_number(self):
         with tempfile.NamedTemporaryFile() as db_file:
-            p = Print()
+            p = StringPrinter()
             invoice_program = InvoiceProgram(
                 db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
-                print_function=p,
+                printer=p,
             )
     
             invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_peter_parker_wrong_number], logger=self.logger)
@@ -392,12 +380,12 @@ KNTCRK01G01H663Y 2014      5
     
     def test_InvoiceProgram_validate_error_duplicated_number(self):
         with tempfile.NamedTemporaryFile() as db_file:
-            p = Print()
+            p = StringPrinter()
             invoice_program = InvoiceProgram(
                 db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
-                print_function=p,
+                printer=p,
             )
     
             invoice_collection = InvoiceCollection(self._invoices + [self._invoice_004_peter_parker_duplicated_number], logger=self.logger)
@@ -413,12 +401,12 @@ KNTCRK01G01H663Y 2014      5
         
     def _test_InvoiceProgram_undefined_field(self, warning_mode):
         with tempfile.NamedTemporaryFile() as db_file:
-            p = Print()
+            p = StringPrinter()
             invoice_program = InvoiceProgram(
                 db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
-                print_function=p,
+                printer=p,
             )
     
             invoice_a = Invoice(
@@ -469,12 +457,12 @@ KNTCRK01G01H663Y 2014      5
 
     def test_InvoiceProgram_malformed_tax_code(self):
         with tempfile.NamedTemporaryFile() as db_file:
-            p = Print()
+            p = StringPrinter()
             invoice_program = InvoiceProgram(
                 db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
-                print_function=p,
+                printer=p,
             )
     
             invoice_program.impl_init(
@@ -500,12 +488,12 @@ KNTCRK01G01H663Y 2014      5
 
     def test_InvoiceProgram_zero_income(self):
         with tempfile.NamedTemporaryFile() as db_file:
-            p = Print()
+            p = StringPrinter()
             invoice_program = InvoiceProgram(
                 db_filename=db_file.name,
                 logger=self.logger,
                 trace=False,
-                print_function=p,
+                printer=p,
             )
     
             invoice_program.impl_init(
@@ -547,12 +535,12 @@ KNTCRK01G01H663Y 2014      5
                 staged_doc_filenames.append(staged_doc_filename)
                 shutil.copy(doc_filename, staged_doc_filename)
 
-            p = Print()
+            p = StringPrinter()
             invoice_program = InvoiceProgram(
                 db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
-                print_function=p,
+                printer=p,
             )
     
             invoice_program.impl_init(

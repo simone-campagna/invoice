@@ -30,19 +30,7 @@ from invoice.log import get_default_logger, get_null_logger
 from invoice.invoice_collection import InvoiceCollection
 from invoice.invoice_main import invoice_main
 from invoice.database.db_types import Path
-
-class Print(object):
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self._s = io.StringIO()
-
-    def __call__(self, *p_args, **n_args):
-        return print(file=self._s, *p_args, **n_args)
-
-    def string(self):
-        return self._s.getvalue()
+from invoice.string_printer import StringPrinter
 
 class Test_invoice_main(unittest.TestCase):
     DUMP_OUTPUT = """\
@@ -157,11 +145,11 @@ configuration:
 
     def test_invoice_main(self):
         with tempfile.NamedTemporaryFile() as db_filename:
-            p = Print()
+            p = StringPrinter()
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
             )
@@ -169,7 +157,7 @@ configuration:
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'scan'],
             )
@@ -177,7 +165,7 @@ configuration:
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'scan'],
             )
@@ -185,7 +173,7 @@ configuration:
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number'],
             )
@@ -200,7 +188,7 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'dump'],
             )
@@ -208,7 +196,7 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'report', '-y', '2014'],
             )
@@ -216,7 +204,7 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'report', '-y', '2014,2015'],
             )
@@ -224,7 +212,7 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--filter', 'number % 2 == 0', '--filter=tax_code.startswith("P")'],
             )
@@ -235,7 +223,7 @@ PRKPRT01G01H663Y 2014      2
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'validate'],
             )
@@ -244,7 +232,7 @@ PRKPRT01G01H663Y 2014      2
             p.reset()
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'clear'],
             )
@@ -252,7 +240,7 @@ PRKPRT01G01H663Y 2014      2
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
             )
@@ -260,7 +248,7 @@ PRKPRT01G01H663Y 2014      2
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header', '--filter', 'città == Rome'], # InvoiceSyntaxError
             )
@@ -268,11 +256,11 @@ PRKPRT01G01H663Y 2014      2
 
     def test_invoice_main_err(self):
         with tempfile.NamedTemporaryFile() as db_filename:
-            p = Print()
+            p = StringPrinter()
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
             )
@@ -280,7 +268,7 @@ PRKPRT01G01H663Y 2014      2
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'scan'],
             )
@@ -288,7 +276,7 @@ PRKPRT01G01H663Y 2014      2
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number'],
             )
@@ -303,11 +291,11 @@ KNTCRK01G01H663Y 2014      5
 
     def test_invoice_main_err_partial_update_off(self):
         with tempfile.NamedTemporaryFile() as db_filename:
-            p = Print()
+            p = StringPrinter()
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'init', '--partial-update=off', os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
             )
@@ -315,7 +303,7 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'scan'],
             )
@@ -323,7 +311,7 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
             )
@@ -331,11 +319,11 @@ KNTCRK01G01H663Y 2014      5
 
     def test_invoice_main_config_partial_update_on(self):
         with tempfile.NamedTemporaryFile() as db_filename:
-            p = Print()
+            p = StringPrinter()
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
             )
@@ -343,7 +331,7 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'config', '--partial-update=on', '--show'],
             )
@@ -351,11 +339,11 @@ KNTCRK01G01H663Y 2014      5
 
     def test_invoice_main_config_partial_update_off(self):
         with tempfile.NamedTemporaryFile() as db_filename:
-            p = Print()
+            p = StringPrinter()
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
             )
@@ -363,7 +351,7 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'config', '--partial-update=off', '--show'],
             )
@@ -371,11 +359,11 @@ KNTCRK01G01H663Y 2014      5
 
     def test_invoice_main_config_partial_update(self):
         with tempfile.NamedTemporaryFile() as db_filename:
-            p = Print()
+            p = StringPrinter()
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
             )
@@ -383,7 +371,7 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'config', '--partial-update', '--show'],
             )
@@ -391,11 +379,11 @@ KNTCRK01G01H663Y 2014      5
 
     def test_invoice_main_config(self):
         with tempfile.NamedTemporaryFile() as db_filename:
-            p = Print()
+            p = StringPrinter()
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
             )
@@ -403,7 +391,7 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'config', '--show'],
             )
@@ -411,11 +399,11 @@ KNTCRK01G01H663Y 2014      5
 
     def test_invoice_main_config_add_remove_patterns(self):
         with tempfile.NamedTemporaryFile() as db_filename:
-            p = Print()
+            p = StringPrinter()
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
             )
@@ -423,7 +411,7 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'config', '-p', 'example/*.Doc', '-p', 'example/*.DOC', '--show'],
             )
@@ -431,7 +419,7 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'config', '-x', 'example/*.Doc', '-x', 'example/*.DOC', '--show'],
             )
@@ -439,11 +427,11 @@ KNTCRK01G01H663Y 2014      5
 
     def test_invoice_main_dry_run(self):
         with tempfile.NamedTemporaryFile() as db_filename:
-            p = Print()
+            p = StringPrinter()
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
             )
@@ -451,7 +439,7 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
             )
@@ -459,14 +447,14 @@ KNTCRK01G01H663Y 2014      5
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'scan', '--dry-run'],
             )
 
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
             )
@@ -474,12 +462,12 @@ KNTCRK01G01H663Y 2014      5
 
     def _test_invoice_main_global_options(self, *global_options):
         with tempfile.NamedTemporaryFile() as db_filename:
-            p = Print()
+            p = StringPrinter()
 
             args = list(global_options) + ['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')]
             p.reset()
             invoice_main(
-                print_function=p,
+                printer=p,
                 logger=self.logger,
                 args=args,
             )
@@ -494,13 +482,13 @@ KNTCRK01G01H663Y 2014      5
         self._test_invoice_main_global_options('-vvv')
 
     def test_invoice_main_legacy(self):
-        p = Print()
+        p = StringPrinter()
 
         pattern = os.path.join(self.dirname, '*.doc')
 
         p.reset()
         invoice_main(
-            print_function=p,
+            printer=p,
             logger=self.logger,
             args=['legacy', pattern, '-l']
         )
@@ -509,7 +497,7 @@ KNTCRK01G01H663Y 2014      5
 
         p.reset()
         invoice_main(
-            print_function=p,
+            printer=p,
             logger=self.logger,
             args=['legacy', pattern, '-r']
         )
@@ -517,25 +505,21 @@ KNTCRK01G01H663Y 2014      5
         self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.REPORT_OUTPUT)
 
     def test_invoice_main_help(self):
-        p = Print()
+        p = StringPrinter()
 
         p.reset()
-        s = io.StringIO()
         invoice_main(
-            print_function=p,
-            stream=s,
+            printer=p,
             logger=self.logger,
             args=["help"]
         )
 
     def test_invoice_main_default_subcommand(self):
-        p = Print()
+        p = StringPrinter()
 
         p.reset()
-        s = io.StringIO()
         invoice_main(
-            print_function=p,
-            stream=s,
+            printer=p,
             logger=self.logger,
             args=[],
         )
