@@ -23,6 +23,7 @@ __all__ = [
 import datetime
 import io
 import os
+import sys
 import tempfile
 import unittest
 
@@ -518,9 +519,18 @@ KNTCRK01G01H663Y 2014      5
         p = StringPrinter()
 
         p.reset()
-        invoice_main(
-            printer=p,
-            logger=self.logger,
-            args=[],
-        )
+        if sys.version_info.minor >= 4:
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=[],
+            )
+        else:
+            with self.assertRaises(SystemExit) as cm:
+                invoice_main(
+                    printer=p,
+                    logger=self.logger,
+                    args=[],
+                )
+            self.assertEqual(cm.exception.code == 2)
 
