@@ -83,42 +83,42 @@ anno                       2014
   * numero di clienti:     4
     + cliente:             WNYBRC01G01H663Y (Bruce Wayne):
       numero di fatture:   2
-      incasso totale:      102.0
+      incasso totale:      102.00
       incasso percentuale: 23.56%
       settimane:           1, 4
 
     + cliente:             PRKPRT01G01H663Y (Peter B. Parker):
       numero di fatture:   1
-      incasso totale:      76.5
+      incasso totale:      76.50
       incasso percentuale: 17.67%
       settimane:           1
 
     + cliente:             BNNBRC01G01H663Y (Robert Bruce Banner):
       numero di fatture:   1
-      incasso totale:      102.0
+      incasso totale:      102.00
       incasso percentuale: 23.56%
       settimane:           4
 
     + cliente:             KNTCRK01G01H663Y (Clark Kent):
       numero di fatture:   1
-      incasso totale:      152.5
+      incasso totale:      152.50
       incasso percentuale: 35.22%
       settimane:           5
 
   * numero di settimane:   3
     + settimana:           1 [2014-01-01 -> 2014-01-05]:
       numero di fatture:   2
-      incasso totale:      127.5
+      incasso totale:      127.50
       incasso percentuale: 29.45%
 
     + settimana:           4 [2014-01-20 -> 2014-01-26]:
       numero di fatture:   2
-      incasso totale:      153.0
+      incasso totale:      153.00
       incasso percentuale: 35.33%
 
     + settimana:           5 [2014-01-27 -> 2014-02-02]:
       numero di fatture:   1
-      incasso totale:      152.5
+      incasso totale:      152.50
       incasso percentuale: 35.22%
 
 """

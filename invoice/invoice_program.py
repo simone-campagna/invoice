@@ -83,6 +83,249 @@ class InvoiceProgram(object):
             warning_mode=warning_mode,
             error_mode=error_mode,
         )
+
+    def program_config(self, *, patterns, show, partial_update=True, remove_orphaned=False):
+        self.impl_config(patterns=patterns, show=show, partial_update=partial_update, remove_orphaned=remove_orphaned)
+        return 0
+
+    def program_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=False):
+        validation_result, invoice_collection = self.impl_scan(
+            warning_mode=warning_mode,
+            error_mode=error_mode,
+            partial_update=partial_update,
+            remove_orphaned=remove_orphaned,
+        )
+        return validation_result.num_errors()
+
+    def program_clear(self):
+        self.impl_clear()
+        return 0
+
+    def program_validate(self, *, warning_mode, error_mode):
+        self.impl_validate(warning_mode=warning_mode, error_mode=error_mode)
+        return 0
+
+    def program_list(self, *, field_names=None, header=True, filters=None):
+        self.impl_list(field_names=field_names, header=header, filters=filters)
+        return 0
+
+    def program_dump(self, *, filters=None):
+        self.impl_dump(filters=filters)
+        return 0
+
+    def program_report(self, *, filters=None):
+        self.impl_report(filters=filters)
+        return 0
+
+    def legacy(self, patterns, filters, validate, list, report, warning_mode, error_mode):
+        self.impl_legacy(
+            patterns=patterns,
+            filters=filters,
+            validate=validate,
+            list=list,
+            report=report,
+            warning_mode=warning_mode,
+            error_mode=error_mode,
+        )
+        return 0
+
+    ## implementations:
+    def impl_init(self, *, patterns, reset, partial_update=True, remove_orphaned=False):
+        if reset and os.path.exists(self.db_filename):
+            self.logger.info("cancellazione del db {!r}...".format(self.db_filename))
+            os.remove(self.db_filename)
+        self.db.initialize()
+        self.db.configure(
+            patterns=patterns,
+            remove_orphaned=remove_orphaned,
+            partial_update=partial_update,
+        )
+       
+    def impl_config(self, *, patterns, show, partial_update=True, remove_orphaned=False):
+        new_patterns = []
+        del_patterns = []
+        for sign, pattern in patterns:
+            if sign == '+':
+                new_patterns.append(self.db.Pattern(pattern=Path.db_to(pattern)))
+            elif sign == '-':
+                del_patterns.append(self.db.Pattern(pattern=Path.db_to(pattern)))
+        if new_patterns:
+            self.db.write('patterns', new_patterns)
+        if del_patterns:
+            for pattern in del_patterns:
+                self.db.delete('patterns', "pattern == {!r}".format(pattern.pattern))
+        self.db.configure(
+                patterns=None,
+                remove_orphaned=remove_orphaned,
+                partial_update=partial_update,
+            )
+        if show:
+            self.db.show_configuration(print_function=self.print_function)
+
+    def impl_clear(self):
+        self.db.check()
+        self.db.delete('invoices')
+
+    def impl_validate(self, *, warning_mode, error_mode):
+        self.db.check()
+        invoice_collection = self.db.load_invoice_collection()
+        validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
+        self.validate_invoice_collection(validation_result, invoice_collection)
+        return validation_result.num_errors()
+
+    def impl_list(self, *, field_names=None, header=True, filters=None):
+        if field_names is None:
+            field_names = Invoice._fields
+        if filters is None:
+            filters = ()
+        self.db.check()
+        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
+        self.list_invoice_collection(invoice_collection, header=header, field_names=field_names)
+
+    def impl_dump(self, *, filters=None):
+        self.db.check()
+        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
+        self.dump_invoice_collection(invoice_collection)
+
+    def impl_report(self, *, filters=None):
+        if filters is None:
+            filters = ()
+        self.db.check()
+        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
+        self.report_invoice_collection(invoice_collection)
+
+    def impl_legacy(self, patterns, filters, validate, list, report, warning_mode, error_mode):
+        invoice_collection_reader = InvoiceCollectionReader(trace=self.trace)
+
+        invoice_collection = invoice_collection_reader(*patterns)
+
+        if validate is None:
+            validate = any([report])
+
+        try:
+            if validate:
+                self.logger.debug("validazione di {} fatture...".format(len(invoice_collection)))
+                validation_result=self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
+                validation_result = self.validate_invoice_collection(validation_result, invoice_collection)
+                if validation_result.num_errors():
+                    self.logger.error("trovati #{} errori!".format(validation_result.num_errors()))
+                    return 1
+    
+            invoice_collection = self.filter_invoice_collection(invoice_collection, filters)
+    
+            if list:
+                self.logger.debug("lista di {} fatture...".format(len(invoice_collection)))
+                self.dump_invoice_collection(invoice_collection)
+    
+            if report:
+                self.logger.debug("report di {} fatture...".format(len(invoice_collection)))
+                self.report_invoice_collection(invoice_collection)
+    
+        except Exception as err:
+            if self.trace:
+                traceback.print_exc()
+            self.logger.error("{}: {}\n".format(type(err).__name__, err))
+
+    def impl_scan(self, warning_mode=None, error_mode=None, partial_update=None, remove_orphaned=None):
+        self.db.check()
+        found_doc_filenames = set()
+        db = self.db
+        file_date_times = FileDateTimes()
+        updated_invoice_collection = InvoiceCollection()
+        removed_doc_filenames = []
+        with db.connect() as connection:
+            configuration = db.load_configuration(connection)
+            if remove_orphaned is None:
+                remove_orphaned = configuration.remove_orphaned
+            if partial_update is None:
+                partial_update = configuration.partial_update
+
+            for pattern in db.load_patterns(connection=connection):
+                for doc_filename in glob.glob(pattern.pattern):
+                    found_doc_filenames.add(Path.db_to(doc_filename))
+            doc_filename_d = {}
+            for scan_date_time in db.read('scan_date_times', connection=connection):
+                doc_filename_d[scan_date_time.doc_filename] = scan_date_time.scan_date_time
+
+            result = []
+            scanned_doc_filenames = set()
+
+            # update scanned invoices
+            invoice_collection = db.load_invoice_collection()
+            for invoice in invoice_collection:
+                scanned_doc_filenames.add(invoice.doc_filename)
+                to_remove = False
+                if not os.path.exists(invoice.doc_filename):
+                    to_update = False
+                    if remove_orphaned:
+                        to_remove = True
+                elif not invoice.doc_filename in doc_filename_d:
+                    to_update = True
+                elif doc_filename_d[invoice.doc_filename] < file_date_times[invoice.doc_filename]:
+                    to_update = True
+                else:
+                    to_update = False
+                if to_remove:
+                    removed_doc_filenames.append(invoice.doc_filename)
+                else:
+                    if to_update:
+                        result.append((True, invoice.doc_filename))
+                    else:
+                        updated_invoice_collection.add(invoice)
+          
+            # unscanned invoices
+            for doc_filename in found_doc_filenames.difference(scanned_doc_filenames):
+                result.append((False, doc_filename))
+
+            validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
+            if result:
+                invoice_reader = InvoiceReader(logger=self.logger)
+                new_invoices = []
+                old_invoices = []
+                scan_date_times = []
+                for existing, doc_filename in result:
+                    try:
+                        invoice = invoice_reader(doc_filename)
+                    except Exception as err:
+                        if self.trace:
+                            traceback.print_exc()
+                        self.logger.error("fattura {!r}: {}: {}".format(doc_filename, type(err).__name__, err))
+                        continue
+                    updated_invoice_collection.add(invoice_reader(doc_filename))
+                    if existing:
+                        old_invoices.append(invoice)
+                    else:
+                        new_invoices.append(invoice)
+                    scan_date_times.append(db.ScanDateTime(doc_filename=invoice.doc_filename, scan_date_time=file_date_times[invoice.doc_filename]))
+                self.validate_invoice_collection(validation_result, updated_invoice_collection)
+                if validation_result.num_errors():
+                    message = "validazione fallita - {} errori".format(validation_result.num_errors())
+                    if not partial_update:
+                        raise InvoiceValidationError(message)
+                    else:
+                        old_invoices = validation_result.filter_validated_invoices(old_invoices)
+                        new_invoices = validation_result.filter_validated_invoices(new_invoices)
+                        if old_invoices or new_invoices or removed_doc_filenames:
+                            self.logger.warning(message + ' - update parziale')
+                if old_invoices:
+                    db.update('invoices', 'doc_filename', old_invoices, connection=connection)
+                if new_invoices:
+                    db.write('invoices', new_invoices, connection=connection)
+                db.update('scan_date_times', 'doc_filename', scan_date_times, connection=connection)
+            if removed_doc_filenames:
+                for doc_filename in removed_doc_filenames:
+                    db.delete('invoices', '''doc_filename == {!r}'''.format(doc_filename), connection=connection)
+        return validation_result, updated_invoice_collection
+
+    ## functions
+    def filter_invoice_collection(self, invoice_collection, filters):
+        if filters:
+            self.logger.debug("applicazione filtri su {} fatture...".format(len(invoice_collection)))
+            for filter_source in filters:
+                self.logger.debug("applicazione filtro {!r} su {} fatture...".format(filter_source, len(invoice_collection)))
+                invoice_collection = invoice_collection.filter(filter_source)
+        return invoice_collection
+
     def validate_invoice_collection(self, validation_result, invoice_collection):
         invoice_collection.process()
 
@@ -239,209 +482,6 @@ anno                       {year}
                 ))
         
 
-    def db_init(self, *, patterns, reset, partial_update=True, remove_orphaned=False):
-        if reset and os.path.exists(self.db_filename):
-            self.logger.info("cancellazione del db {!r}...".format(self.db_filename))
-            os.remove(self.db_filename)
-        self.db.initialize()
-        self.db.configure(
-            patterns=patterns,
-            remove_orphaned=remove_orphaned,
-            partial_update=partial_update,
-        )
-       
-
-    def db_config(self, *, patterns, show, partial_update=True, remove_orphaned=False):
-        new_patterns = []
-        del_patterns = []
-        for sign, pattern in patterns:
-            if sign == '+':
-                new_patterns.append(self.db.Pattern(pattern=Path.db_to(pattern)))
-            elif sign == '-':
-                del_patterns.append(self.db.Pattern(pattern=Path.db_to(pattern)))
-        if new_patterns:
-            self.db.write('patterns', new_patterns)
-        if del_patterns:
-            for pattern in del_patterns:
-                self.db.delete('patterns', "pattern == {!r}".format(pattern.pattern))
-        self.db.configure(
-                patterns=None,
-                remove_orphaned=remove_orphaned,
-                partial_update=partial_update,
-            )
-        if show:
-            self.db.show_configuration(print_function=self.print_function)
-
-    def db_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=False):
-        self.db.check()
-        validation_result, invoice_collection = self.scan(
-            warning_mode=warning_mode,
-            error_mode=error_mode,
-            partial_update=partial_update,
-            remove_orphaned=remove_orphaned,
-        )
-        for doc_filename in validation_result.errors():
-            print("   ", doc_filename)
-        return validation_result, invoice_collection
-
-    def db_clear(self):
-        self.db.check()
-        self.db.delete('invoices')
-
-    def db_validate(self, *, warning_mode, error_mode):
-        self.db.check()
-        invoice_collection = self.db.load_invoice_collection()
-        validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
-        self.validate_invoice_collection(validation_result, invoice_collection)
-        return validation_result.num_errors()
-
-    def db_filter(self, invoice_collection, filters):
-        if filters:
-            self.logger.debug("applicazione filtri su {} fatture...".format(len(invoice_collection)))
-            for filter_source in filters:
-                self.logger.debug("applicazione filtro {!r} su {} fatture...".format(filter_source, len(invoice_collection)))
-                invoice_collection = invoice_collection.filter(filter_source)
-        return invoice_collection
-
-    def db_list(self, *, field_names=None, header=True, filters=None):
-        if field_names is None:
-            field_names = Invoice._fields
-        if filters is None:
-            filters = ()
-        self.db.check()
-        invoice_collection = self.db_filter(self.db.load_invoice_collection(), filters)
-        self.list_invoice_collection(invoice_collection, header=header, field_names=field_names)
-
-    def db_dump(self, *, filters=None):
-        self.db.check()
-        invoice_collection = self.db_filter(self.db.load_invoice_collection(), filters)
-        self.dump_invoice_collection(invoice_collection)
-
-    def db_report(self, *, filters=None):
-        if filters is None:
-            filters = ()
-        self.db.check()
-        invoice_collection = self.db_filter(self.db.load_invoice_collection(), filters)
-        self.report_invoice_collection(invoice_collection)
-
-    def legacy(self, patterns, filters, validate, list, report, warning_mode, error_mode):
-        invoice_collection_reader = InvoiceCollectionReader(trace=self.trace)
-
-        invoice_collection = invoice_collection_reader(*patterns)
-
-        if validate is None:
-            validate = any([report])
-
-        try:
-            if validate:
-                self.logger.debug("validazione di {} fatture...".format(len(invoice_collection)))
-                validation_result=self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
-                validation_result = self.validate_invoice_collection(validation_result, invoice_collection)
-                if validation_result.num_errors():
-                    self.logger.error("trovati #{} errori!".format(validation_result.num_errors()))
-                    return 1
-    
-            invoice_collection = self.db_filter(invoice_collection, filters)
-    
-            if list:
-                self.logger.debug("lista di {} fatture...".format(len(invoice_collection)))
-                self.dump_invoice_collection(invoice_collection)
-    
-            if report:
-                self.logger.debug("report di {} fatture...".format(len(invoice_collection)))
-                self.report_invoice_collection(invoice_collection)
-    
-        except Exception as err:
-            if self.trace:
-                traceback.print_exc()
-            self.logger.error("{}: {}\n".format(type(err).__name__, err))
-
-    def scan(self, warning_mode=None, error_mode=None, partial_update=None, remove_orphaned=None):
-        found_doc_filenames = set()
-        db = self.db
-        file_date_times = FileDateTimes()
-        updated_invoice_collection = InvoiceCollection()
-        removed_doc_filenames = []
-        with db.connect() as connection:
-            configuration = db.load_configuration(connection)
-            if remove_orphaned is None:
-                remove_orphaned = configuration.remove_orphaned
-            if partial_update is None:
-                partial_update = configuration.partial_update
-
-            for pattern in db.load_patterns(connection=connection):
-                for doc_filename in glob.glob(pattern.pattern):
-                    found_doc_filenames.add(Path.db_to(doc_filename))
-            doc_filename_d = {}
-            for scan_date_time in db.read('scan_date_times', connection=connection):
-                doc_filename_d[scan_date_time.doc_filename] = scan_date_time.scan_date_time
-
-            result = []
-            scanned_doc_filenames = set()
-
-            # update scanned invoices
-            invoice_collection = db.load_invoice_collection()
-            for invoice in invoice_collection:
-                scanned_doc_filenames.add(invoice.doc_filename)
-                to_remove = False
-                if not os.path.exists(invoice.doc_filename):
-                    to_update = False
-                    if remove_orphaned:
-                        to_remove = True
-                elif not invoice.doc_filename in doc_filename_d:
-                    to_update = True
-                elif doc_filename_d[invoice.doc_filename] < file_date_times[invoice.doc_filename]:
-                    to_update = True
-                else:
-                    to_update = False
-                if to_remove:
-                    removed_doc_filenames.append(invoice.doc_filename)
-                else:
-                    if to_update:
-                        result.append((True, invoice.doc_filename))
-                    else:
-                        updated_invoice_collection.add(invoice)
-          
-            # unscanned invoices
-            for doc_filename in found_doc_filenames.difference(scanned_doc_filenames):
-                result.append((False, doc_filename))
-
-            validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
-            if result:
-                invoice_reader = InvoiceReader(logger=self.logger)
-                new_invoices = []
-                old_invoices = []
-                scan_date_times = []
-                for existing, doc_filename in result:
-                    try:
-                        invoice = invoice_reader(doc_filename)
-                    except Exception as err:
-                        if self.trace:
-                            traceback.print_exc()
-                        self.logger.error("fattura {!r}: {}: {}".format(doc_filename, type(err).__name__, err))
-                        continue
-                    updated_invoice_collection.add(invoice_reader(doc_filename))
-                    if existing:
-                        old_invoices.append(invoice)
-                    else:
-                        new_invoices.append(invoice)
-                    scan_date_times.append(db.ScanDateTime(doc_filename=invoice.doc_filename, scan_date_time=file_date_times[invoice.doc_filename]))
-                self.validate_invoice_collection(validation_result, updated_invoice_collection)
-                if validation_result.num_errors():
-                    message = "validazione fallita - {} errori".format(validation_result.num_errors())
-                    if not partial_update:
-                        raise InvoiceValidationError(message)
-                    else:
-                        old_invoices = validation_result.filter_validated_invoices(old_invoices)
-                        new_invoices = validation_result.filter_validated_invoices(new_invoices)
-                        if old_invoices or new_invoices or removed_doc_filenames:
-                            self.logger.warning(message + ' - update parziale')
-                if old_invoices:
-                    db.update('invoices', 'doc_filename', old_invoices, connection=connection)
-                if new_invoices:
-                    db.write('invoices', new_invoices, connection=connection)
-                db.update('scan_date_times', 'doc_filename', scan_date_times, connection=connection)
-            if removed_doc_filenames:
-                for doc_filename in removed_doc_filenames:
-                    db.delete('invoices', '''doc_filename == {!r}'''.format(doc_filename), connection=connection)
-        return validation_result, updated_invoice_collection
+    def program_init(self, *, patterns, reset, partial_update=True, remove_orphaned=False):
+        self.impl_init(patterns=patterns, reset=reset, partial_update=partial_update, remove_orphaned=remove_orphaned)
+        return 0

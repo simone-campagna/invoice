@@ -202,7 +202,7 @@ $ %(prog)s init 'docs/*.doc'
 """,
     )
     init_parser.set_defaults(
-        function_name="db_init",
+        function_name="program_init",
         function_arguments=('patterns', 'reset', 'remove_orphaned', 'partial_update'),
     )
 
@@ -218,7 +218,7 @@ vedere configurazione e pattern (opzione --show/-s) e/o di modificarli.
 """,
     )
     config_parser.set_defaults(
-        function_name="db_config",
+        function_name="program_config",
         function_arguments=('show', 'patterns', 'remove_orphaned', 'partial_update'),
     )
 
@@ -253,7 +253,7 @@ il relativo DOC file non sia stato modificato.
 """,
     )
     scan_parser.set_defaults(
-        function_name="db_scan",
+        function_name="program_scan",
         function_arguments=('warning_mode', 'error_mode', 'remove_orphaned', 'partial_update'),
     )
 
@@ -268,7 +268,7 @@ Rimuove tutte le fatture dal database.
 """,
     )
     clear_parser.set_defaults(
-        function_name="db_clear",
+        function_name="program_clear",
         function_arguments=(),
     )
 
@@ -283,7 +283,7 @@ Esegue una validazione del contenuto del database.
 """,
     )
     validate_parser.set_defaults(
-        function_name="db_validate",
+        function_name="program_validate",
         function_arguments=('warning_mode', 'error_mode'),
     )
 
@@ -298,7 +298,7 @@ Mostra una lista delle fatture contenute nel database.
 """,
     )
     list_parser.set_defaults(
-        function_name="db_list",
+        function_name="program_list",
         function_arguments=('filters', 'field_names', 'header'),
     )
 
@@ -313,7 +313,7 @@ Mostra tutti i dettagli delle fatture contenute nel database.
 """,
     )
     dump_parser.set_defaults(
-        function_name="db_dump",
+        function_name="program_dump",
         function_arguments=('filters', ),
     )
 
@@ -343,7 +343,7 @@ Per ciascun anno, vengono mostrate le seguenti informazioni:
 """,
     )
     report_parser.set_defaults(
-        function_name="db_report",
+        function_name="program_report",
         function_arguments=('filters', ),
     )
 

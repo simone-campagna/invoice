@@ -95,42 +95,42 @@ anno                       2014
   * numero di clienti:     4
     + cliente:             WNYBRC01G01H663Y (Bruce Wayne):
       numero di fatture:   2
-      incasso totale:      102.0
+      incasso totale:      102.00
       incasso percentuale: 23.56%
       settimane:           1, 4
 
     + cliente:             PRKPRT01G01H663Y (Peter B. Parker):
       numero di fatture:   1
-      incasso totale:      76.5
+      incasso totale:      76.50
       incasso percentuale: 17.67%
       settimane:           1
 
     + cliente:             BNNBRC01G01H663Y (Robert Bruce Banner):
       numero di fatture:   1
-      incasso totale:      102.0
+      incasso totale:      102.00
       incasso percentuale: 23.56%
       settimane:           4
 
     + cliente:             KNTCRK01G01H663Y (Clark Kent):
       numero di fatture:   1
-      incasso totale:      152.5
+      incasso totale:      152.50
       incasso percentuale: 35.22%
       settimane:           5
 
   * numero di settimane:   3
     + settimana:           1 [2014-01-01 -> 2014-01-05]:
       numero di fatture:   2
-      incasso totale:      127.5
+      incasso totale:      127.50
       incasso percentuale: 29.45%
 
     + settimana:           4 [2014-01-20 -> 2014-01-26]:
       numero di fatture:   2
-      incasso totale:      153.0
+      incasso totale:      153.00
       incasso percentuale: 35.33%
 
     + settimana:           5 [2014-01-27 -> 2014-02-02]:
       numero di fatture:   1
-      incasso totale:      152.5
+      incasso totale:      152.50
       incasso percentuale: 35.22%
 
 """
@@ -141,14 +141,14 @@ anno                       2012
   * numero di clienti:     1
     + cliente:             PRKPRT01A01B123C (Peter B. Parker):
       numero di fatture:   1
-      incasso totale:      0.0
+      incasso totale:      0.00
       incasso percentuale: 0.00%
       settimane:           2
 
   * numero di settimane:   1
     + settimana:           2 [2012-01-02 -> 2012-01-08]:
       numero di fatture:   1
-      incasso totale:      0.0
+      incasso totale:      0.00
       incasso percentuale: 0.00%
 
 """
@@ -213,21 +213,21 @@ anno                       2012
                 trace=False,
                 print_function=p,
             )
-            invoice_program.db_init(
+            invoice_program.impl_init(
                 patterns=[os.path.join(self.dirname, '*.doc')],
                 reset=True,
                 partial_update=True,
                 remove_orphaned=True,
             )
 
-            invoice_program.db_scan(
+            invoice_program.impl_scan(
                 warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                 error_mode=None,
                 partial_update=None,
                 remove_orphaned=None,
             )
 
-            invoice_program.db_list(
+            invoice_program.impl_list(
                 field_names=('tax_code', 'year', 'number'),
                 header=True,
                 filters=(),
@@ -243,16 +243,16 @@ KNTCRK01G01H663Y 2014      5
 """)
 
             p.reset()
-            invoice_program.db_dump(
+            invoice_program.impl_dump(
                 filters=(),
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.DUMP_OUTPUT)
             p.reset()
-            invoice_program.db_report()
+            invoice_program.impl_report()
             self.assertEqual(p.string(), self.REPORT_OUTPUT)
 
             p.reset()
-            invoice_program.db_list(
+            invoice_program.impl_list(
                 field_names=None,
                 header=False,
                 filters=(),
@@ -270,13 +270,13 @@ KNTCRK01G01H663Y 2014      5
             )
 
             p.reset()
-            invoice_program.db_init(
+            invoice_program.impl_init(
                 patterns=[os.path.join(self.dirname, '*.doc')],
                 reset=True,
             )
 
             p.reset()
-            validation_result, invoice_collection = invoice_program.db_scan(
+            validation_result, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                 error_mode=ValidationResult.ERROR_MODE_RAISE,
             )
@@ -284,7 +284,7 @@ KNTCRK01G01H663Y 2014      5
             self.assertEqual(validation_result.num_warnings(), 0)
 
             p.reset()
-            invoice_program.db_validate(
+            invoice_program.impl_validate(
                 warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                 error_mode=ValidationResult.ERROR_MODE_RAISE,
             )
@@ -303,14 +303,14 @@ KNTCRK01G01H663Y 2014      5
             )
 
             p.reset()
-            invoice_program.db_init(
+            invoice_program.impl_init(
                 patterns=[os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_duplicated_number/*.doc')],
                 reset=True,
             )
 
             p.reset()
             with self.assertRaises(InvoiceDuplicatedNumberError):
-                invoice_program.db_scan(
+                invoice_program.impl_scan(
                     warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                     error_mode=ValidationResult.ERROR_MODE_RAISE,
                 )
@@ -477,14 +477,14 @@ KNTCRK01G01H663Y 2014      5
                 print_function=p,
             )
     
-            invoice_program.db_init(
+            invoice_program.impl_init(
                 patterns=[os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_malformed_tax_code', '*.doc')],
                 reset=True,
                 partial_update=True,
                 remove_orphaned=True,
             )
 
-            validation_result, invoice_collection = invoice_program.db_scan(
+            validation_result, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                 error_mode=None,
                 partial_update=None,
@@ -508,14 +508,14 @@ KNTCRK01G01H663Y 2014      5
                 print_function=p,
             )
     
-            invoice_program.db_init(
+            invoice_program.impl_init(
                 patterns=[os.path.join(self.dirname, '*.doc')],
                 reset=True,
                 partial_update=True,
                 remove_orphaned=True,
             )
 
-            validation_result, invoice_collection = invoice_program.db_scan(
+            validation_result, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                 error_mode=None,
                 partial_update=None,
@@ -555,14 +555,14 @@ KNTCRK01G01H663Y 2014      5
                 print_function=p,
             )
     
-            invoice_program.db_init(
+            invoice_program.impl_init(
                 patterns=[os.path.join(example_dirname, '*.doc')],
                 reset=True,
                 partial_update=True,
                 remove_orphaned=remove_orphaned,
             )
 
-            validation_result, invoice_collection = invoice_program.db_scan(
+            validation_result, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                 error_mode=None,
                 partial_update=None,
@@ -572,20 +572,20 @@ KNTCRK01G01H663Y 2014      5
             self.assertEqual(validation_result.num_errors(), 0)
 
             p.reset()
-            invoice_program.db_dump(
+            invoice_program.impl_dump(
                 filters=(),
             )
             self.assertEqual(p.string().replace(example_dirname, '<DIRNAME>'), self.DUMP_OUTPUT)
 
             p.reset()
-            invoice_program.db_report()
+            invoice_program.impl_report()
             self.assertEqual(p.string(), self.REPORT_OUTPUT)
 
             for staged_doc_filename in staged_doc_filenames:
                 os.remove(staged_doc_filename)
             os.rmdir(example_dirname)
 
-            validation_result, invoice_collection = invoice_program.db_scan(
+            validation_result, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                 error_mode=None,
                 partial_update=None,
@@ -595,7 +595,7 @@ KNTCRK01G01H663Y 2014      5
             self.assertEqual(validation_result.num_errors(), 0)
 
             p.reset()
-            invoice_program.db_dump(
+            invoice_program.impl_dump(
                 filters=(),
             )
             if remove_orphaned:
