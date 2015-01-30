@@ -532,5 +532,5 @@ KNTCRK01G01H663Y 2014      5
                     logger=self.logger,
                     args=[],
                 )
-            self.assertEqual(cm.exception.code == 2)
+            self.assertEqual(cm.exception.code, 2)
 
