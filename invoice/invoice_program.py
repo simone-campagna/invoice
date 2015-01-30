@@ -373,7 +373,7 @@ class InvoiceProgram(object):
         # verify numbering and dates per year
         for year in invoice_collection.years():
             invoices = validation_result.filter_validated_invoices(invoice_collection.filter(lambda invoice: invoice.year == year))
-            numbers = set()
+            numbers = {}
             expected_number = 1
             prev_doc, prev_date = None, None
             for invoice in invoices:
@@ -381,11 +381,19 @@ class InvoiceProgram(object):
                 if invoice.number != expected_number:
                     if invoice.number in numbers:
                         validation_result.add_error(invoice, InvoiceDuplicatedNumberError,
-                            "fattura {}: il numero {} è duplicato".format(invoice.doc_filename, invoice.number, year, expected_number))
+                            "fattura {i}: il numero {y}/{n} è duplicato [presente anche in {l}]".format(
+                                i=invoice.doc_filename,
+                                y=year,
+                                n=invoice.number,
+                                l=', '.join("{}:{}".format(invoice.number, invoice.doc_filename) for invoice in numbers[invoice.number])))
                         failed = True
                     else:
                         validation_result.add_error(invoice, InvoiceWrongNumberError,
-                            "fattura {}: il numero {} non è valido (il numero atteso per l'anno {} è {})".format(invoice.doc_filename, invoice.number, year, expected_number))
+                            "fattura {i}: il numero {y}/{n} non è valido (il numero atteso è {e})".format(
+                                i=invoice.doc_filename,
+                                y=year,
+                                n=invoice.number,
+                                e=expected_number))
                         failed = True
                 if prev_date is not None:
                     if invoice.date is not None and invoice.date < prev_date:
@@ -393,7 +401,7 @@ class InvoiceProgram(object):
                         failed = True
                 if not failed:
                     expected_number += 1
-                    numbers.add(invoice.number)
+                    numbers.setdefault(invoice.number, []).append(invoice)
                     prev_doc, prev_date = invoice.doc_filename, invoice.date
 
         

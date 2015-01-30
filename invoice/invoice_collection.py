@@ -19,6 +19,7 @@ __author__ = "Simone Campagna"
 __all__ = [
     'InvoiceCollection',
 ]
+import datetime
 
 from .error import InvoiceError, \
                    InvoiceMultipleNamesError, \
@@ -73,6 +74,8 @@ class InvoiceCollection(object):
 
     def process(self):
         if not self._processed:
+            date_min = datetime.date.min
+            self._invoices.sort(key=lambda invoice: self.subst_None(invoice.date, date_min))
             self._invoices.sort(key=lambda invoice: self.subst_None(invoice.number, -1))
             self._invoices.sort(key=lambda invoice: self.subst_None(invoice.year, -1))
             self._years = tuple(sorted(set(invoice.year for invoice in self._invoices if invoice.year is not None)))
