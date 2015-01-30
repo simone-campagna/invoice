@@ -291,7 +291,7 @@ class InvoiceProgram(object):
                             traceback.print_exc()
                         self.logger.error("fattura {!r}: {}: {}".format(doc_filename, type(err).__name__, err))
                         continue
-                    updated_invoice_collection.add(invoice_reader(doc_filename))
+                    updated_invoice_collection.add(invoice)
                     if existing:
                         old_invoices.append(invoice)
                     else:
