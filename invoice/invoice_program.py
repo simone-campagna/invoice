@@ -84,6 +84,15 @@ class InvoiceProgram(object):
             error_mode=error_mode,
         )
 
+    def program_help(self, *, parser, stream):
+        parser.print_help(file=stream)
+        return 0
+
+    def program_default_subcommand(self, *, parser, stream):
+        parser.print_help(file=stream)
+        self.logger.error("deve essere specificato un comando")
+        return 1
+
     def program_config(self, *, patterns, show, partial_update=True, remove_orphaned=False):
         self.impl_config(patterns=patterns, show=show, partial_update=partial_update, remove_orphaned=remove_orphaned)
         return 0

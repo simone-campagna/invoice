@@ -494,24 +494,49 @@ KNTCRK01G01H663Y 2014      5
         self._test_invoice_main_global_options('-vvv')
 
     def test_invoice_main_legacy(self):
-            p = Print()
+        p = Print()
 
-            pattern = os.path.join(self.dirname, '*.doc')
+        pattern = os.path.join(self.dirname, '*.doc')
 
-            p.reset()
-            invoice_main(
-                print_function=p,
-                logger=self.logger,
-                args=['legacy', pattern, '-l']
-            )
-            
-            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.DUMP_OUTPUT)
+        p.reset()
+        invoice_main(
+            print_function=p,
+            logger=self.logger,
+            args=['legacy', pattern, '-l']
+        )
+        
+        self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.DUMP_OUTPUT)
 
-            p.reset()
-            invoice_main(
-                print_function=p,
-                logger=self.logger,
-                args=['legacy', pattern, '-r']
-            )
-            
-            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.REPORT_OUTPUT)
+        p.reset()
+        invoice_main(
+            print_function=p,
+            logger=self.logger,
+            args=['legacy', pattern, '-r']
+        )
+        
+        self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.REPORT_OUTPUT)
+
+    def test_invoice_main_help(self):
+        p = Print()
+
+        p.reset()
+        s = io.StringIO()
+        invoice_main(
+            print_function=p,
+            stream=s,
+            logger=self.logger,
+            args=["help"]
+        )
+
+    def test_invoice_main_default_subcommand(self):
+        p = Print()
+
+        p.reset()
+        s = io.StringIO()
+        invoice_main(
+            print_function=p,
+            stream=s,
+            logger=self.logger,
+            args=[],
+        )
+

@@ -39,7 +39,7 @@ from .invoice import Invoice
 from .validation_result import ValidationResult
 from .invoice_program import InvoiceProgram
 
-def invoice_main(print_function=print, logger=None, args=None):
+def invoice_main(print_function=print, logger=None, args=None, stream=sys.stdout):
     if args is None:
         args = sys.argv[1:]
     if logger is None:
@@ -188,6 +188,23 @@ fattura:                  'example/2014_001_bruce_wayne.doc'
     )
 
     subparsers = top_level_parser.add_subparsers()
+
+    ### help_parser ###
+    help_parser = subparsers.add_parser(
+        "help",
+        parents=(common_parser, ),
+        add_help=False,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""\
+Stampa l'help
+""",
+    )
+    help_parser.set_defaults(
+        function_name="program_help",
+        parser=top_level_parser,
+        stream=stream,
+        function_arguments=('parser', ),
+    )
 
     ### init_parser ###
     init_parser = subparsers.add_parser(
@@ -525,18 +542,21 @@ e validati.
         file_context_manager = nocopy
 
     with file_context_manager(args.db_filename) as fcm:
-        ip = InvoiceProgram(
+        invoice_program = InvoiceProgram(
             db_filename=fcm.get_filename(),
             logger=logger,
             print_function=print_function,
             trace=args.trace,
         )
     
+        if not hasattr(args, 'function_name'):
+            return invoice_program.program_default_subcommand(parser=top_level_parser, stream=stream)
+
         function_argdict = {}
         for argument in args.function_arguments:
             function_argdict[argument] = getattr(args, argument)
     
-        function = getattr(ip, args.function_name)
+        function = getattr(invoice_program, args.function_name)
         try:
             return function(**function_argdict)
         except InvoiceSyntaxError as err:
