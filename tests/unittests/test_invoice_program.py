@@ -274,6 +274,36 @@ KNTCRK01G01H663Y 2014      5
                     remove_orphaned=None,
                 )
 
+    def test_InvoiceProgramInvalidVersion(self):
+        with tempfile.NamedTemporaryFile() as db_file:
+            p = StringPrinter()
+
+            invoice_program = InvoiceProgram(
+                db_filename=db_file.name,
+                logger=self.logger,
+                trace=False,
+                printer=p,
+            )
+
+            p.reset()
+            invoice_program.impl_init(
+                patterns=[os.path.join(self.dirname, '*.doc')],
+                reset=True,
+                partial_update=True,
+                remove_orphaned=True,
+            )
+
+            invoice_program.db.store_version(version=invoice_program.db.Version(0, 2, 0))
+
+            p.reset()
+            with self.assertRaises(DbError):
+                invoice_program.impl_scan(
+                    warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                    error_mode=None,
+                    partial_update=None,
+                    remove_orphaned=None,
+                )
+
     def test_InvoiceProgramOk(self):
         with tempfile.NamedTemporaryFile() as db_file:
             p = StringPrinter()

@@ -101,8 +101,8 @@ class InvoiceDb(Db):
         with self.connect() as connection:
             version = self.load_version(connection=connection)
             if not self.version_is_valid(version):
-                vdb = "{}.{}.{}".format(**version)
-                vcl = "{}.{}.{}".format(**self.VERSION)
+                vdb = "{}.{}.{}".format(*version)
+                vcl = "{}.{}.{}".format(*self.VERSION)
                 raise DbError("versione del database {} non compatibile con quella del client {}".format(vdb, vcl))
 
     def version_is_valid(self, version):
@@ -212,6 +212,11 @@ END"""
                 version = versions[-1]
         return version
 
+    def store_version(self, version, connection=None):
+        with self.connect(connection) as connection:
+            self.clear('version')
+            self.write('version', [version])
+        
     def load_invoice_collection(self, connection=None):
         invoice_collection = InvoiceCollection()
         with self.connect(connection) as connection:
