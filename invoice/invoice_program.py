@@ -34,7 +34,8 @@ from .error import InvoiceSyntaxError, \
                    InvoiceWrongNumberError, \
                    InvoiceDuplicatedNumberError, \
                    InvoiceMalformedTaxCodeError, \
-                   InvoiceValidationError
+                   InvoiceValidationError, \
+                   InvoicePartialUpdateError
 
 from .invoice_collection import InvoiceCollection
 from .invoice_collection_reader import InvoiceCollectionReader
@@ -93,8 +94,12 @@ class InvoiceProgram(object):
         self.logger.error("deve essere specificato un comando")
         return 1
 
-    def program_config(self, *, patterns, show, partial_update=True, remove_orphaned=False):
-        self.impl_config(patterns=patterns, show=show, partial_update=partial_update, remove_orphaned=remove_orphaned)
+    def program_config(self, *, partial_update=True, remove_orphaned=False, reset=False):
+        self.impl_config(reset=reset, partial_update=partial_update, remove_orphaned=remove_orphaned)
+        return 0
+
+    def program_patterns(self, *, patterns=False, reset=False):
+        self.impl_patterns(reset=reset, patterns=patterns)
         return 0
 
     def program_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=False):
@@ -106,7 +111,7 @@ class InvoiceProgram(object):
         )
         if validation_result.num_errors():
             max_errors = 5
-            self.logger.error("first {} errors are:".format(max_errors))
+            self.logger.error("i primi {} errori sono:".format(max_errors))
             failing_invoices = InvoiceCollection(validation_result.filter_failing_invoices(invoice_collection))
             failing_invoices.process()
             for c, invoice in enumerate(failing_invoices):
@@ -151,18 +156,45 @@ class InvoiceProgram(object):
         return 0
 
     ## implementations:
+    def show_configuration(self, configuration):
+        self.printer("configuration:")
+        for field_name in configuration._fields:
+            self.printer("  + {:20s} = {!r}".format(field_name, getattr(configuration, field_name)))
+
+    def show_patterns(self, patterns):
+        self.printer("patterns:")
+        for pattern in self.db.load_patterns():
+            self.printer("  + {!r}".format(pattern))
+
     def impl_init(self, *, patterns, reset, partial_update=True, remove_orphaned=False):
         if reset and os.path.exists(self.db_filename):
             self.logger.info("cancellazione del db {!r}...".format(self.db_filename))
             os.remove(self.db_filename)
         self.db.initialize()
-        self.db.configure(
-            patterns=patterns,
-            remove_orphaned=remove_orphaned,
+        configuration = self.db.Configuration(
             partial_update=partial_update,
+            remove_orphaned=remove_orphaned,
         )
+        configuration = self.db.store_configuration(configuration)
+        #self.show_configuration(configuration)
+        patterns = self.db.store_patterns(patterns)
+        #self.show_patterns(patterns)
+
        
-    def impl_config(self, *, patterns, show, partial_update=True, remove_orphaned=False):
+    def impl_config(self, *, partial_update=True, remove_orphaned=False, reset=False):
+        if reset:
+            self.db.clear('configuration')
+        configuration = self.db.Configuration(
+            partial_update=partial_update,
+            remove_orphaned=remove_orphaned,
+        )
+        configuration = self.db.store_configuration(configuration)
+        self.show_configuration(configuration)
+
+
+    def impl_patterns(self, *, reset, patterns, partial_update=True, remove_orphaned=False):
+        if reset:
+            self.db.clear('patterns')
         new_patterns = []
         del_patterns = []
         for sign, pattern in patterns:
@@ -175,13 +207,7 @@ class InvoiceProgram(object):
         if del_patterns:
             for pattern in del_patterns:
                 self.db.delete('patterns', "pattern == {!r}".format(pattern.pattern))
-        self.db.configure(
-                patterns=None,
-                remove_orphaned=remove_orphaned,
-                partial_update=partial_update,
-            )
-        if show:
-            self.db.show_configuration(printer=self.printer)
+        self.show_patterns(patterns)
 
     def impl_clear(self):
         self.db.check()
@@ -328,6 +354,12 @@ class InvoiceProgram(object):
                     else:
                         old_invoices = validation_result.filter_validated_invoices(old_invoices)
                         new_invoices = validation_result.filter_validated_invoices(new_invoices)
+                        #partially_updated_invoices = validation_result.filter_validated_invoices(updated_invoice_collection)
+                        #partially_updated_invoice_collection = InvoiceCollection(partially_updated_invoices)
+                        #partial_validation_result = self.create_validation_result()
+                        #self.validate_invoice_collection(partial_validation_result, partially_updated_invoice_collection)
+                        #if partial_validation_result.num_errors():
+                        #    raise InvoicePartialUpdateError("validation of partial invoice collection failed")
                         if old_invoices or new_invoices or removed_doc_filenames:
                             self.logger.warning(message + ' - update parziale')
                 scan_date_times_l = []

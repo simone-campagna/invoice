@@ -230,13 +230,37 @@ $ %(prog)s init 'docs/*.doc'
         add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-Accesso alla configurazione del database. Questo comando permette di
-vedere configurazione e pattern (opzione --show/-s) e/o di modificarli.
+Permette di modificare e visualizzare i parametri di configurazione; la
+visualizzazione avviene DOPO la modifica. I parametri attualmente
+supportati sono:
+ * partial_update[=True]: in caso di errori durante la scansione, salva
+   comunque nel database le fatture che non contengono errori;
+ * remove_orphaned[=False]: se il documento relativo ad una fattura è
+   stato cancellato da disco, viene eliminato il dato dal database
+   (questo parametro non è modificabile in quanto la funzionalità non è
+   completamente implementata)
 """,
     )
     config_parser.set_defaults(
         function_name="program_config",
-        function_arguments=('show', 'patterns', 'remove_orphaned', 'partial_update'),
+        function_arguments=('remove_orphaned', 'partial_update', 'reset'),
+    )
+
+    ### patterns ###
+    patterns_parser = subparsers.add_parser(
+        "patterns",
+        parents=(common_parser, ),
+        add_help=False,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""\
+Permette di modificare e visualizzare i pattern utilizzati per la
+ricerca delle fatture su disco.  La visualizzazione avviene DOPO la
+modifica.
+""",
+    )
+    patterns_parser.set_defaults(
+        function_name="program_patterns",
+        function_arguments=('patterns', 'reset'),
     )
 
     ### scan_parser ###
@@ -416,12 +440,6 @@ e validati.
         default=default_list_field_names,
         help="selezione manuale dei campi, ad esempio 'anno,codice_fiscale,città' [{}]".format('|'.join(all_field_names)))
 
-    ### config list option
-    config_parser.add_argument("--show", "-s",
-        action="store_true",
-        default=False,
-        help="mostra la configurazione del database")
-
     ### year filter option
     for parser in list_parser, dump_parser, legacy_parser, report_parser:
         parser.add_argument("--year", "-y",
@@ -465,11 +483,24 @@ e validati.
             default=default_error_mode,
             help="rende fatale il primo errore incontrato (per default, %(prog)s tenta di continuare)")
     
-    ### reset option
+    ### reset options
     init_parser.add_argument("--reset", "-r",
+        dest="reset",
         action="store_true",
         default=False,
         help="elimina il database se già esistente")
+
+    config_parser.add_argument("--reset", "-r",
+        dest="reset",
+        default=False,
+        action="store_true",
+        help='ripristina la configuratione di default')
+
+    patterns_parser.add_argument("--clear", "-c",
+        dest="reset",
+        default=False,
+        action="store_true",
+        help='rimuove tutti i pattern')
 
     ### partial_update option
     for parser in init_parser, config_parser, scan_parser:
@@ -496,7 +527,7 @@ e validati.
             nargs='+',
             help='pattern per la ricerca dei DOC delle fatture')
 
-    config_parser.add_argument("--add-pattern", "-p",
+    patterns_parser.add_argument("--add-pattern", "-p",
         metavar="P",
         dest="patterns",
         default=[],
@@ -504,7 +535,7 @@ e validati.
         type=lambda x: ('+', x),
         help='aggiunge un pattern per la ricerca dei DOC delle fatture')
 
-    config_parser.add_argument("--remove-pattern", "-x",
+    patterns_parser.add_argument("--remove-pattern", "-x",
         metavar="P",
         dest="patterns",
         default=[],

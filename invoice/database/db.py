@@ -121,6 +121,9 @@ class Db(object):
                 values = [getattr(record, field_name) for field_name in field_names] + [getattr(record, key)]
                 self.execute(cursor, sql, values)
 
+    def clear(self, table_name, connection=None):
+        self.delete(table_name=table_name, where=None, connection=None)
+
     def delete(self, table_name, where=None, connection=None):
         if where:
             if isinstance(where, str):

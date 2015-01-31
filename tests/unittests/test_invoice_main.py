@@ -113,30 +113,30 @@ anno                       2014
 """
 
     CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
-patterns:
-  + Pattern(pattern='<DIRNAME>/*.doc')
-
 configuration:
   + remove_orphaned      = False
   + partial_update       = True
 """
     CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
-patterns:
-  + Pattern(pattern='<DIRNAME>/*.doc')
-
 configuration:
   + remove_orphaned      = False
   + partial_update       = False
 """
-    CONFIG_ADD_PATTERNS = """\
+
+    PATTERNS_CLEAR = """\
+patterns:
+"""
+
+    PATTERNS_DEFAULT = """\
+patterns:
+  + Pattern(pattern='<DIRNAME>/*.doc')
+"""
+
+    PATTERNS_ADD_REMOVE = """\
 patterns:
   + Pattern(pattern='<DIRNAME>/*.doc')
   + Pattern(pattern='<DIRNAME>/*.Doc')
   + Pattern(pattern='<DIRNAME>/*.DOC')
-
-configuration:
-  + remove_orphaned      = False
-  + partial_update       = True
 """
 
     def setUp(self):
@@ -334,7 +334,7 @@ KNTCRK01G01H663Y 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update=on', '--show'],
+                args=['-d', db_filename.name, 'config', '--partial-update=on'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
@@ -354,7 +354,7 @@ KNTCRK01G01H663Y 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update=off', '--show'],
+                args=['-d', db_filename.name, 'config', '--partial-update=off'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_OFF)
 
@@ -374,7 +374,7 @@ KNTCRK01G01H663Y 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update', '--show'],
+                args=['-d', db_filename.name, 'config', '--partial-update'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
@@ -394,11 +394,11 @@ KNTCRK01G01H663Y 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--show'],
+                args=['-d', db_filename.name, 'config'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
-    def test_invoice_main_config_add_remove_patterns(self):
+    def test_invoice_main_config_reset(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = StringPrinter()
 
@@ -414,17 +414,65 @@ KNTCRK01G01H663Y 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '-p', 'example/*.Doc', '-p', 'example/*.DOC', '--show'],
+                args=['-d', db_filename.name, 'config', '--partial-update=off'],
             )
-            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_ADD_PATTERNS)
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '-x', 'example/*.Doc', '-x', 'example/*.DOC', '--show'],
+                args=['-d', db_filename.name, 'config', '--reset'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
+
+    def test_invoice_main_patterns_add_remove(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'patterns', '-p', 'example/*.Doc', '-p', 'example/*.DOC'],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'patterns', '-x', 'example/*.Doc', '-x', 'example/*.DOC'],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_DEFAULT)
+
+    def test_invoice_main_patterns_clear(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'patterns', '--clear'],
+            )
+
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_CLEAR)
 
     def test_invoice_main_dry_run(self):
         with tempfile.NamedTemporaryFile() as db_filename:

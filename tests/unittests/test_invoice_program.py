@@ -201,6 +201,8 @@ anno                       2012
                 trace=False,
                 printer=p,
             )
+
+            p.reset()
             invoice_program.impl_init(
                 patterns=[os.path.join(self.dirname, '*.doc')],
                 reset=True,
@@ -208,6 +210,7 @@ anno                       2012
                 remove_orphaned=True,
             )
 
+            p.reset()
             invoice_program.impl_scan(
                 warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                 error_mode=None,
@@ -215,12 +218,12 @@ anno                       2012
                 remove_orphaned=None,
             )
 
+            p.reset()
             invoice_program.impl_list(
                 field_names=('tax_code', 'year', 'number'),
                 header=True,
                 filters=(),
             )
-
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
 WNYBRC01G01H663Y 2014      1

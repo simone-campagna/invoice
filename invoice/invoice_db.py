@@ -95,38 +95,35 @@ DELETE FROM scan_date_times WHERE doc_filename == old.doc_filename;
 END"""
             self.execute(cursor, sql)
 
-    def show_configuration(self, printer=print, connection=None):
+    def store_patterns(self, patterns, connection=None):
         with self.connect(connection) as connection:
-            printer("patterns:")
-            for pattern in self.load_patterns(connection=connection):
-                printer("  + {!r}".format(pattern))
-            printer()
-            printer("configuration:")
-            configuration = self.load_configuration(connection=connection)
-            for field_name in self.Configuration._fields:
-                printer("  + {:20s} = {!r}".format(field_name, getattr(configuration, field_name)))
-
-    def configure(self, patterns, partial_update=None, remove_orphaned=None, connection=None):
-        with self.connect(connection) as connection:
-            default_configuration = self.load_configuration(connection=connection)
-            self.delete('configuration')
-            if remove_orphaned is None:
-                remove_orphaned = default_configuration.remove_orphaned
-            if partial_update is None:
-                partial_update = default_configuration.partial_update
-            configuration = self.Configuration(
-                remove_orphaned=remove_orphaned,
-                partial_update=partial_update,
-            )
-            self.warn_remove_orphaned(remove_orphaned)
-            self.write('configuration', [configuration])
+            self.clear('patterns')
             if patterns:
                 self.write('patterns', ((pattern, ) for pattern in patterns))
+        return patterns
+
+    def store_configuration(self, configuration, connection=None):
+        with self.connect(connection) as connection:
+            default_configuration = self.load_configuration(connection=connection)
+            self.clear('configuration')
+            data = {}
+            for field in self.Configuration._fields:
+                value = getattr(configuration, field)
+                if value is None:
+                    value = getattr(default_configuration, field)
+                data[field] = value
+            configuration = self.Configuration(**data)
+            self.warn_remove_orphaned(configuration.remove_orphaned)
+            self.write('configuration', [configuration])
+        return configuration
 
     def load_patterns(self, connection=None):
         with self.connect(connection) as connection:
             patterns = list(self.read('patterns', connection=connection))
             return patterns
+
+    def default_configuration(self, connection=None):
+        return self.DEFAULT_CONFIGURATION
 
     def load_configuration(self, connection=None):
         with self.connect(connection) as connection:
