@@ -563,6 +563,13 @@ KNTCRK01G01H663Y 2014      5
             args=["help"]
         )
 
+        p.reset()
+        invoice_main(
+            printer=p,
+            logger=self.logger,
+            args=["help", "scan"]
+        )
+
     def test_invoice_main_missing_subcommand(self):
         p = StringPrinter()
 
