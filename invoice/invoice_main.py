@@ -286,13 +286,28 @@ Permette di visualizzare la versione del programma e del database.
 Permette di modificare e visualizzare i parametri di configurazione; la
 visualizzazione avviene DOPO la modifica. I parametri attualmente
 supportati sono:
- * partial_update[=True]: in caso di errori durante la scansione, salva
+ * warning_mode[={wm}]: gestione dei warning sollevati durante la
+   scansione:
+   - 'log': viene eseguito solo il log dei messaggi di warning
+   - 'error': i warning vengono gestiti come errori 
+   - 'ignore': i warning vengono ignorati
+ * error_mode[={em}]: gestione degli errori sollevati durante la
+   scansione:
+   - 'log': viene eseguito solo il log dei messaggi di errore
+   - 'raise': viene sollevata una eccezione ad ogni errore, che quindi
+     interrompe la scansione
+ * partial_update[={pu}]: in caso di errori durante la scansione, salva
    comunque nel database le fatture che non contengono errori;
- * remove_orphaned[=False]: se il documento relativo ad una fattura è
+ * remove_orphaned[={ro}]: se il documento relativo ad una fattura è
    stato cancellato da disco, viene eliminato il dato dal database
    (questo parametro non è modificabile in quanto la funzionalità non è
    completamente implementata)
-""",
+""".format(
+            wm=InvoiceDb.DEFAULT_CONFIGURATION.warning_mode,
+            em=InvoiceDb.DEFAULT_CONFIGURATION.error_mode,
+            pu=InvoiceDb.DEFAULT_CONFIGURATION.partial_update,
+            ro=InvoiceDb.DEFAULT_CONFIGURATION.remove_orphaned,
+        ),
     )
     config_parser.set_defaults(
         function_name="program_config",
@@ -525,13 +540,13 @@ e validati.
             dest="warning_mode",
             choices=ValidationResult.WARNING_MODES,
             default=default_warning_mode,
-            help="modalità di gestione dei warning")
+            help="modalità di gestione dei warning (vedi '%(prog)s config --help' per una spiegazione dei valori)")
 
         parser.add_argument("--error-mode", "-e",
             dest="error_mode",
             choices=ValidationResult.ERROR_MODES,
             default=default_error_mode,
-            help="modalità di gestione degli errori")
+            help="modalità di gestione degli errori (vedi '%(prog)s config --help' per una spiegazione dei valori)")
 
     ### reset options
     init_parser.add_argument("--reset", "-r",
