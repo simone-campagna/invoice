@@ -21,6 +21,7 @@ __all__ = [
 ]
 
 import argparse
+import collections
 import os
 import sys
 import traceback
@@ -53,6 +54,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
         if n != field_name:
             all_field_names.append(n)
 
+    top_level_parser_name = 'main'
     default_validate = True
     default_warning_mode = ValidationResult.WARNING_MODE_DEFAULT
     default_error_mode = ValidationResult.ERROR_MODE_DEFAULT
@@ -190,8 +192,18 @@ fattura:                  'example/2014_001_bruce_wayne.doc'
 
     subparsers = top_level_parser.add_subparsers()
 
+    parser_dict = collections.OrderedDict()
+    parser_dict[top_level_parser_name] = top_level_parser
+
+    top_level_parser.set_defaults(parser_dict=parser_dict)
+
+    def add_subparser(subparsers, name, *n_args, **p_args):
+        parser = subparsers.add_parser(name, *n_args, **p_args)
+        parser_dict[name] = parser
+        return parser
+
     ### help_parser ###
-    help_parser = subparsers.add_parser(
+    help_parser = add_subparser(subparsers,
         "help",
         parents=(common_parser, ),
         add_help=False,
@@ -203,11 +215,11 @@ Stampa l'help
     help_parser.set_defaults(
         function_name="program_help",
         parser=top_level_parser,
-        function_arguments=('parser', ),
+        function_arguments=('parser_dict', 'command'),
     )
 
     ### init_parser ###
-    init_parser = subparsers.add_parser(
+    init_parser = add_subparser(subparsers,
         "init",
         parents=(common_parser, ),
         add_help=False,
@@ -224,7 +236,7 @@ $ %(prog)s init 'docs/*.doc'
     )
 
     ### config ###
-    config_parser = subparsers.add_parser(
+    config_parser = add_subparser(subparsers,
         "config",
         parents=(common_parser, ),
         add_help=False,
@@ -247,7 +259,7 @@ supportati sono:
     )
 
     ### patterns ###
-    patterns_parser = subparsers.add_parser(
+    patterns_parser = add_subparser(subparsers,
         "patterns",
         parents=(common_parser, ),
         add_help=False,
@@ -264,7 +276,7 @@ modifica.
     )
 
     ### scan_parser ###
-    scan_parser = subparsers.add_parser(
+    scan_parser = add_subparser(subparsers,
         "scan",
         parents=(common_parser, ),
         add_help=False,
@@ -299,7 +311,7 @@ il relativo DOC file non sia stato modificato.
     )
 
     ### clear_parser ###
-    clear_parser = subparsers.add_parser(
+    clear_parser = add_subparser(subparsers,
         "clear",
         parents=(common_parser, ),
         add_help=False,
@@ -314,7 +326,7 @@ Rimuove tutte le fatture dal database.
     )
 
     ### validate_parser ###
-    validate_parser = subparsers.add_parser(
+    validate_parser = add_subparser(subparsers,
         "validate",
         parents=(common_parser, ),
         add_help=False,
@@ -329,7 +341,7 @@ Esegue una validazione del contenuto del database.
     )
 
     ### list_parser ###
-    list_parser = subparsers.add_parser(
+    list_parser = add_subparser(subparsers,
         "list",
         parents=(common_parser, ),
         add_help=False,
@@ -344,7 +356,7 @@ Mostra una lista delle fatture contenute nel database.
     )
 
     ### dump_parser ###
-    dump_parser = subparsers.add_parser(
+    dump_parser = add_subparser(subparsers,
         "dump",
         parents=(common_parser, ),
         add_help=False,
@@ -359,7 +371,7 @@ Mostra tutti i dettagli delle fatture contenute nel database.
     )
 
     ### report_parser ###
-    report_parser = subparsers.add_parser(
+    report_parser = add_subparser(subparsers,
         "report",
         parents=(common_parser, ),
         add_help=False,
@@ -389,7 +401,7 @@ Per ciascun anno, vengono mostrate le seguenti informazioni:
     )
 
     ### legacy_parser ###
-    legacy_parser = subparsers.add_parser(
+    legacy_parser = add_subparser(subparsers,
         "legacy",
         parents=(common_parser, ),
         add_help=False,
@@ -404,6 +416,12 @@ e validati.
         function_name="legacy",
         function_arguments=('patterns', 'filters', 'validate', 'list', 'report', 'warning_mode', 'error_mode'),
     )
+
+    ### help parser commands
+    help_parser.add_argument("command",
+        nargs='?',
+        default=top_level_parser_name,
+        help="comando di cui stampare l'help")
 
     ### list_mode option
     list_parser.add_argument("--no-header", "-H",

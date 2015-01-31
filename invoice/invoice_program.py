@@ -85,7 +85,8 @@ class InvoiceProgram(object):
             error_mode=error_mode,
         )
 
-    def program_help(self, *, parser):
+    def program_help(self, *, parser_dict, command):
+        parser = parser_dict[command]
         parser.print_help(file=self.printer.stream)
         return 0
 
