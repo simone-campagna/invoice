@@ -95,8 +95,22 @@ class InvoiceProgram(object):
         self.logger.error("deve essere specificato un comando")
         return 1
 
-    def program_config(self, *, partial_update=True, remove_orphaned=False, reset=False):
-        self.impl_config(reset=reset, partial_update=partial_update, remove_orphaned=remove_orphaned)
+    def program_version(self):
+        self.impl_version()
+        return 0
+
+    def program_config(self, *, warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                                error_mode=ValidationResult.ERROR_MODE_DEFAULT,
+                                partial_update=True,
+                                remove_orphaned=False,
+                                reset=False):
+        self.impl_config(
+            warning_mode=warning_mode,
+            error_mode=error_mode,
+            partial_update=partial_update,
+            remove_orphaned=remove_orphaned,
+            reset=reset,
+        )
         return 0
 
     def program_patterns(self, *, patterns=False, reset=False):
@@ -173,12 +187,19 @@ class InvoiceProgram(object):
             for pattern in non_patterns:
                 self.logger.warning("pattern {!r}: non contiene wildcard: probabilmente hai dimenticato gli apici".format(pattern.pattern))
 
-    def impl_init(self, *, patterns, reset, partial_update=True, remove_orphaned=False):
+    def impl_init(self, *, patterns,
+                           warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                           error_mode=ValidationResult.ERROR_MODE_DEFAULT,
+                           partial_update=True,
+                           remove_orphaned=False,
+                           reset=False):
         if reset and os.path.exists(self.db_filename):
             self.logger.info("cancellazione del db {!r}...".format(self.db_filename))
             os.remove(self.db_filename)
         self.db.initialize()
         configuration = self.db.Configuration(
+            warning_mode=warning_mode,
+            error_mode=error_mode,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
         )
@@ -189,10 +210,23 @@ class InvoiceProgram(object):
         #self.show_patterns(patterns)
 
        
-    def impl_config(self, *, partial_update=True, remove_orphaned=False, reset=False):
+    def impl_version(self):
+        self.db.check()
+        version = self.db.load_version()
+        self.printer("versione del database:  {}.{}.{}".format(*version))
+        self.printer("versione del programma: {}.{}.{}".format(*self.db.VERSION))
+
+    def impl_config(self, *, warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                             error_mode=ValidationResult.ERROR_MODE_DEFAULT,
+                             partial_update=True,
+                             remove_orphaned=False,
+                             reset=False):
+        self.db.check()
         if reset:
             self.db.clear('configuration')
         configuration = self.db.Configuration(
+            warning_mode=warning_mode,
+            error_mode=error_mode,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
         )
@@ -239,11 +273,11 @@ class InvoiceProgram(object):
         return validation_result.num_errors()
 
     def impl_list(self, *, field_names=None, header=True, filters=None):
+        self.db.check()
         if field_names is None:
             field_names = Invoice._fields
         if filters is None:
             filters = ()
-        self.db.check()
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
         self.list_invoice_collection(invoice_collection, header=header, field_names=field_names)
 
@@ -253,9 +287,9 @@ class InvoiceProgram(object):
         self.dump_invoice_collection(invoice_collection)
 
     def impl_report(self, *, filters=None):
+        self.db.check()
         if filters is None:
             filters = ()
-        self.db.check()
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
         self.report_invoice_collection(invoice_collection)
 
@@ -577,6 +611,18 @@ anno                       {year}
                 ))
         
 
-    def program_init(self, *, patterns, reset, partial_update=True, remove_orphaned=False):
-        self.impl_init(patterns=patterns, reset=reset, partial_update=partial_update, remove_orphaned=remove_orphaned)
+    def program_init(self, *, patterns,
+                              warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                              error_mode=ValidationResult.ERROR_MODE_DEFAULT,
+                              partial_update=True,
+                              remove_orphaned=False,
+                              reset=False):
+        self.impl_init(
+            patterns=patterns,
+            warning_mode=warning_mode,
+            error_mode=error_mode,
+            partial_update=partial_update,
+            remove_orphaned=remove_orphaned,
+            reset=reset,
+        )
         return 0

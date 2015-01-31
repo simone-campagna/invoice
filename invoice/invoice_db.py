@@ -24,21 +24,43 @@ import collections
 import datetime
 import sqlite3
 
+from .conf import VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH
 from .error import InvoiceError
 from .invoice import Invoice
 from .invoice_collection import InvoiceCollection
-from .database.db import Db
+from .database.db import Db, DbError
 from .database.table import Table
 from .database.db_types import Str, Int, Float, Date, DateTime, Path, Bool
+from .validation_result import ValidationResult
 
 class InvoiceDb(Db):
     Pattern = collections.namedtuple('Pattern', ('pattern'))
-    Configuration = collections.namedtuple('Configuration', ('remove_orphaned', 'partial_update'))
+    Configuration = collections.namedtuple('Configuration', ('warning_mode', 'error_mode', 'partial_update', 'remove_orphaned'))
+    Version = collections.namedtuple('Version', ('major', 'minor', 'patch'))
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
-    DEFAULT_CONFIGURATION = Configuration(remove_orphaned=False, partial_update=True)
+    VERSION = Version(
+        major=VERSION_MAJOR,
+        minor= VERSION_MINOR,
+        patch= VERSION_PATCH)
+    DEFAULT_CONFIGURATION = Configuration(
+        warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+        error_mode=ValidationResult.ERROR_MODE_DEFAULT,
+        remove_orphaned=False,
+        partial_update=True)
+    
     TABLES = {
+        'version': Table(
+            fields=(
+                ('major', Int()),
+                ('minor', Int()),
+                ('patch', Int()),
+            ),
+            dict_type=Version,
+        ),
         'configuration': Table(
             fields=(
+                ('warning_mode', Str()),
+                ('error_mode', Str()),
                 ('remove_orphaned', Bool()),
                 ('partial_update', Bool()),
             ),
@@ -74,6 +96,18 @@ class InvoiceDb(Db):
         ),
     }
 
+    def check(self):
+        super().check()
+        with self.connect() as connection:
+            version = self.load_version(connection=connection)
+            if not self.version_is_valid(version):
+                vdb = "{}.{}.{}".format(**version)
+                vcl = "{}.{}.{}".format(**self.VERSION)
+                raise DbError("versione del database {} non compatibile con quella del client {}".format(vdb, vcl))
+
+    def version_is_valid(self, version):
+        return version[:-1] == self.VERSION[:-1]
+            
     def impl_initialize(self, connection=None):
         min_datetime = DateTime.db_to(datetime.datetime(1900, 1, 1))
         with self.connect(connection) as connection:
@@ -94,7 +128,7 @@ BEGIN
 DELETE FROM scan_date_times WHERE doc_filename == old.doc_filename;
 END"""
             self.execute(cursor, sql)
-
+            self.write('version', [self.VERSION], connection=connection)
 
     @classmethod
     def make_pattern(cls, pattern):
@@ -129,7 +163,7 @@ END"""
         with self.connect(connection) as connection:
             self.clear('patterns')
             if patterns:
-                self.write('patterns', patterns)
+                self.write('patterns', patterns, connection=connection)
         return patterns
 
     def store_configuration(self, configuration, connection=None):
@@ -144,7 +178,7 @@ END"""
                 data[field] = value
             configuration = self.Configuration(**data)
             self.warn_remove_orphaned(configuration.remove_orphaned)
-            self.write('configuration', [configuration])
+            self.write('configuration', [configuration], connection=connection)
         return configuration
 
     def load_patterns(self, connection=None):
@@ -169,6 +203,14 @@ END"""
         with self.connect(connection) as connection:
             self.write('invoices', invoice_collection, connection=connection)
             
+    def load_version(self, connection=None):
+        with self.connect(connection) as connection:
+            versions = list(self.read('version', connection=connection))
+            if len(versions) == 0:
+                raise DbError("tabella 'version' non trovata")
+            else:
+                version = versions[-1]
+        return version
 
     def load_invoice_collection(self, connection=None):
         invoice_collection = InvoiceCollection()

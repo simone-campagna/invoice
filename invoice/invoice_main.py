@@ -57,10 +57,14 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
 
     top_level_parser_name = 'main'
     default_validate = True
-    default_warning_mode = ValidationResult.WARNING_MODE_DEFAULT
-    default_error_mode = ValidationResult.ERROR_MODE_DEFAULT
     default_list_field_names = InvoiceProgram.LIST_FIELD_NAMES_LONG
     default_filters = []
+
+    # configuration
+    default_warning_mode = None
+    default_error_mode = None
+    default_partial_update = None
+    default_remove_orphaned = None
 
     def type_fields(s):
         field_names = []
@@ -254,7 +258,22 @@ file, e non nuovi file che corrispondono al pattern.
     )
     init_parser.set_defaults(
         function_name="program_init",
-        function_arguments=('patterns', 'reset', 'remove_orphaned', 'partial_update'),
+        function_arguments=('patterns', 'reset', 'warning_mode', 'error_mode', 'remove_orphaned', 'partial_update'),
+    )
+
+    ### version ###
+    version_parser = add_subparser(subparsers,
+        "version",
+        parents=(common_parser, ),
+        add_help=False,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""\
+Permette di visualizzare la versione del programma e del database.
+""",
+    )
+    version_parser.set_defaults(
+        function_name="program_version",
+        function_arguments=(),
     )
 
     ### config ###
@@ -277,7 +296,7 @@ supportati sono:
     )
     config_parser.set_defaults(
         function_name="program_config",
-        function_arguments=('remove_orphaned', 'partial_update', 'reset'),
+        function_arguments=('warning_mode', 'error_mode', 'remove_orphaned', 'partial_update', 'reset'),
     )
 
     ### patterns ###
@@ -501,28 +520,19 @@ e validati.
             help="aggiunge un filtro sulle fatture (ad esempio 'anno == 2014')")
 
     ### warnings and error options
-    for parser in scan_parser, validate_parser, legacy_parser:
-        parser.add_argument("--werror", "-we",
+    for parser in init_parser, config_parser, scan_parser, validate_parser, legacy_parser:
+        parser.add_argument("--warning-mode", "-w",
             dest="warning_mode",
-            action="store_const",
-            const=ValidationResult.WARNING_MODE_ERROR,
+            choices=ValidationResult.WARNING_MODES,
             default=default_warning_mode,
-            help="converte warning in errori")
+            help="modalità di gestione dei warning")
 
-        parser.add_argument("--wignore", "-wi",
-            dest="warning_mode",
-            action="store_const",
-            const=ValidationResult.WARNING_MODE_IGNORE,
-            default=default_warning_mode,
-            help="ignora gli warning")
-
-        parser.add_argument("--eraise", "-er",
+        parser.add_argument("--error-mode", "-e",
             dest="error_mode",
-            action="store_const",
-            const=ValidationResult.ERROR_MODE_RAISE,
+            choices=ValidationResult.ERROR_MODES,
             default=default_error_mode,
-            help="rende fatale il primo errore incontrato (per default, %(prog)s tenta di continuare)")
-    
+            help="modalità di gestione degli errori")
+
     ### reset options
     init_parser.add_argument("--reset", "-r",
         dest="reset",
@@ -548,7 +558,7 @@ e validati.
         #    metavar="on/off",
         #    type=type_onoff,
         #    const=type_onoff("on"),
-        #    default=None,
+        #    default=default_remove_orphaned,
         #    nargs='?',
         #    help="abilita/disabilita la rimozione dal database le fatture 'orphane', ovvero quelle il cui documento è stato rimosso dal disco")
         parser.set_defaults(remove_orphaned=False)
@@ -557,7 +567,7 @@ e validati.
             metavar="on/off",
             type=type_onoff,
             const=type_onoff("on"),
-            default=None,
+            default=default_partial_update,
             nargs='?',
             help="abilita/disabilita l'update parziale del database (in caso di errori di validazione, l'update parziale fa in modo che le fatture corrette vengano comunque archiviate)")
 

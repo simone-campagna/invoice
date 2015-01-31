@@ -40,6 +40,7 @@ from invoice.invoice_program import InvoiceProgram
 from invoice.invoice_collection import InvoiceCollection
 from invoice.invoice import Invoice
 from invoice.database.db_types import Path
+from invoice.database.db import DbError
 from invoice.validation_result import ValidationResult
 from invoice.string_printer import StringPrinter
 
@@ -191,7 +192,6 @@ anno                       2012
             city='New York', date=datetime.date(2015, 1, 5),
             income=200.0, currency='euro')
 
-    # invoice
     def test_InvoiceProgram(self):
         with tempfile.NamedTemporaryFile() as db_file:
             p = StringPrinter()
@@ -248,6 +248,31 @@ KNTCRK01G01H663Y 2014      5
                 header=False,
                 filters=(),
             )
+
+    def test_InvoiceProgramNotInitialized(self):
+        with tempfile.NamedTemporaryFile() as db_file:
+            i = 0
+            while True:
+                non_existent_filename = "{}.{}".format(db_file, i)
+                if not os.path.exists(non_existent_filename):
+                    break
+                i = i + 1
+            p = StringPrinter()
+            invoice_program = InvoiceProgram(
+                db_filename=non_existent_filename,
+                logger=self.logger,
+                trace=False,
+                printer=p,
+            )
+
+            p.reset()
+            with self.assertRaises(DbError):
+                invoice_program.impl_scan(
+                    warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                    error_mode=None,
+                    partial_update=None,
+                    remove_orphaned=None,
+                )
 
     def test_InvoiceProgramOk(self):
         with tempfile.NamedTemporaryFile() as db_file:

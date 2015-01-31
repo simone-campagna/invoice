@@ -17,6 +17,7 @@
 
 __author__ = "Simone Campagna"
 __all__ = [
+    'DbError',
     'Db',
 ]
 

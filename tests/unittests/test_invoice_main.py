@@ -31,6 +31,7 @@ import unittest
 from invoice.log import get_default_logger, get_null_logger
 from invoice.invoice_collection import InvoiceCollection
 from invoice.invoice_main import invoice_main
+from invoice.invoice_db import InvoiceDb
 from invoice.database.db_types import Path
 from invoice.string_printer import StringPrinter
 
@@ -113,15 +114,26 @@ anno                       2014
 
 """
 
+    CONFIG_SHOW_WERROR_ERAISE = """\
+configuration:
+  + warning_mode         = 'error'
+  + error_mode           = 'raise'
+  + partial_update       = True
+  + remove_orphaned      = False
+"""
     CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
 configuration:
-  + remove_orphaned      = False
+  + warning_mode         = 'log'
+  + error_mode           = 'log'
   + partial_update       = True
+  + remove_orphaned      = False
 """
     CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
 configuration:
-  + remove_orphaned      = False
+  + warning_mode         = 'log'
+  + error_mode           = 'log'
   + partial_update       = False
+  + remove_orphaned      = False
 """
 
     PATTERNS_CLEAR = """\
@@ -140,6 +152,10 @@ patterns:
   + Pattern(pattern='<DIRNAME>/*.DOC')
 """
 
+    VERSION_OUTPUT = """\
+versione del database:  {0}
+versione del programma: {0}
+""".format("{}.{}.{}".format(*InvoiceDb.VERSION))
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
         self.logger = get_null_logger()
@@ -318,6 +334,46 @@ KNTCRK01G01H663Y 2014      5
                 args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
             )
             self.assertEqual(p.string(), '')
+
+    def test_invoice_main_version(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'version'],
+            )
+            self.assertEqual(p.string(), self.VERSION_OUTPUT)
+
+    def test_invoice_main_config_werror_eraise(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'config', '-werror', '-eraise'],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_WERROR_ERAISE)
 
     def test_invoice_main_config_partial_update_on(self):
         with tempfile.NamedTemporaryFile() as db_filename:
