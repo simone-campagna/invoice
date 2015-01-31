@@ -21,6 +21,7 @@ __all__ = [
 ]
 
 import datetime
+import glob
 import io
 import os
 import sys
@@ -453,6 +454,15 @@ KNTCRK01G01H663Y 2014      5
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_DEFAULT)
 
+            # check if duplicate pattern raises:
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'patterns', '-p', 'example/*.doc'],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_DEFAULT)
+
     def test_invoice_main_patterns_clear(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = StringPrinter()
@@ -462,6 +472,27 @@ KNTCRK01G01H663Y 2014      5
                 printer=p,
                 logger=self.logger,
                 args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'patterns', '--clear'],
+            )
+
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_CLEAR)
+
+    def test_invoice_main_patterns_warning(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init'] + list(glob.glob(os.path.join(self.dirname, '*.doc'))),
             )
             self.assertEqual(p.string(), '')
 

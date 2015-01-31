@@ -39,6 +39,7 @@ from .log import get_default_logger, set_verbose_level
 from .invoice import Invoice
 from .validation_result import ValidationResult
 from .invoice_program import InvoiceProgram
+from .invoice_db import InvoiceDb
 from .stream_printer import StreamPrinter
 
 def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
@@ -85,6 +86,9 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
             return False
         else:
             raise ValueError("valore {!r} non valido (i valori leciti sono on/True|off/False)".format(value))
+
+    def type_pattern(s):
+        return InvoiceDb.make_pattern(s)
 
     common_parser = argparse.ArgumentParser(
         add_help=False,
@@ -227,7 +231,25 @@ Stampa l'help
         description="""\
 Inizializza il database. Deve essere fornito almeno un pattern, ad
 esempio:
+
 $ %(prog)s init 'docs/*.doc'
+
+I pattern vengono utilizzati per la ricerca dei DOC file contenenti le
+fatture.
+È importante che il comando riceva un pattern e non la lista di file
+corrispondenti alla sua espansione, altrimenti la ricerca non avverrà
+in modo corretto. Pertanto:
+
+$ %(prog)s init 'docs/*.doc'
+
+è corretto, e fa in modo che le successive scansioni ispezionino tutti
+i DOC file corrispondenti al pattern 'docs/*.doc'. Al contrario,
+
+$ %(prog)s init docs/*.doc
+
+inizializza il database con i nomi dei file che corrispondono *adesso*
+al pattern '*.doc'; le successive scansioni ispezioneranno solo questi
+file, e non nuovi file che corrispondono al pattern.
 """,
     )
     init_parser.set_defaults(
@@ -543,6 +565,7 @@ e validati.
     for parser in init_parser, legacy_parser:
         parser.add_argument("patterns",
             nargs='+',
+            type=type_pattern,
             help='pattern per la ricerca dei DOC delle fatture')
 
     patterns_parser.add_argument("--add-pattern", "-p",
@@ -550,7 +573,7 @@ e validati.
         dest="patterns",
         default=[],
         action="append",
-        type=lambda x: ('+', x),
+        type=lambda x: ('+', type_pattern(x)),
         help='aggiunge un pattern per la ricerca dei DOC delle fatture')
 
     patterns_parser.add_argument("--remove-pattern", "-x",
@@ -558,7 +581,7 @@ e validati.
         dest="patterns",
         default=[],
         action="append",
-        type=lambda x: ('-', x),
+        type=lambda x: ('-', type_pattern(x)),
         help='rimuove un pattern per la ricerca dei DOC delle fatture')
 
     ### legacy options

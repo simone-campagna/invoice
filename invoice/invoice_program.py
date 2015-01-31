@@ -167,6 +167,12 @@ class InvoiceProgram(object):
         for pattern in self.db.load_patterns():
             self.printer("  + {!r}".format(pattern))
 
+    def check_patterns(self, patterns):
+        non_patterns = self.db.non_patterns(patterns)
+        if non_patterns:
+            for pattern in non_patterns:
+                self.logger.warning("pattern {!r}: non contiene wildcard: probabilmente hai dimenticato gli apici".format(pattern.pattern))
+
     def impl_init(self, *, patterns, reset, partial_update=True, remove_orphaned=False):
         if reset and os.path.exists(self.db_filename):
             self.logger.info("cancellazione del db {!r}...".format(self.db_filename))
@@ -178,6 +184,7 @@ class InvoiceProgram(object):
         )
         configuration = self.db.store_configuration(configuration)
         #self.show_configuration(configuration)
+        self.check_patterns(patterns)
         patterns = self.db.store_patterns(patterns)
         #self.show_patterns(patterns)
 
@@ -198,14 +205,24 @@ class InvoiceProgram(object):
             self.db.clear('patterns')
         new_patterns = []
         del_patterns = []
+        old_patterns = self.db.load_patterns()
         for sign, pattern in patterns:
             if sign == '+':
-                new_patterns.append(self.db.Pattern(pattern=Path.db_to(pattern)))
+                new_patterns.append(pattern)
             elif sign == '-':
-                del_patterns.append(self.db.Pattern(pattern=Path.db_to(pattern)))
+                del_patterns.append(pattern)
         if new_patterns:
+            l = []
+            for pattern in new_patterns:
+                if pattern in old_patterns:
+                    self.logger.warning("pattern {!r}: già definito".format(pattern))
+                else:
+                    l.append(pattern)
+            new_patterns = l
+            self.check_patterns(new_patterns)
             self.db.write('patterns', new_patterns)
         if del_patterns:
+            self.check_patterns(del_patterns)
             for pattern in del_patterns:
                 self.db.delete('patterns', "pattern == {!r}".format(pattern.pattern))
         self.show_patterns(patterns)
@@ -245,7 +262,7 @@ class InvoiceProgram(object):
     def impl_legacy(self, patterns, filters, validate, list, report, warning_mode, error_mode):
         invoice_collection_reader = InvoiceCollectionReader(trace=self.trace)
 
-        invoice_collection = invoice_collection_reader(*patterns)
+        invoice_collection = invoice_collection_reader(*[pattern.pattern for pattern in patterns])
 
         if validate is None:
             validate = any([report])

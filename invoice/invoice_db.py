@@ -95,11 +95,41 @@ DELETE FROM scan_date_times WHERE doc_filename == old.doc_filename;
 END"""
             self.execute(cursor, sql)
 
+
+    @classmethod
+    def make_pattern(cls, pattern):
+        if not isinstance(pattern, cls.Pattern):
+            pattern = cls.Pattern(pattern=Path.db_to(pattern))
+        return pattern
+
+    @classmethod
+    def make_patterns(cls, patterns):
+        pattern_list = []
+        for pattern in patterns:
+            pattern_list.append(cls.make_pattern(pattern))
+        return pattern_list
+
+    @classmethod
+    def non_patterns(cls, patterns):
+        patterns = cls.make_patterns(patterns)
+        return list(filter(lambda pattern: not cls.is_pattern(pattern), patterns))
+
+    @classmethod
+    def is_pattern(cls, pattern):
+        if isinstance(pattern, cls.Pattern):
+            pattern = pattern.pattern
+        for ch in '*[?':
+            if ch in pattern:
+                return True
+        else:
+            return False
+ 
     def store_patterns(self, patterns, connection=None):
+        patterns = self.make_patterns(patterns)
         with self.connect(connection) as connection:
             self.clear('patterns')
             if patterns:
-                self.write('patterns', ((pattern, ) for pattern in patterns))
+                self.write('patterns', patterns)
         return patterns
 
     def store_configuration(self, configuration, connection=None):
