@@ -168,23 +168,23 @@ comandi ('list', 'dump', 'report'). Ad esempio:
 
 $ invoice -d x.db list --short
 anno numero data       codice_fiscale   importo valuta
-2014      1 2014-01-03 WNYBRC01G01H663Y   51.00 euro  
-2014      2 2014-01-03 PRKPRT01G01H663Y   76.50 euro  
-2014      3 2014-01-22 BNNBRC01G01H663Y  102.00 euro  
-2014      4 2014-01-25 WNYBRC01G01H663Y   51.00 euro  
-2014      5 2014-01-29 KNTCRK01G01H663Y  152.50 euro  
+2014      1 2014-01-03 WNYBRC01G01H663S   51.00 euro  
+2014      2 2014-01-03 PRKPRT01G01H663M   76.50 euro  
+2014      3 2014-01-22 BNNBRC01G01H663S  102.00 euro  
+2014      4 2014-01-25 WNYBRC01G01H663S   51.00 euro  
+2014      5 2014-01-29 KNTCRK01G01H663X  152.50 euro  
 
 # modalità legacy
 Questa modalità serve ad emulare il comportamento della versione 1.x di
 %(prog)s; in tal caso, non viene utilizzato il database.
 
 $ invoice legacy 'example/*.doc' -l
-fattura:                  'example/2014_001_bruce_wayne.doc'
-  anno/numero:            2014/1
-  città/data:             Gotham City/2014-01-03
-  nome:                   Bruce Wayne
-  codice fiscale:         WNYBRC01G01H663Y
-  importo:                51.00 [euro]
+fattura:                   '/home/simone/Programs/Programming/invoice/example/2014_001_bruce_wayne.doc'
+  anno/numero:             2014/1
+  città/data:              Gotham City/2014-01-03
+  nome:                    Bruce Wayne
+  codice fiscale:          WNYBRC01G01H663S
+  importo:                 51.00 [euro]
 ...
 
 """.format(db_file_var=DB_FILE_VAR,
