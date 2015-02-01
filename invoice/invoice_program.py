@@ -552,10 +552,12 @@ fattura:                   {doc_filename!r}
                 wd.setdefault(self.get_week_number(invoice.date), []).append(invoice)
             self.printer("""\
 anno                       {year}
+  * incasso totale:        {total_income:.2f}
   * numero di fatture:     {num_invoices}
   * numero di clienti:     {num_clients}\
 """.format(
                 year=year,
+                total_income=sum(invoice.income for invoice in year_invoices),
                 num_invoices=len(year_invoices),
                 num_clients=len(td),
             ))

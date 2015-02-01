@@ -80,6 +80,7 @@ fattura:                   '<DIRNAME>/2014_005_clark_kent.doc'
 
     REPORT_OUTPUT = """\
 anno                       2014
+  * incasso totale:        433.00
   * numero di fatture:     5
   * numero di clienti:     4
     + cliente:             WNYBRC01G01H663Y (Bruce Wayne):
@@ -126,6 +127,7 @@ anno                       2014
 
     REPORT_OUTPUT_2012 = """\
 anno                       2012
+  * incasso totale:        0.00
   * numero di fatture:     1
   * numero di clienti:     1
     + cliente:             PRKPRT01A01B123C (Peter B. Parker):
