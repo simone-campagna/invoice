@@ -27,6 +27,7 @@ __all__ = [
     'InvoiceNumberingError',
     'InvoiceDuplicatedNumberError',
     'InvoiceWrongNumberError',
+    'InvoiceTaxCodeError',
     'InvoiceMalformedTaxCodeError',
     'InvoiceUnsupportedCurrencyError',
     'InvoicePartialUpdateError',
@@ -65,7 +66,10 @@ class InvoiceUnsupportedCurrencyError(InvoiceValidationError):
 class InvoiceMultipleNamesError(InvoiceValidationError):
     pass
 
-class InvoiceMalformedTaxCodeError(InvoiceValidationError):
+class InvoiceTaxCodeError(InvoiceValidationError):
+    pass
+
+class InvoiceMalformedTaxCodeError(InvoiceTaxCodeError):
     pass
 
 class InvoicePartialUpdateError(InvoiceValidationError):

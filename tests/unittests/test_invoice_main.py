@@ -41,31 +41,31 @@ fattura:                   '<DIRNAME>/2014_001_bruce_wayne.doc'
   anno/numero:             2014/1
   città/data:              Gotham City/2014-01-03
   nome:                    Bruce Wayne
-  codice fiscale:          WNYBRC01G01H663Y
+  codice fiscale:          WNYBRC01G01H663S
   importo:                 51.00 [euro]
 fattura:                   '<DIRNAME>/2014_002_peter_parker.doc'
   anno/numero:             2014/2
   città/data:              New York City/2014-01-03
   nome:                    Peter B. Parker
-  codice fiscale:          PRKPRT01G01H663Y
+  codice fiscale:          PRKPRT01G01H663M
   importo:                 76.50 [euro]
 fattura:                   '<DIRNAME>/2014_003_bruce_banner.doc'
   anno/numero:             2014/3
   città/data:              Greenville/2014-01-22
   nome:                    Robert Bruce Banner
-  codice fiscale:          BNNBRC01G01H663Y
+  codice fiscale:          BNNBRC01G01H663S
   importo:                 102.00 [euro]
 fattura:                   '<DIRNAME>/2014_004_bruce_wayne.doc'
   anno/numero:             2014/4
   città/data:              Gotham City/2014-01-25
   nome:                    Bruce Wayne
-  codice fiscale:          WNYBRC01G01H663Y
+  codice fiscale:          WNYBRC01G01H663S
   importo:                 51.00 [euro]
 fattura:                   '<DIRNAME>/2014_005_clark_kent.doc'
   anno/numero:             2014/5
   città/data:              Smallville/2014-01-29
   nome:                    Clark Kent
-  codice fiscale:          KNTCRK01G01H663Y
+  codice fiscale:          KNTCRK01G01H663X
   importo:                 152.50 [euro]
 """
     REPORT_OUTPUT = """\
@@ -73,25 +73,25 @@ anno                       2014
   * incasso totale:        433.00
   * numero di fatture:     5
   * numero di clienti:     4
-    + cliente:             WNYBRC01G01H663Y (Bruce Wayne):
+    + cliente:             WNYBRC01G01H663S (Bruce Wayne):
       numero di fatture:   2
       incasso totale:      102.00
       incasso percentuale: 23.56%
       settimane:           1, 4
 
-    + cliente:             PRKPRT01G01H663Y (Peter B. Parker):
+    + cliente:             PRKPRT01G01H663M (Peter B. Parker):
       numero di fatture:   1
       incasso totale:      76.50
       incasso percentuale: 17.67%
       settimane:           1
 
-    + cliente:             BNNBRC01G01H663Y (Robert Bruce Banner):
+    + cliente:             BNNBRC01G01H663S (Robert Bruce Banner):
       numero di fatture:   1
       incasso totale:      102.00
       incasso percentuale: 23.56%
       settimane:           4
 
-    + cliente:             KNTCRK01G01H663Y (Clark Kent):
+    + cliente:             KNTCRK01G01H663X (Clark Kent):
       numero di fatture:   1
       incasso totale:      152.50
       incasso percentuale: 35.22%
@@ -198,11 +198,11 @@ versione del programma: {0}
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
-WNYBRC01G01H663Y 2014      1
-PRKPRT01G01H663Y 2014      2
-BNNBRC01G01H663Y 2014      3
-WNYBRC01G01H663Y 2014      4
-KNTCRK01G01H663Y 2014      5
+WNYBRC01G01H663S 2014      1
+PRKPRT01G01H663M 2014      2
+BNNBRC01G01H663S 2014      3
+WNYBRC01G01H663S 2014      4
+KNTCRK01G01H663X 2014      5
 """)
 
             p.reset()
@@ -237,7 +237,7 @@ KNTCRK01G01H663Y 2014      5
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
-PRKPRT01G01H663Y 2014      2
+PRKPRT01G01H663M 2014      2
 """)
 
             p.reset()
@@ -301,11 +301,11 @@ PRKPRT01G01H663Y 2014      2
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
-WNYBRC01G01H663Y 2014      1
-PRKPRT01G01H663Y 2014      2
-BNNBRC01G01H663Y 2014      3
-WNYBRC01G01H663Y 2014      4
-KNTCRK01G01H663Y 2014      5
+WNYBRC01G01H663S 2014      1
+PRKPRT01G01H663M 2014      2
+BNNBRC01G01H663S 2014      3
+WNYBRC01G01H663S 2014      4
+KNTCRK01G01H663X 2014      5
 """)
 
     def test_invoice_main_err_partial_update_off(self):

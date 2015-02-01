@@ -46,7 +46,7 @@ class TestInvoiceCollectionReader(unittest.TestCase):
         self.assertEqual(invoice.number, 1)
         self.assertEqual(invoice.city, 'Gotham City')
         self.assertEqual(invoice.date, datetime.date(2014, 1, 3))
-        self.assertEqual(invoice.tax_code, "WNYBRC01G01H663Y")
+        self.assertEqual(invoice.tax_code, "WNYBRC01G01H663S")
         self.assertEqual(invoice.name, "Bruce Wayne")
         self.assertEqual(invoice.income, 51.0)
         self.assertEqual(invoice.currency, "euro")

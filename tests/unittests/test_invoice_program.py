@@ -50,31 +50,31 @@ fattura:                   '<DIRNAME>/2014_001_bruce_wayne.doc'
   anno/numero:             2014/1
   città/data:              Gotham City/2014-01-03
   nome:                    Bruce Wayne
-  codice fiscale:          WNYBRC01G01H663Y
+  codice fiscale:          WNYBRC01G01H663S
   importo:                 51.00 [euro]
 fattura:                   '<DIRNAME>/2014_002_peter_parker.doc'
   anno/numero:             2014/2
   città/data:              New York City/2014-01-03
   nome:                    Peter B. Parker
-  codice fiscale:          PRKPRT01G01H663Y
+  codice fiscale:          PRKPRT01G01H663M
   importo:                 76.50 [euro]
 fattura:                   '<DIRNAME>/2014_003_bruce_banner.doc'
   anno/numero:             2014/3
   città/data:              Greenville/2014-01-22
   nome:                    Robert Bruce Banner
-  codice fiscale:          BNNBRC01G01H663Y
+  codice fiscale:          BNNBRC01G01H663S
   importo:                 102.00 [euro]
 fattura:                   '<DIRNAME>/2014_004_bruce_wayne.doc'
   anno/numero:             2014/4
   città/data:              Gotham City/2014-01-25
   nome:                    Bruce Wayne
-  codice fiscale:          WNYBRC01G01H663Y
+  codice fiscale:          WNYBRC01G01H663S
   importo:                 51.00 [euro]
 fattura:                   '<DIRNAME>/2014_005_clark_kent.doc'
   anno/numero:             2014/5
   città/data:              Smallville/2014-01-29
   nome:                    Clark Kent
-  codice fiscale:          KNTCRK01G01H663Y
+  codice fiscale:          KNTCRK01G01H663X
   importo:                 152.50 [euro]
 """
 
@@ -83,25 +83,25 @@ anno                       2014
   * incasso totale:        433.00
   * numero di fatture:     5
   * numero di clienti:     4
-    + cliente:             WNYBRC01G01H663Y (Bruce Wayne):
+    + cliente:             WNYBRC01G01H663S (Bruce Wayne):
       numero di fatture:   2
       incasso totale:      102.00
       incasso percentuale: 23.56%
       settimane:           1, 4
 
-    + cliente:             PRKPRT01G01H663Y (Peter B. Parker):
+    + cliente:             PRKPRT01G01H663M (Peter B. Parker):
       numero di fatture:   1
       incasso totale:      76.50
       incasso percentuale: 17.67%
       settimane:           1
 
-    + cliente:             BNNBRC01G01H663Y (Robert Bruce Banner):
+    + cliente:             BNNBRC01G01H663S (Robert Bruce Banner):
       numero di fatture:   1
       incasso totale:      102.00
       incasso percentuale: 23.56%
       settimane:           4
 
-    + cliente:             KNTCRK01G01H663Y (Clark Kent):
+    + cliente:             KNTCRK01G01H663X (Clark Kent):
       numero di fatture:   1
       incasso totale:      152.50
       incasso percentuale: 35.22%
@@ -130,7 +130,7 @@ anno                       2012
   * incasso totale:        0.00
   * numero di fatture:     1
   * numero di clienti:     1
-    + cliente:             PRKPRT01A01B123C (Peter B. Parker):
+    + cliente:             PRKPRT01A01B123M (Peter B. Parker):
       numero di fatture:   1
       incasso totale:      0.00
       incasso percentuale: 0.00%
@@ -149,19 +149,19 @@ anno                       2012
         self._invoice_001_peter_parker = Invoice(
             doc_filename='2015_001_peter_parker.doc',
             year=2015, number=1,
-            name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
+            name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 1),
             income=200.0, currency='euro')
         self._invoice_002_peter_parker = Invoice(
             doc_filename='2015_002_peter_parker.doc',
             year=2015, number=2,
-            name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
+            name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 2),
             income=100.0, currency='euro')
         self._invoice_003_peter_parker = Invoice(
             doc_filename='2015_003_peter_parser.doc',
             year=2015, number=3,
-            name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
+            name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 3),
             income=150.0, currency='euro')
         self._invoices = [
@@ -172,25 +172,25 @@ anno                       2012
         self._invoice_004_parker_peter = Invoice(
             doc_filename='2015_004_parker_peter.doc',
             year=2015, number=4,
-            name='Parker B. Peter', tax_code='PRKPRT01A01B123C', 
+            name='Parker B. Peter', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 4),
             income=200.0, currency='euro')
         self._invoice_004_peter_parker_wrong_date = Invoice(
             doc_filename='2015_004_peter_parker.doc',
             year=2015, number=4,
-            name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
+            name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 2),
             income=200.0, currency='euro')
         self._invoice_004_peter_parker_wrong_number = Invoice(
             doc_filename='2015_004_peter_parker.doc',
             year=2015, number=6,
-            name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
+            name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 5),
             income=200.0, currency='euro')
         self._invoice_004_peter_parker_duplicated_number = Invoice(
             doc_filename='2015_004_peter_parker.doc',
             year=2015, number=self._invoices[-1].number,
-            name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
+            name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 5),
             income=200.0, currency='euro')
 
@@ -228,11 +228,11 @@ anno                       2012
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
-WNYBRC01G01H663Y 2014      1
-PRKPRT01G01H663Y 2014      2
-BNNBRC01G01H663Y 2014      3
-WNYBRC01G01H663Y 2014      4
-KNTCRK01G01H663Y 2014      5
+WNYBRC01G01H663S 2014      1
+PRKPRT01G01H663M 2014      2
+BNNBRC01G01H663S 2014      3
+WNYBRC01G01H663S 2014      4
+KNTCRK01G01H663X 2014      5
 """)
 
             p.reset()
@@ -472,7 +472,7 @@ KNTCRK01G01H663Y 2014      5
             invoice_a = Invoice(
                 doc_filename='2015_004_parker_peter.doc',
                 year=2015, number=4,
-                name='Parker B. Peter', tax_code='PRKPRT01A01B123C', 
+                name='Parker B. Peter', tax_code='PRKPRT01G01H663M', 
                 city='New York', date=datetime.date(2015, 1, 4),
                 income=None, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
@@ -543,8 +543,9 @@ KNTCRK01G01H663Y 2014      5
             self.assertEqual(validation_result.num_errors(), 1)
             for doc_filename, errors in validation_result.errors().items():
                 for error in errors:
+                    self.maxDiff = None
                     self.assertIs(error.exc_type, InvoiceMalformedTaxCodeError)
-                    self.assertEqual(error.message.replace(self.dirname, '<DIRNAME>'), "fattura <DIRNAME>/error_malformed_tax_code/2013_001_bruce_wayne.doc: codice fiscale 'WnYBRCO1GO10663Y' non corretto: i caratteri non corretti sono 'W[n]YBRC[O]1G[O]1[0]663Y'")
+                    self.assertEqual(error.message.replace(self.dirname, '<DIRNAME>'), "fattura <DIRNAME>/error_malformed_tax_code/2013_001_bruce_wayne.doc: codice fiscale 'WnYBRCO1GO10663T' non corretto: i caratteri non corretti sono 'W[n]YBRC[O]1G[O]1[0]663T'")
 
     def test_InvoiceProgram_zero_income(self):
         with tempfile.NamedTemporaryFile() as db_file:
@@ -575,13 +576,14 @@ KNTCRK01G01H663Y 2014      5
             invoice_collection.add(Invoice(
                 doc_filename='2012_001_peter_parker.doc',
                 year=2012, number=1,
-                name='Peter B. Parker', tax_code='PRKPRT01A01B123C',
+                name='Peter B. Parker', tax_code='PRKPRT01A01B123M',
                 city='New York', date=datetime.date(2015, 1, 4),
                 income=0.0, currency='euro'))
 
             p.reset()
             invoice_collection = invoice_collection.filter("anno == 2012")
             invoice_program.report_invoice_collection(invoice_collection)
+            self.maxDiff = None
             self.assertEqual(p.string(), self.REPORT_OUTPUT_2012)
 
     def _test_InvoiceProgram_remove_orphaned(self, remove_orphaned):
