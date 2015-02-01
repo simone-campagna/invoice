@@ -591,6 +591,16 @@ anno                       {year}
             ))
             for week in sorted(wd.keys()):
                 invoices = wd[week]
+                counter = collections.Counter()
+                for invoice in invoices:
+                    counter[invoice.date] += 1
+                day_names = ['LU', 'MA', 'ME', 'GI', 'VE', 'SA', 'DO']
+                days = []
+                dates = sorted(counter.keys())
+                for date in dates:
+                    day = date.weekday()
+                    count = counter[date]
+                    days.append("{} {}[{}]".format(date, day_names[day], count))
                 week_total_income = sum(invoice.income for invoice in invoices)
                 if total_income != 0.0:
                     week_income_percentage = week_total_income / total_income
@@ -600,11 +610,13 @@ anno                       {year}
                 self.printer("""\
     + settimana:           {week} [{first_date} -> {last_date}]:
       numero di fatture:   {num_invoices}
+      giorni:              {days}
       incasso totale:      {week_total_income:.2f}
       incasso percentuale: {week_income_percentage:.2%}
 """.format(
                     week=week,
                     num_invoices=len(invoices),
+                    days=', '.join(days),
                     first_date=first_date,
                     last_date=last_date,
                     total_income=total_income,

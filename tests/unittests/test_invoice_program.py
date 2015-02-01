@@ -110,16 +110,19 @@ anno                       2014
   * numero di settimane:   3
     + settimana:           1 [2014-01-01 -> 2014-01-05]:
       numero di fatture:   2
+      giorni:              2014-01-03 VE[2]
       incasso totale:      127.50
       incasso percentuale: 29.45%
 
     + settimana:           4 [2014-01-20 -> 2014-01-26]:
       numero di fatture:   2
+      giorni:              2014-01-22 ME[1], 2014-01-25 SA[1]
       incasso totale:      153.00
       incasso percentuale: 35.33%
 
     + settimana:           5 [2014-01-27 -> 2014-02-02]:
       numero di fatture:   1
+      giorni:              2014-01-29 ME[1]
       incasso totale:      152.50
       incasso percentuale: 35.22%
 
@@ -139,6 +142,7 @@ anno                       2012
   * numero di settimane:   1
     + settimana:           2 [2012-01-02 -> 2012-01-08]:
       numero di fatture:   1
+      giorni:              2015-01-04 DO[1]
       incasso totale:      0.00
       incasso percentuale: 0.00%
 
