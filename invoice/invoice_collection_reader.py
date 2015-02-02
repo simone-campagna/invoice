@@ -35,13 +35,13 @@ class InvoiceCollectionReader(object):
         self.logger = logger
         self.trace = trace
 
-    def __call__(self, *doc_filename_patterns):
+    def __call__(self, validation_result, *doc_filename_patterns):
         invoice_reader = InvoiceReader(logger=self.logger)
         invoice_collection = InvoiceCollection(logger=self.logger)
         for doc_filename_pattern in doc_filename_patterns:
             for doc_filename in glob.glob(doc_filename_pattern):
                 try:
-                    invoice_collection.add(invoice_reader(doc_filename))
+                    invoice_collection.add(invoice_reader(validation_result, doc_filename))
                 except Exception as err: # pragma: no cover
                     if self.trace:
                         traceback.print_exc()

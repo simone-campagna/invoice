@@ -27,6 +27,7 @@ import unittest
 from invoice.log import get_null_logger
 from invoice.invoice import Invoice
 from invoice.invoice_collection_reader import InvoiceCollectionReader
+from invoice.validation_result import ValidationResult
 
 class TestInvoiceCollectionReader(unittest.TestCase):
     def setUp(self):
@@ -37,8 +38,9 @@ class TestInvoiceCollectionReader(unittest.TestCase):
     def test_InvoiceCollectionReader(self):
         doc_filename = os.path.normpath(os.path.abspath(os.path.join(self.dirname, '2014_001_bruce_wayne.doc')))
         glob_filename = doc_filename.replace('bruce_wayne', '*')
+        validation_result = ValidationResult(logger=self.logger)
         invoice_collection_reader = InvoiceCollectionReader(logger=self.logger)
-        invoice_collection = invoice_collection_reader(glob_filename)
+        invoice_collection = invoice_collection_reader(validation_result, glob_filename)
         self.assertEqual(len(invoice_collection), 1)
         invoice = invoice_collection[0]
         self.assertEqual(invoice.doc_filename, doc_filename)

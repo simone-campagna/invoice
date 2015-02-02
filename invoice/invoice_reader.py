@@ -20,20 +20,30 @@ __all__ = [
     'InvoiceReader',
 ]
 
+import collections
 import datetime
 import re
 import subprocess
 
+from .error import InvoiceDuplicatedLineError
 from .invoice import Invoice
 from .log import get_default_logger
 
 class InvoiceReader(object):
-    RE_INVOICE_NUMBER = re.compile("^[Ff]attura\s+n.\s+(?P<year>\d+)/(?P<number>\d+)\s*$")
+    RE_YEAR_AND_NUMBER = re.compile("^[Ff]attura\s+n.\s+(?P<year>\d+)/(?P<number>\d+)\s*$")
     RE_NAME = re.compile("^\s*[Ss]pett\.(?:\s*[Ss]ig\.?)?\s*(?P<name>[\w\s'\.]+)\s*$")
     RE_TAX_CODE = re.compile("^.*[^\w]?(?P<tax_code>[A-Z]{6,6}\d{2,2}[A-Z]\d{2,2}[A-Z]\d{3,3}[A-Z])\s*$")
     RE_MALFORMED_TAX_CODE = re.compile("^.*[^\w](?P<tax_code>[A-Za-z0]{6,6}[\dO]{2,2}[A-Za-z0][\dO]{2,2}[A-Za-z0][\dO]{3,3}[A-Za-z0])\s*$")
-    RE_DATE = re.compile("^\s*(?P<city>[^,]+)(?:,|\s)\s*(?P<date>\d{1,2}/\d{1,2}/\d\d\d\d)\s*$")
-    RE_TOTAL = re.compile("Totale\s+fattura\s+(?P<income>[\d,\.]*)\s+(?P<currency>\w+)\s*$")
+    RE_CITY_AND_DATE = re.compile("^\s*(?P<city>[^,]+)(?:,|\s)\s*(?P<date>\d{1,2}/\d{1,2}/\d\d\d\d)\s*$")
+    RE_INCOME_AND_CURRENCY = re.compile("Totale\s+fattura\s+(?P<income>[\d,\.]*)\s+(?P<currency>\w+)\s*$")
+    RE_DICT = collections.OrderedDict((
+        ('year_and_number',	(None,		RE_YEAR_AND_NUMBER)),
+        ('name',		(None,		RE_NAME)),
+        ('tax_code',		(None,		RE_TAX_CODE)),
+        ('malformed_tax_code',	('tax_code',	RE_MALFORMED_TAX_CODE)),
+        ('city_and_date',	(None,		RE_CITY_AND_DATE)),
+        ('income_and_currency',	(None,		RE_INCOME_AND_CURRENCY)),
+    ))
     DATE_FORMATS = (
         "%d/%m/%Y",
     )
@@ -42,7 +52,7 @@ class InvoiceReader(object):
             logger = get_default_logger()
         self.logger = logger
         
-    def __call__(self, doc_filename):
+    def __call__(self, validation_result, doc_filename):
         got_number = False
         got_date = False
         got_name = False
@@ -63,42 +73,36 @@ class InvoiceReader(object):
         malformed_tax_code = None
         def store(data, converters, match):
             data.update({key: converters[key](val) for key, val in match.groupdict().items()})
+        tag_data = collections.OrderedDict()
         for line in self.read_text(doc_filename).split('\n'):
-            if not got_number:
-                match = self.RE_INVOICE_NUMBER.match(line)
+            for tag, (field_name, regex) in self.RE_DICT.items():
+                if field_name is None:
+                    field_name = tag
+                match = regex.match(line)
                 if match:
-                    got_number = True
-                    store(data, converters, match)
-                    continue
-            if not got_name:
-                match = self.RE_NAME.match(line)
-                if match:
-                    got_name = True
-                    store(data, converters, match)
-                    continue
-            if not got_tax_code:
-                match = self.RE_TAX_CODE.match(line)
-                if match:
-                    got_tax_code = True
-                    store(data, converters, match)
-                    continue
-                match = self.RE_MALFORMED_TAX_CODE.match(line)
-                if match:
-                    store(data, converters, match)
-                    continue
-            if not got_date:
-                match = self.RE_DATE.match(line)
-                if match:
-                    got_date = True
-                    store(data, converters, match)
-                    continue
-            if not got_total:
-                match = self.RE_TOTAL.match(line)
-                if match:
-                    got_total = True
-                    store(data, converters, match)
-                    continue
+                    keys = {key: converters[key](val) for key, val in match.groupdict().items()}
+                    tag_data.setdefault(tag, []).append((line, keys))
+
+        if 'malformed_tax_code' in tag_data:
+            if not 'tax_code' in tag_data:
+                tag_data['tax_code'] = tag_data['malformed_tax_code']
+            del tag_data['malformed_tax_code']
+
+        postponed_errors = []
+        for tag, entries in tag_data.items():
+            if len(entries) > 1:
+                message = "fattura {}: linee {!r} duplicate".format(doc_filename, tag)
+                postponed_errors.append((
+                    InvoiceDuplicatedLineError,
+                    message))
+                self.logger.error(message + ':')
+                for line, keys in entries:
+                    self.logger.error("  {}: {!r}".format(tag, line.strip()))
+            line,keys = entries[0]
+            data.update(keys)
         invoice = Invoice(**data)
+        for exc_type, message in postponed_errors:
+            validation_result.add_error(invoice, exc_type, message)
         self.logger.info("fattura {} letta con successo".format(invoice))
         return invoice
 

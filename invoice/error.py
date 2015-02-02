@@ -19,6 +19,7 @@ __author__ = "Simone Campagna"
 __all__ = [
     'InvoiceError',
     'InvoiceSyntaxError',
+    'InvoiceDuplicatedLineError',
     'InvoiceValidationError',
     'InvoiceMultipleNamesError',
     'InvoiceUndefinedFieldError',
@@ -40,6 +41,9 @@ class InvoiceSyntaxError(Exception):
     pass
 
 class InvoiceValidationError(InvoiceError):
+    pass
+
+class InvoiceDuplicatedLineError(InvoiceValidationError):
     pass
 
 class InvoiceUndefinedFieldError(InvoiceValidationError):

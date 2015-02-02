@@ -125,9 +125,9 @@ class InvoiceProgram(object):
             remove_orphaned=remove_orphaned,
         )
         if validation_result.num_errors():
-            max_errors = 5
-            self.logger.error("i primi {} errori sono:".format(max_errors))
             failing_invoices = InvoiceCollection(validation_result.filter_failing_invoices(invoice_collection))
+            max_errors = min(5, len(failing_invoices))
+            self.logger.error("le prime {} fatture contenenti errori sono:".format(max_errors))
             failing_invoices.sort()
             for c, invoice in enumerate(failing_invoices):
                 self.logger.error(" {:2d}) {!r}".format(c, invoice.doc_filename))
@@ -296,7 +296,9 @@ class InvoiceProgram(object):
     def impl_legacy(self, patterns, filters, validate, list, report, warning_mode, error_mode):
         invoice_collection_reader = InvoiceCollectionReader(trace=self.trace)
 
-        invoice_collection = invoice_collection_reader(*[pattern.pattern for pattern in patterns])
+        validation_result=self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
+        invoice_collection = invoice_collection_reader(validation_result, *[pattern.pattern for pattern in patterns])
+        
 
         if validate is None:
             validate = any([report])
@@ -304,7 +306,6 @@ class InvoiceProgram(object):
         try:
             if validate:
                 self.logger.debug("validazione di {} fatture...".format(len(invoice_collection)))
-                validation_result=self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
                 validation_result = self.validate_invoice_collection(validation_result, invoice_collection)
                 if validation_result.num_errors():
                     self.logger.error("trovati #{} errori!".format(validation_result.num_errors()))
@@ -383,13 +384,7 @@ class InvoiceProgram(object):
                 old_invoices = []
                 scan_date_times = collections.OrderedDict()
                 for existing, doc_filename in result:
-                    try:
-                        invoice = invoice_reader(doc_filename)
-                    except Exception as err:
-                        if self.trace:
-                            traceback.print_exc()
-                        self.logger.error("fattura {!r}: {}: {}".format(doc_filename, type(err).__name__, err))
-                        continue
+                    invoice = invoice_reader(validation_result, doc_filename)
                     updated_invoice_collection.add(invoice)
                     if existing:
                         old_invoices.append(invoice)

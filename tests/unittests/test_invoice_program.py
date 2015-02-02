@@ -30,6 +30,7 @@ import unittest
 
 from invoice.log import get_null_logger
 from invoice.error import InvoiceDuplicatedNumberError, \
+                          InvoiceDuplicatedLineError, \
                           InvoiceDateError, \
                           InvoiceWrongNumberError, \
                           InvoiceUndefinedFieldError, \
@@ -363,7 +364,7 @@ KNTCRK01G01H663X 2014      5
             self.assertEqual(validation_result.num_errors(), 0)
             self.assertEqual(validation_result.num_warnings(), 0)
 
-    def test_InvoiceProgramError(self):
+    def test_InvoiceProgramErrorDuplicatedNumber(self):
         with tempfile.NamedTemporaryFile() as db_file:
             p = StringPrinter()
 
@@ -382,6 +383,30 @@ KNTCRK01G01H663X 2014      5
 
             p.reset()
             with self.assertRaises(InvoiceDuplicatedNumberError):
+                invoice_program.impl_scan(
+                    warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                    error_mode=ValidationResult.ERROR_MODE_RAISE,
+                )
+
+    def test_InvoiceProgramErrorDuplicatedLine(self):
+        with tempfile.NamedTemporaryFile() as db_file:
+            p = StringPrinter()
+
+            invoice_program = InvoiceProgram(
+                db_filename=db_file.name,
+                logger=self.logger,
+                trace=False,
+                printer=p,
+            )
+
+            p.reset()
+            invoice_program.impl_init(
+                patterns=[os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_duplicated_line/*.doc')],
+                reset=True,
+            )
+
+            p.reset()
+            with self.assertRaises(InvoiceDuplicatedLineError):
                 invoice_program.impl_scan(
                     warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                     error_mode=ValidationResult.ERROR_MODE_RAISE,
