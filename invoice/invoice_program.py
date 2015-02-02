@@ -128,7 +128,7 @@ class InvoiceProgram(object):
             max_errors = 5
             self.logger.error("i primi {} errori sono:".format(max_errors))
             failing_invoices = InvoiceCollection(validation_result.filter_failing_invoices(invoice_collection))
-            failing_invoices.process()
+            failing_invoices.sort()
             for c, invoice in enumerate(failing_invoices):
                 self.logger.error(" {:2d}) {!r}".format(c, invoice.doc_filename))
                 errors = validation_result.errors().get(invoice.doc_filename, [])
@@ -440,7 +440,7 @@ class InvoiceProgram(object):
 
     def validate_invoice_collection(self, validation_result, invoice_collection):
         self.logger.debug("validation of {} invoices...".format(len(invoice_collection)))
-        invoice_collection.process()
+        invoice_collection.sort()
 
         # verify fields definition:
         for invoice in invoice_collection:
@@ -505,7 +505,7 @@ class InvoiceProgram(object):
         return validation_result
 
     def list_invoice_collection(self, invoice_collection, field_names, header=True):
-        invoice_collection.process()
+        invoice_collection.sort()
         if field_names is None:
             field_names = Invoice._fields
         field_names = [Invoice.get_field_name_from_translation(field_name) for field_name in field_names]
@@ -530,7 +530,7 @@ class InvoiceProgram(object):
                 self.printer(fmt.format(row=row, lengths=lengths))
 
     def dump_invoice_collection(self, invoice_collection):
-        invoice_collection.process()
+        invoice_collection.sort()
         digits = 1 + int(math.log10(max(1, len(invoice_collection))))
         for invoice in invoice_collection:
             self.printer("""\
@@ -542,7 +542,7 @@ fattura:                   {doc_filename!r}
   importo:                 {income:.2f} [{currency}]""".format(digits=digits, **invoice._asdict()))
 
     def report_invoice_collection(self, invoice_collection):
-        invoice_collection.process()
+        invoice_collection.sort()
         for year in invoice_collection.years():
             year_invoices = invoice_collection.filter(lambda invoice: invoice.year == year)
             td = collections.OrderedDict()

@@ -36,7 +36,7 @@ class Db(object):
 
     def check(self):
         if not os.path.exists(self.db_filename):
-            raise DbError("db file {!r} non inizializzato".format(self.db_filename))
+            raise DbError("database {!r} non inizializzato".format(self.db_filename))
 
     def connect(self, connection=None):
         if connection:
@@ -55,7 +55,7 @@ class Db(object):
     def get_table_names(self, connection=None):
         with self.connect(connection) as connection:
             cursor = connection.cursor()
-            return tuple(self.execute(cursor, "SELECT name FROM sqlite_master WHERE type == 'table';"))
+            return tuple(row[0] for row in self.execute(cursor, "SELECT name FROM sqlite_master WHERE type == 'table';"))
 
     def create_table(self, table_name, table_fields, connection=None):
         with self.connect(connection) as connection:

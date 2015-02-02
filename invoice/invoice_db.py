@@ -99,11 +99,14 @@ class InvoiceDb(Db):
     def check(self):
         super().check()
         with self.connect() as connection:
+            table_names = self.get_table_names(connection)
+            if not 'version' in table_names:
+                raise DbError("database {!r}: la versione non è disponibile; è necessario eseguire nuovamente l'inizializzazione".format(self.db_filename))
             version = self.load_version(connection=connection)
             if not self.version_is_valid(version):
                 vdb = "{}.{}.{}".format(*version)
                 vcl = "{}.{}.{}".format(*self.VERSION)
-                raise DbError("versione del database {} non compatibile con quella del client {}".format(vdb, vcl))
+                raise DbError("database {!r}: la versione {} non compatibile con quella del client {}".format(self.db_filename, vdb, vcl))
 
     def version_is_valid(self, version):
         return version[:-1] == self.VERSION[:-1]

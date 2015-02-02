@@ -255,7 +255,7 @@ KNTCRK01G01H663X 2014      5
                 filters=(),
             )
 
-    def test_InvoiceProgramNotInitialized(self):
+    def test_InvoiceProgramDbNotExists(self):
         with tempfile.NamedTemporaryFile() as db_file:
             i = 0
             while True:
@@ -279,6 +279,26 @@ KNTCRK01G01H663X 2014      5
                     partial_update=None,
                     remove_orphaned=None,
                 )
+
+    def test_InvoiceProgramDbNotInitialized(self):
+        with tempfile.NamedTemporaryFile() as db_file:
+            p = StringPrinter()
+            invoice_program = InvoiceProgram(
+                db_filename=db_file.name,
+                logger=self.logger,
+                trace=False,
+                printer=p,
+            )
+
+            p.reset()
+            with self.assertRaises(DbError):
+                invoice_program.impl_scan(
+                    warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                    error_mode=None,
+                    partial_update=None,
+                    remove_orphaned=None,
+                )
+
 
     def test_InvoiceProgramInvalidVersion(self):
         with tempfile.NamedTemporaryFile() as db_file:
