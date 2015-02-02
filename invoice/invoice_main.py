@@ -22,6 +22,7 @@ __all__ = [
 
 import argparse
 import collections
+import datetime
 import os
 import sys
 import traceback
@@ -59,6 +60,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_validate = True
     default_list_field_names = InvoiceProgram.LIST_FIELD_NAMES_LONG
     default_filters = []
+    default_stats_interval = InvoiceProgram.STATS_INTERVAL_NONE
 
     # configuration
     default_warning_mode = None
@@ -82,6 +84,15 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
         else:
             filter_source = 'year in {{{}}}'.format(', '.join(str(year) for year in years))
         return filter_source
+
+    DATE_FORMAT = "%Y-%m-%d"
+    def type_date_start_filter(s):
+        d = datetime.datetime.strptime(s, DATE_FORMAT).date()
+        return "date >= datetime.datetime.strptime({!r}, {!r}).date()".format(d.strftime(DATE_FORMAT), DATE_FORMAT)
+
+    def type_date_end_filter(s):
+        d = datetime.datetime.strptime(s, DATE_FORMAT).date()
+        return "date <= datetime.datetime.strptime({!r}, {!r}).date()".format(d.strftime(DATE_FORMAT), DATE_FORMAT)
 
     def type_onoff(value):
         if value.lower() in {"on", "true"}:
@@ -164,7 +175,7 @@ validazione delle fatture lette, ed archivia sul database i nuovi dati.
 $ invoice -d x.db scan
 
 Il contenuto del database può essere ispezionato utilizzando alcuni
-comandi ('list', 'dump', 'report'). Ad esempio:
+comandi ('list', 'dump', 'report', 'stats'). Ad esempio:
 
 $ invoice -d x.db list --short
 anno numero data       codice_fiscale   importo valuta
@@ -456,6 +467,40 @@ Per ciascun anno, vengono mostrate le seguenti informazioni:
         function_arguments=('filters', ),
     )
 
+    ### stats_parser ###
+    stats_parser = add_subparser(subparsers,
+        "stats",
+        parents=(common_parser, ),
+        add_help=False,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""\
+Mostra statistiche relative a determinati periodi di tempo,
+eventualmente raggruppate per settimane o mesi.  Le fatture possono
+essere selezionate utilizzando i filtri.
+
+Tutte le fatture che fanno parte del periodo selezionato possono
+essere raggruppate per
+ * anno		(--year/-sy)
+ * mese		(--month/-sm)
+ * settimana	(--week/-sw)
+ * giorno	(--day/-sd)
+
+Se nessuna opzione di raggruppamento viene specificata, tutte le fatture
+selezionate apparterranno ad un unico gruppo.
+
+Per ogni gruppo di fatture, vengono mostrati:
+  * numero di fatture
+  * numero di clienti
+  * incasso totale
+  * incasso percentuale
+
+""",
+    )
+    stats_parser.set_defaults(
+        function_name="program_stats",
+        function_arguments=('filters', 'stats_interval'),
+    )
+
     ### legacy_parser ###
     legacy_parser = add_subparser(subparsers,
         "legacy",
@@ -515,7 +560,7 @@ e validati.
         help="selezione manuale dei campi, ad esempio 'anno,codice_fiscale,città' [{}]".format('|'.join(all_field_names)))
 
     ### year filter option
-    for parser in list_parser, dump_parser, legacy_parser, report_parser:
+    for parser in list_parser, dump_parser, legacy_parser, report_parser, stats_parser:
         parser.add_argument("--year", "-y",
             metavar="Y",
             dest="filters",
@@ -525,14 +570,58 @@ e validati.
             help="filtra le fatture in base all'anno")
 
     ### generic filter option
-    for parser in list_parser, dump_parser, legacy_parser:
+    for parser in list_parser, dump_parser, legacy_parser, stats_parser:
+        parser.add_argument("--start", "-S",
+            metavar="S",
+            dest="filters",
+            type=type_date_start_filter,
+            action="append",
+            default=default_filters,
+            help="seleziona solo le fatture con data successiva o uguale a S")
+
+        parser.add_argument("--end", "-E",
+            metavar="E",
+            dest="filters",
+            type=type_date_end_filter,
+            action="append",
+            default=default_filters,
+            help="seleziona solo le fatture con data precedente o uguale a E")
+
         parser.add_argument("--filter", "-F",
             metavar="F",
             dest="filters",
             type=str,
             action="append",
             default=default_filters,
-            help="aggiunge un filtro sulle fatture (ad esempio 'anno == 2014')")
+            help="aggiunge un filtro generico sulle fatture (ad esempio 'anno == 2014')")
+
+        parser.add_argument("--yearly", "-sy",
+            dest="stats_interval",
+            action="store_const",
+            const=InvoiceProgram.STATS_INTERVAL_YEAR,
+            default=default_stats_interval,
+            help="raggruppa le fatture per anno")
+
+        parser.add_argument("--monthly", "-sm",
+            dest="stats_interval",
+            action="store_const",
+            const=InvoiceProgram.STATS_INTERVAL_MONTH,
+            default=default_stats_interval,
+            help="raggruppa le fatture per mese")
+
+        parser.add_argument("--weekly", "-sw",
+            dest="stats_interval",
+            action="store_const",
+            const=InvoiceProgram.STATS_INTERVAL_WEEK,
+            default=default_stats_interval,
+            help="raggruppa le fatture per settimana")
+
+        parser.add_argument("--daily", "-sd",
+            dest="stats_interval",
+            action="store_const",
+            const=InvoiceProgram.STATS_INTERVAL_DAY,
+            default=default_stats_interval,
+            help="raggruppa le fatture per giorno")
 
     ### warnings and error options
     for parser in init_parser, config_parser, scan_parser, validate_parser, legacy_parser:

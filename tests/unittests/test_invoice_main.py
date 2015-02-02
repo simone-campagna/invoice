@@ -682,3 +682,37 @@ KNTCRK01G01H663X 2014      5
                 )
             self.assertEqual(cm.exception.code, 2)
 
+    def test_invoice_main_stats(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'scan'],
+            )
+            self.assertEqual(p.string(), '')
+
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'stats', '-S', '2014-01-10', '-E', '2014-01-27', '-sy'],
+            )
+            self.assertEqual(p.string(), """\
+periodo 2014-01-22 -> 2014-01-25:
+  * anno = 2014
+    * numero di fatture:     2
+    * numero di clienti:     2
+    * incasso totale:        153.00
+    * incasso percentuale:   100.00%
+
+""")

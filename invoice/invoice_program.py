@@ -64,6 +64,12 @@ class InvoiceProgram(object):
     LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
     LIST_FIELD_NAMES_FULL = Invoice._fields
 
+    STATS_INTERVAL_YEAR = 'year'
+    STATS_INTERVAL_MONTH = 'month'
+    STATS_INTERVAL_WEEK = 'week'
+    STATS_INTERVAL_DAY = 'day'
+    STATS_INTERVAL_NONE = 'none'
+
     def __init__(self, db_filename, logger, printer=print, trace=False):
         self.db_filename = db_filename
         self.logger = logger
@@ -156,6 +162,10 @@ class InvoiceProgram(object):
 
     def program_report(self, *, filters=None):
         self.impl_report(filters=filters)
+        return 0
+
+    def program_stats(self, *, filters=None, stats_interval=None):
+        self.impl_stats(filters=filters, stats_interval=stats_interval)
         return 0
 
     def legacy(self, patterns, filters, validate, list, report, warning_mode, error_mode):
@@ -292,6 +302,87 @@ class InvoiceProgram(object):
             filters = ()
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
         self.report_invoice_collection(invoice_collection)
+
+    def group_by(self, invoice_collection, stats_interval):
+        invoice_collection.sort()
+        if stats_interval == self.STATS_INTERVAL_YEAR:
+            group_function = lambda invoice: invoice.year
+            group_name_function = lambda group_value: str(group_value)
+        elif stats_interval == self.STATS_INTERVAL_MONTH:
+            group_function = lambda invoice: (invoice.year, invoice.date.month)
+            group_name_function = lambda group_value: "{:4d}-{:02d}".format(*group_value)
+        elif stats_interval == self.STATS_INTERVAL_WEEK:
+            group_function = lambda invoice: (invoice.year, self.get_week_number(invoice.date))
+            group_name_function = lambda group_value: "{:4d}-{:02d} [{} -> {}]".format(*(group_value + self.get_week_range(*group_value)))
+        elif stats_interval == self.STATS_INTERVAL_DAY:
+            group_function = lambda invoice: invoice.date
+            group_name_function = lambda group_value: str(group_value)
+        else:
+            group_function = lambda invoice: 0
+            group_name_function = lambda group_value: str(group_value)
+        group_value = None
+        group = []
+        for invoice in invoice_collection:
+            value = group_function(invoice)
+            if group_value is None:
+                group_value = value
+            if value != group_value:
+                yield group_value, group_name_function(group_value), tuple(group)
+                del group[:]
+                group_value = value
+            group.append(invoice)
+        if group:
+            yield group_value, group_name_function(group_value), group
+   
+    def impl_stats(self, *, filters=None, stats_interval=None):
+        self.db.check()
+        if filters is None:
+            filters = ()
+        if stats_interval is None:
+            stats_interval = self.STATS_INTERVAL_NONE
+        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
+        invoice_collection.sort()
+        if invoice_collection:
+            interval_translation = {
+                self.STATS_INTERVAL_YEAR:	'anno',
+                self.STATS_INTERVAL_MONTH:	'mese',
+                self.STATS_INTERVAL_WEEK:	'settimana',
+                self.STATS_INTERVAL_DAY:	'giorno',
+                self.STATS_INTERVAL_NONE:	'',
+            }
+            first_invoice = invoice_collection[0]
+            last_invoice = invoice_collection[-1]
+            self.printer("periodo {} -> {}:".format(first_invoice.date, last_invoice.date))
+            if stats_interval == self.STATS_INTERVAL_NONE:
+                indentation = ""
+            else:
+                indentation = "  "
+            total_income = sum(invoice.income for invoice in invoice_collection)
+            for group_value, group_name, group in self.group_by(invoice_collection, stats_interval):
+                group_income = sum(invoice.income for invoice in group)
+                if total_income != 0.0:
+                    group_income_percentage = group_income / total_income
+                else:
+                    group_income_percentage = 0.0
+                clients = set(invoice.tax_code for invoice in group)
+                data = {
+                    'i': indentation,
+                    'stats_interval': interval_translation[stats_interval],
+                    'group_name': group_name,
+                    'invoice_count': len(group),
+                    'client_count': len(clients),
+                    'group_income': group_income,
+                    'group_income_percentage': group_income_percentage,
+                }
+                if stats_interval != self.STATS_INTERVAL_NONE:
+                    self.printer("{i}* {stats_interval} = {group_name}".format(**data))
+                self.printer("""\
+{i}  * numero di fatture:     {invoice_count}
+{i}  * numero di clienti:     {client_count}
+{i}  * incasso totale:        {group_income:.2f}
+{i}  * incasso percentuale:   {group_income_percentage:.2%}
+""".format(**data))
+
 
     def impl_legacy(self, patterns, filters, validate, list, report, warning_mode, error_mode):
         invoice_collection_reader = InvoiceCollectionReader(trace=self.trace)

@@ -148,6 +148,85 @@ anno                       2012
       incasso percentuale: 0.00%
 
 """
+
+    STATS_OUTPUT_NONE = """\
+periodo 2014-01-03 -> 2014-01-29:
+  * numero di fatture:     5
+  * numero di clienti:     4
+  * incasso totale:        433.00
+  * incasso percentuale:   100.00%
+
+"""
+
+    STATS_OUTPUT_YEAR = """\
+periodo 2014-01-03 -> 2014-01-29:
+  * anno = 2014
+    * numero di fatture:     5
+    * numero di clienti:     4
+    * incasso totale:        433.00
+    * incasso percentuale:   100.00%
+
+"""
+
+    STATS_OUTPUT_MONTH = """\
+periodo 2014-01-03 -> 2014-01-29:
+  * mese = 2014-01
+    * numero di fatture:     5
+    * numero di clienti:     4
+    * incasso totale:        433.00
+    * incasso percentuale:   100.00%
+
+"""
+
+    STATS_OUTPUT_WEEK = """\
+periodo 2014-01-03 -> 2014-01-29:
+  * settimana = 2014-01 [2014-01-01 -> 2014-01-05]
+    * numero di fatture:     2
+    * numero di clienti:     2
+    * incasso totale:        127.50
+    * incasso percentuale:   29.45%
+
+  * settimana = 2014-04 [2014-01-20 -> 2014-01-26]
+    * numero di fatture:     2
+    * numero di clienti:     2
+    * incasso totale:        153.00
+    * incasso percentuale:   35.33%
+
+  * settimana = 2014-05 [2014-01-27 -> 2014-02-02]
+    * numero di fatture:     1
+    * numero di clienti:     1
+    * incasso totale:        152.50
+    * incasso percentuale:   35.22%
+
+"""
+
+    STATS_OUTPUT_DAY = """\
+periodo 2014-01-03 -> 2014-01-29:
+  * giorno = 2014-01-03
+    * numero di fatture:     2
+    * numero di clienti:     2
+    * incasso totale:        127.50
+    * incasso percentuale:   29.45%
+
+  * giorno = 2014-01-22
+    * numero di fatture:     1
+    * numero di clienti:     1
+    * incasso totale:        102.00
+    * incasso percentuale:   23.56%
+
+  * giorno = 2014-01-25
+    * numero di fatture:     1
+    * numero di clienti:     1
+    * incasso totale:        51.00
+    * incasso percentuale:   11.78%
+
+  * giorno = 2014-01-29
+    * numero di fatture:     1
+    * numero di clienti:     1
+    * incasso totale:        152.50
+    * incasso percentuale:   35.22%
+
+"""
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
         self.logger = get_null_logger()
@@ -707,3 +786,60 @@ KNTCRK01G01H663X 2014      5
 
     def test_InvoiceProgram_remove_orphaned_off(self):
         self._test_InvoiceProgram_remove_orphaned(False)
+
+    def _test_InvoiceProgram_stats(self, stats_interval, expected_output):
+        with tempfile.NamedTemporaryFile() as db_file:
+            p = StringPrinter()
+            invoice_program = InvoiceProgram(
+                db_filename=db_file.name,
+                logger=self.logger,
+                trace=False,
+                printer=p,
+            )
+
+            p.reset()
+            invoice_program.impl_init(
+                patterns=[os.path.join(self.dirname, '*.doc')],
+                reset=True,
+                partial_update=True,
+            )
+
+            p.reset()
+            invoice_program.impl_scan(
+                warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                error_mode=None,
+            )
+
+            p.reset()
+            invoice_program.impl_stats(
+                filters=(),
+                stats_interval=stats_interval,
+            )
+            self.maxDiff = None
+            self.assertEqual(p.string(), expected_output)
+
+    def test_InvoiceProgram_stats_NONE(self):
+        self._test_InvoiceProgram_stats(
+            stats_interval=InvoiceProgram.STATS_INTERVAL_NONE,
+            expected_output=self.STATS_OUTPUT_NONE)
+
+    def test_InvoiceProgram_stats_YEAR(self):
+        self._test_InvoiceProgram_stats(
+            stats_interval=InvoiceProgram.STATS_INTERVAL_YEAR,
+            expected_output=self.STATS_OUTPUT_YEAR)
+
+    def test_InvoiceProgram_stats_MONTH(self):
+        self._test_InvoiceProgram_stats(
+            stats_interval=InvoiceProgram.STATS_INTERVAL_MONTH,
+            expected_output=self.STATS_OUTPUT_MONTH)
+
+    def test_InvoiceProgram_stats_WEEK(self):
+        self._test_InvoiceProgram_stats(
+            stats_interval=InvoiceProgram.STATS_INTERVAL_WEEK,
+            expected_output=self.STATS_OUTPUT_WEEK)
+
+    def test_InvoiceProgram_stats_DAY(self):
+        self._test_InvoiceProgram_stats(
+            stats_interval=InvoiceProgram.STATS_INTERVAL_DAY,
+            expected_output=self.STATS_OUTPUT_DAY)
+
