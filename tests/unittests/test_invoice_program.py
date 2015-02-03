@@ -787,7 +787,7 @@ KNTCRK01G01H663X 2014      5
     def test_InvoiceProgram_remove_orphaned_off(self):
         self._test_InvoiceProgram_remove_orphaned(False)
 
-    def _test_InvoiceProgram_stats(self, stats_interval, expected_output):
+    def _test_InvoiceProgram_stats(self, stats_group, expected_output):
         with tempfile.NamedTemporaryFile() as db_file:
             p = StringPrinter()
             invoice_program = InvoiceProgram(
@@ -813,33 +813,33 @@ KNTCRK01G01H663X 2014      5
             p.reset()
             invoice_program.impl_stats(
                 filters=(),
-                stats_interval=stats_interval,
+                stats_group=stats_group,
             )
             self.maxDiff = None
             self.assertEqual(p.string(), expected_output)
 
     def test_InvoiceProgram_stats_NONE(self):
         self._test_InvoiceProgram_stats(
-            stats_interval=InvoiceProgram.STATS_INTERVAL_NONE,
+            stats_group=InvoiceProgram.STATS_GROUP_NONE,
             expected_output=self.STATS_OUTPUT_NONE)
 
     def test_InvoiceProgram_stats_YEAR(self):
         self._test_InvoiceProgram_stats(
-            stats_interval=InvoiceProgram.STATS_INTERVAL_YEAR,
+            stats_group=InvoiceProgram.STATS_GROUP_YEAR,
             expected_output=self.STATS_OUTPUT_YEAR)
 
     def test_InvoiceProgram_stats_MONTH(self):
         self._test_InvoiceProgram_stats(
-            stats_interval=InvoiceProgram.STATS_INTERVAL_MONTH,
+            stats_group=InvoiceProgram.STATS_GROUP_MONTH,
             expected_output=self.STATS_OUTPUT_MONTH)
 
     def test_InvoiceProgram_stats_WEEK(self):
         self._test_InvoiceProgram_stats(
-            stats_interval=InvoiceProgram.STATS_INTERVAL_WEEK,
+            stats_group=InvoiceProgram.STATS_GROUP_WEEK,
             expected_output=self.STATS_OUTPUT_WEEK)
 
     def test_InvoiceProgram_stats_DAY(self):
         self._test_InvoiceProgram_stats(
-            stats_interval=InvoiceProgram.STATS_INTERVAL_DAY,
+            stats_group=InvoiceProgram.STATS_GROUP_DAY,
             expected_output=self.STATS_OUTPUT_DAY)
 

@@ -60,7 +60,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_validate = True
     default_list_field_names = InvoiceProgram.LIST_FIELD_NAMES_LONG
     default_filters = []
-    default_stats_interval = InvoiceProgram.STATS_INTERVAL_NONE
+    default_stats_group = InvoiceProgram.STATS_GROUP_NONE
 
     # configuration
     default_warning_mode = None
@@ -480,13 +480,13 @@ essere selezionate utilizzando i filtri.
 
 Tutte le fatture che fanno parte del periodo selezionato possono
 essere raggruppate per
- * anno		(--year/-sy)
- * mese		(--month/-sm)
- * settimana	(--week/-sw)
- * giorno	(--day/-sd)
+ * anno		(--group=year/-gyear)
+ * mese		(--group=month/-gmonth)
+ * settimana	(--group=week/-gweek)
+ * giorno	(--group=day/-gday)
 
 Se nessuna opzione di raggruppamento viene specificata, tutte le fatture
-selezionate apparterranno ad un unico gruppo.
+selezionate apparterranno ad un unico gruppo (--group=none/-gnone).
 
 Per ogni gruppo di fatture, vengono mostrati:
   * numero di fatture
@@ -498,7 +498,7 @@ Per ogni gruppo di fatture, vengono mostrati:
     )
     stats_parser.set_defaults(
         function_name="program_stats",
-        function_arguments=('filters', 'stats_interval'),
+        function_arguments=('filters', 'stats_group'),
     )
 
     ### legacy_parser ###
@@ -595,33 +595,11 @@ e validati.
             default=default_filters,
             help="aggiunge un filtro generico sulle fatture (ad esempio 'anno == 2014')")
 
-        parser.add_argument("--yearly", "-sy",
-            dest="stats_interval",
-            action="store_const",
-            const=InvoiceProgram.STATS_INTERVAL_YEAR,
-            default=default_stats_interval,
-            help="raggruppa le fatture per anno")
-
-        parser.add_argument("--monthly", "-sm",
-            dest="stats_interval",
-            action="store_const",
-            const=InvoiceProgram.STATS_INTERVAL_MONTH,
-            default=default_stats_interval,
-            help="raggruppa le fatture per mese")
-
-        parser.add_argument("--weekly", "-sw",
-            dest="stats_interval",
-            action="store_const",
-            const=InvoiceProgram.STATS_INTERVAL_WEEK,
-            default=default_stats_interval,
-            help="raggruppa le fatture per settimana")
-
-        parser.add_argument("--daily", "-sd",
-            dest="stats_interval",
-            action="store_const",
-            const=InvoiceProgram.STATS_INTERVAL_DAY,
-            default=default_stats_interval,
-            help="raggruppa le fatture per giorno")
+        parser.add_argument("--group", "-g",
+            dest="stats_group",
+            choices=InvoiceProgram.STATS_GROUPS,
+            default=default_stats_group,
+            help="raggruppa le fatture")
 
     ### warnings and error options
     for parser in init_parser, config_parser, scan_parser, validate_parser, legacy_parser:

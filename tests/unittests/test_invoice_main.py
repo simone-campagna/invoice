@@ -705,7 +705,7 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'stats', '-S', '2014-01-10', '-E', '2014-01-27', '-sy'],
+                args=['-d', db_filename.name, 'stats', '-S', '2014-01-10', '-E', '2014-01-27', '-gyear'],
             )
             self.assertEqual(p.string(), """\
 periodo 2014-01-22 -> 2014-01-25:
