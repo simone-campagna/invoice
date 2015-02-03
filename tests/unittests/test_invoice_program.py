@@ -150,82 +150,33 @@ anno                       2012
 """
 
     STATS_OUTPUT_NONE = """\
-periodo 2014-01-03 -> 2014-01-29:
-  * numero di fatture:     5
-  * numero di clienti:     4
-  * incasso totale:        433.00
-  * incasso percentuale:   100.00%
-
+#clienti #fatture incasso %incasso
+       4        5  433.00  100.00%
 """
 
     STATS_OUTPUT_YEAR = """\
-periodo 2014-01-03 -> 2014-01-29:
-  * anno = 2014
-    * numero di fatture:     5
-    * numero di clienti:     4
-    * incasso totale:        433.00
-    * incasso percentuale:   100.00%
-
+anno         da          a #clienti #fatture incasso %incasso
+2014 2014-01-01 2014-12-31        4        5  433.00  100.00%
 """
 
     STATS_OUTPUT_MONTH = """\
-periodo 2014-01-03 -> 2014-01-29:
-  * mese = 2014-01
-    * numero di fatture:     5
-    * numero di clienti:     4
-    * incasso totale:        433.00
-    * incasso percentuale:   100.00%
-
+mese            da          a #clienti #fatture incasso %incasso
+2014-01 2014-01-01 2014-01-31        4        5  433.00  100.00%
 """
 
     STATS_OUTPUT_WEEK = """\
-periodo 2014-01-03 -> 2014-01-29:
-  * settimana = 2014-01 [2014-01-01 -> 2014-01-05]
-    * numero di fatture:     2
-    * numero di clienti:     2
-    * incasso totale:        127.50
-    * incasso percentuale:   29.45%
-
-  * settimana = 2014-04 [2014-01-20 -> 2014-01-26]
-    * numero di fatture:     2
-    * numero di clienti:     2
-    * incasso totale:        153.00
-    * incasso percentuale:   35.33%
-
-  * settimana = 2014-05 [2014-01-27 -> 2014-02-02]
-    * numero di fatture:     1
-    * numero di clienti:     1
-    * incasso totale:        152.50
-    * incasso percentuale:   35.22%
-
+settimana         da          a #clienti #fatture incasso %incasso
+2014:01   2014-01-01 2014-01-05        2        2  127.50   29.45%
+2014:04   2014-01-20 2014-01-26        2        2  153.00   35.33%
+2014:05   2014-01-27 2014-02-02        1        1  152.50   35.22%
 """
 
     STATS_OUTPUT_DAY = """\
-periodo 2014-01-03 -> 2014-01-29:
-  * giorno = 2014-01-03
-    * numero di fatture:     2
-    * numero di clienti:     2
-    * incasso totale:        127.50
-    * incasso percentuale:   29.45%
-
-  * giorno = 2014-01-22
-    * numero di fatture:     1
-    * numero di clienti:     1
-    * incasso totale:        102.00
-    * incasso percentuale:   23.56%
-
-  * giorno = 2014-01-25
-    * numero di fatture:     1
-    * numero di clienti:     1
-    * incasso totale:        51.00
-    * incasso percentuale:   11.78%
-
-  * giorno = 2014-01-29
-    * numero di fatture:     1
-    * numero di clienti:     1
-    * incasso totale:        152.50
-    * incasso percentuale:   35.22%
-
+giorno             da          a #clienti #fatture incasso %incasso
+2014-01-03 2014-01-03 2014-01-03        2        2  127.50   29.45%
+2014-01-22 2014-01-22 2014-01-22        1        1  102.00   23.56%
+2014-01-25 2014-01-25 2014-01-25        1        1   51.00   11.78%
+2014-01-29 2014-01-29 2014-01-29        1        1  152.50   35.22%
 """
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))

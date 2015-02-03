@@ -682,7 +682,7 @@ KNTCRK01G01H663X 2014      5
                 )
             self.assertEqual(cm.exception.code, 2)
 
-    def test_invoice_main_stats(self):
+    def _test_invoice_main_stats(self, stats_group, output):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = StringPrinter()
 
@@ -705,14 +705,37 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'stats', '-S', '2014-01-10', '-E', '2014-01-27', '-gyear'],
+                args=['-d', db_filename.name, 'stats', '-S', '2014-01-10', '-E', '2014-01-27', '-g{}'.format(stats_group)],
             )
-            self.assertEqual(p.string(), """\
-periodo 2014-01-22 -> 2014-01-25:
-  * anno = 2014
-    * numero di fatture:     2
-    * numero di clienti:     2
-    * incasso totale:        153.00
-    * incasso percentuale:   100.00%
+            self.assertEqual(p.string(), output)
 
+    def test_invoice_main_stats_year(self):
+        return self._test_invoice_main_stats('year', """\
+anno         da          a #clienti #fatture incasso %incasso
+2014 2014-01-10 2014-01-27        2        2  153.00  100.00%
+""")
+
+    def test_invoice_main_stats_month(self):
+        return self._test_invoice_main_stats('month', """\
+mese            da          a #clienti #fatture incasso %incasso
+2014-01 2014-01-10 2014-01-27        2        2  153.00  100.00%
+""")
+
+    def test_invoice_main_stats_week(self):
+        return self._test_invoice_main_stats('week', """\
+settimana         da          a #clienti #fatture incasso %incasso
+2014:04   2014-01-20 2014-01-26        2        2  153.00  100.00%
+""")
+
+    def test_invoice_main_stats_day(self):
+        return self._test_invoice_main_stats('day', """\
+giorno             da          a #clienti #fatture incasso %incasso
+2014-01-22 2014-01-22 2014-01-22        1        1  102.00   66.67%
+2014-01-25 2014-01-25 2014-01-25        1        1   51.00   33.33%
+""")
+
+    def test_invoice_main_stats_none(self):
+        return self._test_invoice_main_stats('none', """\
+#clienti #fatture incasso %incasso
+       2        2  153.00  100.00%
 """)

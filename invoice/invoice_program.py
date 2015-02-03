@@ -20,6 +20,7 @@ __all__ = [
     'InvoiceProgram'
 ]
 
+import calendar
 import collections
 import datetime
 import glob
@@ -166,8 +167,8 @@ class InvoiceProgram(object):
         self.impl_report(filters=filters)
         return 0
 
-    def program_stats(self, *, filters=None, stats_group=None):
-        self.impl_stats(filters=filters, stats_group=stats_group)
+    def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None):
+        self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group)
         return 0
 
     def legacy(self, patterns, filters, validate, list, report, warning_mode, error_mode):
@@ -305,23 +306,46 @@ class InvoiceProgram(object):
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
         self.report_invoice_collection(invoice_collection)
 
+    def _get_year_group_value(self, year):
+        return (year,
+                datetime.date(year, 1, 1),
+                datetime.date(year, 12, 31))
+
+    def _get_month_group_value(self, year, month):
+        date_from = datetime.date(year, month, 1)
+        date_to = datetime.date(year, month, calendar.monthrange(year, month)[1])
+        return (date_from.strftime("%Y-%m"),
+                date_from,
+                date_to)
+
+    def _get_week_group_value(self, year, week_number):
+        date_from, date_to = self.get_week_range(year, week_number)
+        return ("{:4d}:{:02d}".format(year, week_number),
+                date_from,
+                date_to)
+
+    def _get_day_group_value(self, date):
+        return (date,
+                date,
+                date)
+
     def group_by(self, invoice_collection, stats_group):
         invoice_collection.sort()
         if stats_group == self.STATS_GROUP_YEAR:
-            group_function = lambda invoice: invoice.year
-            group_name_function = lambda group_value: str(group_value)
+            group_function = lambda invoice: (invoice.year, )
+            group_value_function = self._get_year_group_value
         elif stats_group == self.STATS_GROUP_MONTH:
             group_function = lambda invoice: (invoice.year, invoice.date.month)
-            group_name_function = lambda group_value: "{:4d}-{:02d}".format(*group_value)
+            group_value_function = self._get_month_group_value
         elif stats_group == self.STATS_GROUP_WEEK:
             group_function = lambda invoice: (invoice.year, self.get_week_number(invoice.date))
-            group_name_function = lambda group_value: "{:4d}-{:02d} [{} -> {}]".format(*(group_value + self.get_week_range(*group_value)))
+            group_value_function = self._get_week_group_value
         elif stats_group == self.STATS_GROUP_DAY:
-            group_function = lambda invoice: invoice.date
-            group_name_function = lambda group_value: str(group_value)
+            group_function = lambda invoice: (invoice.date, )
+            group_value_function = self._get_day_group_value
         else:
-            group_function = lambda invoice: 0
-            group_name_function = lambda group_value: str(group_value)
+            group_function = lambda invoice: (0, )
+            group_value_function = lambda group_value: (None, None, None)
         group_value = None
         group = []
         for invoice in invoice_collection:
@@ -329,17 +353,22 @@ class InvoiceProgram(object):
             if group_value is None:
                 group_value = value
             if value != group_value:
-                yield group_value, group_name_function(group_value), tuple(group)
+                yield group_value_function(*group_value), tuple(group)
                 del group[:]
                 group_value = value
             group.append(invoice)
         if group:
-            yield group_value, group_name_function(group_value), group
+            yield group_value_function(*group_value), group
    
-    def impl_stats(self, *, filters=None, stats_group=None):
+    def impl_stats(self, *, date_from=None, date_to=None, filters=None, stats_group=None):
         self.db.check()
         if filters is None:
             filters = ()
+        if date_from is not None:
+            filters.append(lambda invoice: invoice.date >= date_from)
+        if date_to is not None:
+            filters.append(lambda invoice: invoice.date <= date_to)
+
         if stats_group is None:
             stats_group = self.STATS_GROUP_NONE
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
@@ -351,16 +380,41 @@ class InvoiceProgram(object):
                 self.STATS_GROUP_WEEK:	'settimana',
                 self.STATS_GROUP_DAY:	'giorno',
                 self.STATS_GROUP_NONE:	'',
+                'from':			'da',
+                'to':			'a',
             }
+            convert = {
+                'group_income': lambda income: '{:.2f}'.format(income),
+                'group_income_percentage': lambda income_percentage: '{:.2%}'.format(income_percentage),
+            }
+            align = {
+                'client_count': '>',
+                'invoice_count': '>',
+                'group_income': '>',
+                'group_income_percentage': '>',
+                'from': '>',
+                'to': '>',
+            }
+            field_names = ('client_count', 'invoice_count', 'group_income', 'group_income_percentage')
+            header = ('#clienti', '#fatture', 'incasso', '%incasso')
+            if stats_group == self.STATS_GROUP_NONE:
+                group_field_names = ()
+            else:
+                group_field_names = (stats_group, 'from', 'to')
+            group_header = tuple(group_translation[field_name] for field_name in group_field_names)
+            all_field_names = group_field_names + field_names
+            all_header = group_header + header
             first_invoice = invoice_collection[0]
             last_invoice = invoice_collection[-1]
-            self.printer("periodo {} -> {}:".format(first_invoice.date, last_invoice.date))
-            if stats_group == self.STATS_GROUP_NONE:
-                indentation = ""
-            else:
-                indentation = "  "
+            first_date = first_invoice.date
+            last_date = last_invoice.date
             total_income = sum(invoice.income for invoice in invoice_collection)
-            for group_value, group_name, group in self.group_by(invoice_collection, stats_group):
+            rows = []
+            for (group_value, group_date_from, group_date_to), group in self.group_by(invoice_collection, stats_group):
+                if date_from is not None and group_date_from is not None:
+                    group_date_from = max(group_date_from, date_from)
+                if date_to is not None and group_date_to is not None:
+                    group_date_to = min(group_date_to, date_to)
                 group_income = sum(invoice.income for invoice in group)
                 if total_income != 0.0:
                     group_income_percentage = group_income / total_income
@@ -368,22 +422,25 @@ class InvoiceProgram(object):
                     group_income_percentage = 0.0
                 clients = set(invoice.tax_code for invoice in group)
                 data = {
-                    'i': indentation,
-                    'stats_group': group_translation[stats_group],
-                    'group_name': group_name,
-                    'invoice_count': len(group),
-                    'client_count': len(clients),
-                    'group_income': group_income,
-                    'group_income_percentage': group_income_percentage,
+                    'stats_group':		group_translation[stats_group],
+                    'invoice_count':		len(group),
+                    'client_count':		len(clients),
+                    'group_income':		group_income,
+                    'group_income_percentage':	group_income_percentage,
+                    stats_group:		group_value,
+                    'from':			group_date_from,
+                    'to':			group_date_to,
                 }
-                if stats_group != self.STATS_GROUP_NONE:
-                    self.printer("{i}* {stats_group} = {group_name}".format(**data))
-                self.printer("""\
-{i}  * numero di fatture:     {invoice_count}
-{i}  * numero di clienti:     {client_count}
-{i}  * incasso totale:        {group_income:.2f}
-{i}  * incasso percentuale:   {group_income_percentage:.2%}
-""".format(**data))
+                rows.append(data)
+            t = Table(
+                field_names=all_field_names,
+                header=all_header,
+                align=align,
+                convert=convert,
+                getter=Table.ITEM_GETTER,
+            )
+            for line in t.getlines(rows):
+                self.printer(line)
 
 
     def impl_legacy(self, patterns, filters, validate, list, report, warning_mode, error_mode):

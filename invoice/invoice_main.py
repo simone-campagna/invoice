@@ -94,6 +94,9 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
         d = datetime.datetime.strptime(s, DATE_FORMAT).date()
         return "date <= datetime.datetime.strptime({!r}, {!r}).date()".format(d.strftime(DATE_FORMAT), DATE_FORMAT)
 
+    def type_date(s):
+        return datetime.datetime.strptime(s, DATE_FORMAT).date()
+
     def type_onoff(value):
         if value.lower() in {"on", "true"}:
             return True
@@ -498,7 +501,7 @@ Per ogni gruppo di fatture, vengono mostrati:
     )
     stats_parser.set_defaults(
         function_name="program_stats",
-        function_arguments=('filters', 'stats_group'),
+        function_arguments=('filters', 'date_from', 'date_to', 'stats_group'),
     )
 
     ### legacy_parser ###
@@ -570,7 +573,7 @@ e validati.
             help="filtra le fatture in base all'anno")
 
     ### generic filter option
-    for parser in list_parser, dump_parser, legacy_parser, stats_parser:
+    for parser in list_parser, dump_parser, legacy_parser:
         parser.add_argument("--start", "-S",
             metavar="S",
             dest="filters",
@@ -587,6 +590,21 @@ e validati.
             default=default_filters,
             help="seleziona solo le fatture con data precedente o uguale a E")
 
+    stats_parser.add_argument("--start", "-S",
+        metavar="S",
+        dest="date_from",
+        type=type_date,
+        default=None,
+        help="seleziona solo le fatture con data successiva o uguale a S")
+
+    stats_parser.add_argument("--end", "-E",
+        metavar="E",
+        dest="date_to",
+        type=type_date,
+        default=None,
+        help="seleziona solo le fatture con data precedente o uguale a E")
+
+    for parser in list_parser, dump_parser, legacy_parser, stats_parser:
         parser.add_argument("--filter", "-F",
             metavar="F",
             dest="filters",
@@ -599,7 +617,7 @@ e validati.
             dest="stats_group",
             choices=InvoiceProgram.STATS_GROUPS,
             default=default_stats_group,
-            help="raggruppa le fatture")
+            help="raggruppa le fatture per anno/mese/settimana/giorno/tutto il periodo")
 
     ### warnings and error options
     for parser in init_parser, config_parser, scan_parser, validate_parser, legacy_parser:
