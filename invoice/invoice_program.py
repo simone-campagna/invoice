@@ -45,6 +45,7 @@ from .invoice import Invoice
 from .validation_result import ValidationResult
 from .week import WeekManager
 from .database.db_types import Path
+from .table import Table
 
 
 class FileDateTimes(object):
@@ -595,26 +596,23 @@ class InvoiceProgram(object):
         invoice_collection.sort()
         if field_names is None:
             field_names = Invoice._fields
-        field_names = [Invoice.get_field_name_from_translation(field_name) for field_name in field_names]
-        data = []
-        digits =1 + int(math.log10(max(1, len(invoice_collection))))
-        converters = {
-            'number': lambda n: "{n:0{digits}d}".format(n=n, digits=digits),
-            'income': lambda i: "{:.2f}".format(i),
-        }
-        aligns = {
-            'number': '>',
-            'income': '>',
-        }
         if header:
-            data.append(tuple(Invoice.get_field_translation(field_name) for field_name in field_names))
-        for invoice in invoice_collection:
-            data.append(tuple(converters.get(field_name, str)(getattr(invoice, field_name)) for field_name in field_names))
-        if data:
-            lengths = [max(len(row[c]) for row in data) for c, f in enumerate(field_names)]
-            fmt = " ".join("{{row[{i}]:{align}{{lengths[{i}]}}s}}".format(i=i, align=aligns.get(f, '<')) for i, f in enumerate(field_names))
-            for row in data:
-                self.printer(fmt.format(row=row, lengths=lengths))
+            header = [Invoice.get_field_translation(field_name) for field_name in field_names]
+        digits = 1 + int(math.log10(max(1, len(invoice_collection))))
+        table = Table(
+            field_names=field_names,
+            header=header,
+            convert={
+                'number': lambda n: "{n:0{digits}d}".format(n=n, digits=digits),
+                'income': lambda i: "{:.2f}".format(i),
+            },
+            align={
+                'number': '>',
+                'income': '>',
+            },
+        )
+        for line in table.getlines(invoice_collection):
+            self.printer(line)
 
     def dump_invoice_collection(self, invoice_collection):
         invoice_collection.sort()
