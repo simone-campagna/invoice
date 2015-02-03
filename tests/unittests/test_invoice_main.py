@@ -276,6 +276,37 @@ PRKPRT01G01H663M 2014      2
             )
             self.assertEqual(p.string(), '')
 
+    def test_invoice_main_list(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'scan'],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'date, city,tax_code,year,number', '--filter', 'città != "Gotham City"', '-S', '2014-01-10', '-E', '2014-01-27'],
+            )
+            self.assertEqual(p.string(), """\
+data       città      codice_fiscale   anno numero
+2014-01-22 Greenville BNNBRC01G01H663S 2014      3
+""")
+
     def test_invoice_main_err(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = StringPrinter()
