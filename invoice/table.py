@@ -35,7 +35,7 @@ class Table(object):
             self.show_header = False
         else:
             self.show_header = True
-            if header is None:
+            if header is None or header is True:
                 header = field_names
             self.header = header
         if getter is None:

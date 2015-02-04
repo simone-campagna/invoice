@@ -29,7 +29,7 @@ from .error import InvoiceError
 from .invoice import Invoice
 from .invoice_collection import InvoiceCollection
 from .database.db import Db, DbError
-from .database.table import Table
+from .database.db_table import DbTable
 from .database.db_types import Str, Int, Float, Date, DateTime, Path, Bool
 from .validation_result import ValidationResult
 
@@ -49,7 +49,7 @@ class InvoiceDb(Db):
         partial_update=True)
     
     TABLES = {
-        'version': Table(
+        'version': DbTable(
             fields=(
                 ('major', Int()),
                 ('minor', Int()),
@@ -57,7 +57,7 @@ class InvoiceDb(Db):
             ),
             dict_type=Version,
         ),
-        'configuration': Table(
+        'configuration': DbTable(
             fields=(
                 ('warning_mode', Str()),
                 ('error_mode', Str()),
@@ -66,13 +66,13 @@ class InvoiceDb(Db):
             ),
             dict_type=Configuration,
         ),
-        'patterns': Table(
+        'patterns': DbTable(
             fields=(
                 ('pattern', Path('UNIQUE')),
             ),
             dict_type=Pattern,
         ),
-        'invoices': Table(
+        'invoices': DbTable(
             fields=(
                 ('ID', Int('PRIMARY KEY')),
                 ('doc_filename', Path('UNIQUE')),
@@ -87,7 +87,7 @@ class InvoiceDb(Db):
             ),
             dict_type=Invoice,
         ),
-        'scan_date_times': Table(
+        'scan_date_times': DbTable(
             fields=(
                 ('doc_filename', Str('UNIQUE')),
                 ('scan_date_time', DateTime()),

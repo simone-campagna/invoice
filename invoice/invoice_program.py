@@ -437,14 +437,14 @@ class InvoiceProgram(object):
                 rows.append(data)
             if total:
                 rows.append(total_row)
-            t = Table(
+            table = Table(
                 field_names=all_field_names,
                 header=all_header,
                 align=align,
                 convert=convert,
                 getter=Table.ITEM_GETTER,
             )
-            for line in t.getlines(rows):
+            for line in table.getlines(rows):
                 self.printer(line)
 
 

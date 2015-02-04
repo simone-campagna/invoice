@@ -17,12 +17,12 @@
 
 __author__ = "Simone Campagna"
 __all__ = [
-    'Table',
+    'DbTable',
 ]
 
 import collections
 
-class Table(object):
+class DbTable(object):
     def __init__(self, fields, dict_type=collections.OrderedDict):
         self.dict_type = dict_type
         self.fields = collections.OrderedDict(fields)
