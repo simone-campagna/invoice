@@ -111,12 +111,16 @@ class InvoiceProgram(object):
                                 error_mode=ValidationResult.ERROR_MODE_DEFAULT,
                                 partial_update=True,
                                 remove_orphaned=False,
+                                header=True,
+                                total=True,
                                 reset=False):
         self.impl_config(
             warning_mode=warning_mode,
             error_mode=error_mode,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
+            header=header,
+            total=total,
             reset=reset,
         )
         return 0
@@ -154,7 +158,7 @@ class InvoiceProgram(object):
         self.impl_validate(warning_mode=warning_mode, error_mode=error_mode)
         return 0
 
-    def program_list(self, *, field_names=None, header=True, filters=None, date_from=None, date_to=None):
+    def program_list(self, *, field_names=None, header=None, filters=None, date_from=None, date_to=None):
         self.impl_list(field_names=field_names, header=header, filters=filters, date_from=date_from, date_to=date_to)
         return 0
 
@@ -166,7 +170,7 @@ class InvoiceProgram(object):
         self.impl_report(filters=filters)
         return 0
 
-    def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=True):
+    def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None):
         self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group, total=total)
         return 0
 
@@ -206,6 +210,8 @@ class InvoiceProgram(object):
                            error_mode=ValidationResult.ERROR_MODE_DEFAULT,
                            partial_update=True,
                            remove_orphaned=False,
+                           header=True,
+                           total=True,
                            reset=False):
         if reset and os.path.exists(self.db_filename):
             self.logger.info("cancellazione del db {!r}...".format(self.db_filename))
@@ -216,6 +222,8 @@ class InvoiceProgram(object):
             error_mode=error_mode,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
+            header=header,
+            total=total,
         )
         configuration = self.db.store_configuration(configuration)
         #self.show_configuration(configuration)
@@ -234,6 +242,8 @@ class InvoiceProgram(object):
                              error_mode=ValidationResult.ERROR_MODE_DEFAULT,
                              partial_update=True,
                              remove_orphaned=False,
+                             header=True,
+                             total=True,
                              reset=False):
         self.db.check()
         if reset:
@@ -243,6 +253,8 @@ class InvoiceProgram(object):
             error_mode=error_mode,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
+            header=header,
+            total=total,
         )
         configuration = self.db.store_configuration(configuration)
         self.show_configuration(configuration)
@@ -286,7 +298,7 @@ class InvoiceProgram(object):
         self.validate_invoice_collection(validation_result, invoice_collection)
         return validation_result.num_errors()
 
-    def impl_list(self, *, field_names=None, header=True, filters=None, date_from=None, date_to=None):
+    def impl_list(self, *, field_names=None, header=None, filters=None, date_from=None, date_to=None):
         self.db.check()
         if field_names is None:
             field_names = Invoice._fields
@@ -358,7 +370,8 @@ class InvoiceProgram(object):
         if group:
             yield group_value_function(*group_value), group
    
-    def impl_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=True):
+    def impl_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None):
+        total = self.db.get_config_option('total', total)
         self.db.check()
         if filters is None:
             filters = ()
@@ -660,7 +673,8 @@ class InvoiceProgram(object):
             validation_result.num_warnings()))
         return validation_result
 
-    def list_invoice_collection(self, invoice_collection, field_names, header=True):
+    def list_invoice_collection(self, invoice_collection, field_names, header=None):
+        header = self.db.get_config_option('header', header)
         invoice_collection.sort()
         if field_names is None:
             field_names = Invoice._fields
@@ -783,6 +797,8 @@ anno                       {year}
                               error_mode=ValidationResult.ERROR_MODE_DEFAULT,
                               partial_update=True,
                               remove_orphaned=False,
+                              header=True,
+                              total=True,
                               reset=False):
         self.impl_init(
             patterns=patterns,
@@ -790,6 +806,8 @@ anno                       {year}
             error_mode=error_mode,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
+            header=header,
+            total=total,
             reset=reset,
         )
         return 0

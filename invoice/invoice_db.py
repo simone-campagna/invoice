@@ -35,7 +35,11 @@ from .validation_result import ValidationResult
 
 class InvoiceDb(Db):
     Pattern = collections.namedtuple('Pattern', ('pattern'))
-    Configuration = collections.namedtuple('Configuration', ('warning_mode', 'error_mode', 'partial_update', 'remove_orphaned'))
+    Configuration = collections.namedtuple(
+        'Configuration',
+        ('warning_mode', 'error_mode',
+         'partial_update', 'remove_orphaned',
+         'header', 'total'))
     Version = collections.namedtuple('Version', ('major', 'minor', 'patch'))
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
     VERSION = Version(
@@ -46,7 +50,9 @@ class InvoiceDb(Db):
         warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
         error_mode=ValidationResult.ERROR_MODE_DEFAULT,
         remove_orphaned=False,
-        partial_update=True)
+        partial_update=True,
+        header=True,
+        total=True)
     
     TABLES = {
         'version': DbTable(
@@ -63,6 +69,8 @@ class InvoiceDb(Db):
                 ('error_mode', Str()),
                 ('remove_orphaned', Bool()),
                 ('partial_update', Bool()),
+                ('header', Bool()),
+                ('total', Bool()),
             ),
             dict_type=Configuration,
         ),
@@ -95,6 +103,9 @@ class InvoiceDb(Db):
             dict_type=ScanDateTime,
         ),
     }
+    def __init__(self, *p_args, **n_args):
+        super().__init__(*p_args, **n_args)
+        self._configuration = None
 
     def check(self):
         super().check()
@@ -231,3 +242,9 @@ END"""
         if remove_orphaned:
             self.logger.warning("l'opzione remove_orphaned è pericolosa, in quanto può compromettere la validazione del database!")
 
+    def get_config_option(self, option, value, connection=None):
+        if value is None:
+            if self._configuration is None:
+                self._configuration = self.load_configuration(connection=connection)
+            value = getattr(self._configuration, option)
+        return value

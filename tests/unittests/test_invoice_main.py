@@ -124,6 +124,8 @@ configuration:
   + error_mode           = 'raise'
   + partial_update       = True
   + remove_orphaned      = False
+  + header               = True
+  + total                = True
 """
     CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
 configuration:
@@ -131,6 +133,8 @@ configuration:
   + error_mode           = 'log'
   + partial_update       = True
   + remove_orphaned      = False
+  + header               = True
+  + total                = True
 """
     CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
 configuration:
@@ -138,6 +142,8 @@ configuration:
   + error_mode           = 'log'
   + partial_update       = False
   + remove_orphaned      = False
+  + header               = True
+  + total                = True
 """
 
     PATTERNS_CLEAR = """\

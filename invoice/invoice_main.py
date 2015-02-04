@@ -61,9 +61,6 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_list_field_names = InvoiceProgram.LIST_FIELD_NAMES_LONG
     default_filters = []
     default_stats_group = InvoiceProgram.STATS_GROUP_MONTH
-    default_header = True
-    default_total = True
-    default_trace = False
     default_dry_run = False
 
     # configuration
@@ -71,6 +68,9 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_error_mode = None
     default_partial_update = None
     default_remove_orphaned = None
+    default_header = None
+    default_total = None
+    default_trace = None
 
     def type_fields(s):
         field_names = []
@@ -280,11 +280,21 @@ $ %(prog)s init docs/*.doc
 inizializza il database con i nomi dei file che corrispondono *adesso*
 al pattern '*.doc'; le successive scansioni ispezioneranno solo questi
 file, e non nuovi file che corrispondono al pattern.
+
+Durante questa fase possono anche essere fissati i valori dei parametri
+di configurazione; vedi
+
+$ %(prog)s config -h
+
+per una spiegazione di questi valori
 """,
     )
     init_parser.set_defaults(
         function_name="program_init",
-        function_arguments=('patterns', 'reset', 'warning_mode', 'error_mode', 'remove_orphaned', 'partial_update'),
+        function_arguments=('patterns', 'reset',
+                            'warning_mode', 'error_mode',
+                            'remove_orphaned', 'partial_update',
+                            'header', 'total'),
     )
 
     ### version ###
@@ -328,16 +338,23 @@ supportati sono:
    stato cancellato da disco, viene eliminato il dato dal database
    (questo parametro non è modificabile in quanto la funzionalità non è
    completamente implementata)
+ * header[={hd}]: mostra un header per i comandi 'list' e 'stats'
+ * total[={tt}]: mostra la riga del TOTALE per il comando 'stats'
 """.format(
             wm=InvoiceDb.DEFAULT_CONFIGURATION.warning_mode,
             em=InvoiceDb.DEFAULT_CONFIGURATION.error_mode,
             pu=InvoiceDb.DEFAULT_CONFIGURATION.partial_update,
             ro=InvoiceDb.DEFAULT_CONFIGURATION.remove_orphaned,
+            hd=InvoiceDb.DEFAULT_CONFIGURATION.header,
+            tt=InvoiceDb.DEFAULT_CONFIGURATION.total,
         ),
     )
     config_parser.set_defaults(
         function_name="program_config",
-        function_arguments=('warning_mode', 'error_mode', 'remove_orphaned', 'partial_update', 'reset'),
+        function_arguments=('reset',
+                            'warning_mode', 'error_mode',
+                            'remove_orphaned', 'partial_update',
+                            'header', 'total'),
     )
 
     ### patterns ###
@@ -537,14 +554,15 @@ e validati.
         help="comando di cui stampare l'help")
 
     ### list_mode option
-    list_parser.add_argument("--header", "-H",
-        dest="header",
-        metavar="on/off",
-        type=type_onoff,
-        const=switch_onoff(default_header),
-        default=default_header,
-        nargs='?',
-        help="abilita/disabilita l'header")
+    for parser in init_parser, config_parser, list_parser:
+        parser.add_argument("--header", "-H",
+            dest="header",
+            metavar="on/off",
+            type=type_onoff,
+            const=switch_onoff(default_header),
+            default=default_header,
+            nargs='?',
+            help="abilita/disabilita l'header")
 
     list_argument_group = list_parser.add_mutually_exclusive_group()
     list_argument_group.add_argument("--short", "-s",
@@ -615,14 +633,15 @@ e validati.
         default=default_stats_group,
         help="raggruppa le fatture per anno/mese/settimana/giorno/tutto il periodo")
 
-    stats_parser.add_argument("--total", "-T",
-        dest="total",
-        metavar="on/off",
-        type=type_onoff,
-        const=switch_onoff(default_total),
-        default=default_total,
-        nargs='?',
-        help="abilita/disabilita il totale per l'intero periodo")
+    for parser in init_parser, config_parser, stats_parser:
+        parser.add_argument("--total", "-T",
+            dest="total",
+            metavar="on/off",
+            type=type_onoff,
+            const=switch_onoff(default_total),
+            default=default_total,
+            nargs='?',
+            help="abilita/disabilita il totale per l'intero periodo")
 
     ### warnings and error options
     for parser in init_parser, config_parser, scan_parser, validate_parser, legacy_parser:
@@ -630,13 +649,13 @@ e validati.
             dest="warning_mode",
             choices=ValidationResult.WARNING_MODES,
             default=default_warning_mode,
-            help="modalità di gestione dei warning (vedi '%(prog)s config --help' per una spiegazione dei valori)")
+            help="modalità di gestione dei warning")
 
         parser.add_argument("--error-mode", "-e",
             dest="error_mode",
             choices=ValidationResult.ERROR_MODES,
             default=default_error_mode,
-            help="modalità di gestione degli errori (vedi '%(prog)s config --help' per una spiegazione dei valori)")
+            help="modalità di gestione degli errori")
 
     ### reset options
     init_parser.add_argument("--reset", "-r",
