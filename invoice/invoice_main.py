@@ -90,13 +90,6 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
         return filter_source
 
     DATE_FORMAT = "%Y-%m-%d"
-    def type_date_start_filter(s):
-        d = datetime.datetime.strptime(s, DATE_FORMAT).date()
-        return "date >= datetime.datetime.strptime({!r}, {!r}).date()".format(d.strftime(DATE_FORMAT), DATE_FORMAT)
-
-    def type_date_end_filter(s):
-        d = datetime.datetime.strptime(s, DATE_FORMAT).date()
-        return "date <= datetime.datetime.strptime({!r}, {!r}).date()".format(d.strftime(DATE_FORMAT), DATE_FORMAT)
 
     def type_date(s):
         return datetime.datetime.strptime(s, DATE_FORMAT).date()
@@ -441,7 +434,7 @@ Mostra una lista delle fatture contenute nel database.
     )
     list_parser.set_defaults(
         function_name="program_list",
-        function_arguments=('filters', 'field_names', 'header'),
+        function_arguments=('filters', 'date_from', 'date_to', 'field_names', 'header'),
     )
 
     ### dump_parser ###
@@ -456,7 +449,7 @@ Mostra tutti i dettagli delle fatture contenute nel database.
     )
     dump_parser.set_defaults(
         function_name="program_dump",
-        function_arguments=('filters', ),
+        function_arguments=('filters', 'date_from', 'date_to', ),
     )
 
     ### report_parser ###
@@ -534,7 +527,7 @@ e validati.
     )
     legacy_parser.set_defaults(
         function_name="legacy",
-        function_arguments=('patterns', 'filters', 'validate', 'list', 'report', 'warning_mode', 'error_mode'),
+        function_arguments=('patterns', 'filters', 'date_from', 'date_to', 'validate', 'list', 'report', 'warning_mode', 'error_mode'),
     )
 
     ### help parser commands
@@ -592,36 +585,20 @@ e validati.
             help="filtra le fatture in base all'anno")
 
     ### generic filter option
-    for parser in list_parser, dump_parser, legacy_parser:
+    for parser in list_parser, dump_parser, legacy_parser, stats_parser:
         parser.add_argument("--start", "-S",
             metavar="S",
-            dest="filters",
-            type=type_date_start_filter,
-            action="append",
-            default=default_filters,
+            dest="date_from",
+            type=type_date,
+            default=None,
             help="seleziona solo le fatture con data successiva o uguale a S")
-
+    
         parser.add_argument("--end", "-E",
             metavar="E",
-            dest="filters",
-            type=type_date_end_filter,
-            action="append",
-            default=default_filters,
+            dest="date_to",
+            type=type_date,
+            default=None,
             help="seleziona solo le fatture con data precedente o uguale a E")
-
-    stats_parser.add_argument("--start", "-S",
-        metavar="S",
-        dest="date_from",
-        type=type_date,
-        default=None,
-        help="seleziona solo le fatture con data successiva o uguale a S")
-
-    stats_parser.add_argument("--end", "-E",
-        metavar="E",
-        dest="date_to",
-        type=type_date,
-        default=None,
-        help="seleziona solo le fatture con data precedente o uguale a E")
 
     for parser in list_parser, dump_parser, legacy_parser, stats_parser:
         parser.add_argument("--filter", "-F",

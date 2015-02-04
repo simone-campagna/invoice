@@ -154,12 +154,12 @@ class InvoiceProgram(object):
         self.impl_validate(warning_mode=warning_mode, error_mode=error_mode)
         return 0
 
-    def program_list(self, *, field_names=None, header=True, filters=None):
-        self.impl_list(field_names=field_names, header=header, filters=filters)
+    def program_list(self, *, field_names=None, header=True, filters=None, date_from=None, date_to=None):
+        self.impl_list(field_names=field_names, header=header, filters=filters, date_from=date_from, date_to=date_to)
         return 0
 
-    def program_dump(self, *, filters=None):
-        self.impl_dump(filters=filters)
+    def program_dump(self, *, filters=None, date_from=None, date_to=None):
+        self.impl_dump(filters=filters, date_from=date_from, date_to=date_to)
         return 0
 
     def program_report(self, *, filters=None):
@@ -170,10 +170,12 @@ class InvoiceProgram(object):
         self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group, total=total)
         return 0
 
-    def legacy(self, patterns, filters, validate, list, report, warning_mode, error_mode):
+    def legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode):
         self.impl_legacy(
             patterns=patterns,
             filters=filters,
+            date_from=date_from,
+            date_to=date_to,
             validate=validate,
             list=list,
             report=report,
@@ -284,25 +286,25 @@ class InvoiceProgram(object):
         self.validate_invoice_collection(validation_result, invoice_collection)
         return validation_result.num_errors()
 
-    def impl_list(self, *, field_names=None, header=True, filters=None):
+    def impl_list(self, *, field_names=None, header=True, filters=None, date_from=None, date_to=None):
         self.db.check()
         if field_names is None:
             field_names = Invoice._fields
         if filters is None:
             filters = ()
-        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
+        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters, date_from=date_from, date_to=date_to)
         self.list_invoice_collection(invoice_collection, header=header, field_names=field_names)
 
-    def impl_dump(self, *, filters=None):
+    def impl_dump(self, *, filters=None, date_from=None, date_to=None):
         self.db.check()
-        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
+        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters, date_from=date_from, date_to=date_to)
         self.dump_invoice_collection(invoice_collection)
 
     def impl_report(self, *, filters=None):
         self.db.check()
         if filters is None:
             filters = ()
-        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
+        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters)
         self.report_invoice_collection(invoice_collection)
 
     def _get_year_group_value(self, year):
@@ -356,18 +358,14 @@ class InvoiceProgram(object):
         if group:
             yield group_value_function(*group_value), group
    
-    def impl_stats(self, *, date_from=None, date_to=None, filters=None, stats_group=None, total=True):
+    def impl_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=True):
         self.db.check()
         if filters is None:
             filters = ()
-        if date_from is not None:
-            filters.append(lambda invoice: invoice.date >= date_from)
-        if date_to is not None:
-            filters.append(lambda invoice: invoice.date <= date_to)
 
         if stats_group is None:
             stats_group = self.STATS_GROUP_MONTH
-        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
+        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters, date_from=date_from, date_to=date_to)
         invoice_collection.sort()
         if invoice_collection:
             group_translation = {
@@ -448,7 +446,7 @@ class InvoiceProgram(object):
                 self.printer(line)
 
 
-    def impl_legacy(self, patterns, filters, validate, list, report, warning_mode, error_mode):
+    def impl_legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode):
         invoice_collection_reader = InvoiceCollectionReader(trace=self.trace)
 
         validation_result=self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
@@ -466,7 +464,7 @@ class InvoiceProgram(object):
                     self.logger.error("trovati #{} errori!".format(validation_result.num_errors()))
                     return 1
     
-            invoice_collection = self.filter_invoice_collection(invoice_collection, filters)
+            invoice_collection = self.filter_invoice_collection(invoice_collection, filters=filters, date_from=date_from, date_to=date_to)
     
             if list:
                 self.logger.debug("lista di {} fatture...".format(len(invoice_collection)))
@@ -580,7 +578,15 @@ class InvoiceProgram(object):
         return validation_result, updated_invoice_collection
 
     ## functions
-    def filter_invoice_collection(self, invoice_collection, filters):
+    def filter_invoice_collection(self, invoice_collection, filters, date_from=None, date_to=None):
+        if filters is None:
+            filters = []
+        else:
+            filters = list(filters)
+        if date_from is not None:
+            filters.append(lambda invoice: invoice.date >= date_from)
+        if date_to is not None:
+            filters.append(lambda invoice: invoice.date <= date_to)
         if filters:
             self.logger.debug("applicazione filtri su {} fatture...".format(len(invoice_collection)))
             for filter_source in filters:
