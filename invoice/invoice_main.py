@@ -61,6 +61,10 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_list_field_names = InvoiceProgram.LIST_FIELD_NAMES_LONG
     default_filters = []
     default_stats_group = InvoiceProgram.STATS_GROUP_MONTH
+    default_header = True
+    default_total = True
+    default_trace = False
+    default_dry_run = False
 
     # configuration
     default_warning_mode = None
@@ -98,12 +102,21 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
         return datetime.datetime.strptime(s, DATE_FORMAT).date()
 
     def type_onoff(value):
-        if value.lower() in {"on", "true"}:
-            return True
-        elif value.lower() in {"off", "false"}:
-            return False
+        if isinstance(value, str):
+            if value.lower() in {"on", "true"}:
+                return True
+            elif value.lower() in {"off", "false"}:
+                return False
+            else:
+                raise ValueError("valore {!r} non valido (i valori leciti sono on/True|off/False)".format(value))
         else:
-            raise ValueError("valore {!r} non valido (i valori leciti sono on/True|off/False)".format(value))
+            return value
+
+    def switch_onoff(value):
+        if value is None:
+            return None
+        else:
+            return not type_onoff(value)
 
     def type_pattern(s):
         return InvoiceDb.make_pattern(s)
@@ -129,9 +142,12 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
         help="aumenta il livello di verbosità")
 
     common_parser.add_argument("--dry-run", "-D",
-        action="store_true",
-        default=False,
-        help="dry run (il database non viene modificato)")
+        metavar="on/off",
+        type=type_onoff,
+        const=switch_onoff(default_dry_run),
+        default=default_dry_run,
+        nargs='?',
+        help="abilita/disabilita la modalità 'dry run' (il database non viene modificato)")
 
     common_parser.add_argument('--version',
         action='version',
@@ -139,9 +155,12 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
         help='mostra la versione ed esce')
 
     common_parser.add_argument("--trace", "-t",
-        action="store_true",
-        default=False,
-        help="in caso di errori, mostra un traceback")
+        metavar="on/off",
+        type=type_onoff,
+        const=switch_onoff(default_trace),
+        default=default_trace,
+        nargs='?',
+        help="abilita/disabilita il traceback in caso di errori (per debug)")
 
     top_level_parser = argparse.ArgumentParser(
         description="""\
@@ -525,11 +544,14 @@ e validati.
         help="comando di cui stampare l'help")
 
     ### list_mode option
-    list_parser.add_argument("--no-header", "-H",
+    list_parser.add_argument("--header", "-H",
         dest="header",
-        action="store_false",
-        default=True,
-        help="non mostra l'header")
+        metavar="on/off",
+        type=type_onoff,
+        const=switch_onoff(default_header),
+        default=default_header,
+        nargs='?',
+        help="abilita/disabilita l'header")
 
     list_argument_group = list_parser.add_mutually_exclusive_group()
     list_argument_group.add_argument("--short", "-s",
@@ -616,11 +638,14 @@ e validati.
         default=default_stats_group,
         help="raggruppa le fatture per anno/mese/settimana/giorno/tutto il periodo")
 
-    stats_parser.add_argument("--no-total", "-T",
+    stats_parser.add_argument("--total", "-T",
         dest="total",
-        action="store_false",
-        default=True,
-        help="rimuove il totale per l'intero periodo")
+        metavar="on/off",
+        type=type_onoff,
+        const=switch_onoff(default_total),
+        default=default_total,
+        nargs='?',
+        help="abilita/disabilita il totale per l'intero periodo")
 
     ### warnings and error options
     for parser in init_parser, config_parser, scan_parser, validate_parser, legacy_parser:
@@ -660,7 +685,7 @@ e validati.
         #parser.add_argument("--remove-orphaned", "-O",
         #    metavar="on/off",
         #    type=type_onoff,
-        #    const=type_onoff("on"),
+        #    const=switch_onoff(default_remove_orphaned),
         #    default=default_remove_orphaned,
         #    nargs='?',
         #    help="abilita/disabilita la rimozione dal database le fatture 'orphane', ovvero quelle il cui documento è stato rimosso dal disco")
@@ -669,7 +694,7 @@ e validati.
         parser.add_argument("--partial-update", "-U",
             metavar="on/off",
             type=type_onoff,
-            const=type_onoff("on"),
+            const=switch_onoff(default_partial_update),
             default=default_partial_update,
             nargs='?',
             help="abilita/disabilita l'update parziale del database (in caso di errori di validazione, l'update parziale fa in modo che le fatture corrette vengano comunque archiviate)")

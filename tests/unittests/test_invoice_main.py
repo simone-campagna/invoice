@@ -161,7 +161,7 @@ versione del database:  {0}
 versione del programma: {0}
 """.format("{}.{}.{}".format(*InvoiceDb.VERSION))
 
-    STATS_YEAR = """\
+    STATS_YEAR_NO_TOTAL = """\
 anno        da:         a: #clienti #fatture incasso %incasso
 2014 2014-01-10 2014-01-27        2        2  153.00  100.00%
 """
@@ -170,34 +170,40 @@ anno          da:         a: #clienti #fatture incasso %incasso
 2014   2014-01-10 2014-01-27        2        2  153.00  100.00%
 TOTALE                              2        2  153.00  100.00%
 """
+    STATS_YEAR_DEFAULT = STATS_YEAR_TOTAL
 
-    STATS_MONTH = """\
+    STATS_MONTH_NO_TOTAL = """\
 mese           da:         a: #clienti #fatture incasso %incasso
 2014-01 2014-01-10 2014-01-27        2        2  153.00  100.00%
 """
 
-    STATS_MONTH_TOTAL = STATS_MONTH + """\
+    STATS_MONTH_TOTAL = STATS_MONTH_NO_TOTAL + """\
 TOTALE                               2        2  153.00  100.00%
 """
-    STATS_WEEK = """\
+    STATS_MONTH_DEFAULT = STATS_MONTH_TOTAL
+
+    STATS_WEEK_NO_TOTAL = """\
 settimana        da:         a: #clienti #fatture incasso %incasso
 2014:04   2014-01-20 2014-01-26        2        2  153.00  100.00%
 """
-    STATS_WEEK_TOTAL = STATS_WEEK + """\
+    STATS_WEEK_TOTAL = STATS_WEEK_NO_TOTAL + """\
 TOTALE                                 2        2  153.00  100.00%
 """
+    STATS_WEEK_DEFAULT = STATS_WEEK_TOTAL
 
-    STATS_DAY = """\
+    STATS_DAY_NO_TOTAL = """\
 giorno            da:         a: #clienti #fatture incasso %incasso
 2014-01-22 2014-01-22 2014-01-22        1        1  102.00   66.67%
 2014-01-25 2014-01-25 2014-01-25        1        1   51.00   33.33%
 """
-    STATS_DAY_TOTAL = STATS_DAY + """\
+    STATS_DAY_TOTAL = STATS_DAY_NO_TOTAL + """\
 TOTALE                                  2        2  153.00  100.00%
 """
+    STATS_DAY_DEFAULT = STATS_DAY_TOTAL
 
-    STATS_DEFAULT = STATS_MONTH
-    STATS_DEFAULT_TOTAL = STATS_MONTH_TOTAL
+    STATS_NONE_DEFAULT = STATS_MONTH_DEFAULT
+    STATS_NONE_TOTAL = STATS_MONTH_TOTAL
+    STATS_NONE_NO_TOTAL = STATS_MONTH_NO_TOTAL
 
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
@@ -303,7 +309,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--header=off'],
             )
             self.assertEqual(p.string(), '')
 
@@ -311,7 +317,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header', '--filter', 'città == Rome'], # InvoiceSyntaxError
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--header=off', '--filter', 'città == Rome'], # InvoiceSyntaxError
             )
             self.assertEqual(p.string(), '')
 
@@ -405,7 +411,7 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--header=off'],
             )
             self.assertEqual(p.string(), '')
 
@@ -651,7 +657,7 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--header=off'],
             )
             self.assertEqual(p.string(), "")
 
@@ -666,7 +672,7 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--no-header'],
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--header=off'],
             )
             self.assertEqual(p.string(), "")
 
@@ -775,8 +781,11 @@ KNTCRK01G01H663X 2014      5
             args=['-d', db_filename.name, 'stats', '-S', '2014-01-10', '-E', '2014-01-27']
             if stats_group:
                 args.append('-g{}'.format(stats_group))
-            if not total:
-                args.append('--no-total')
+            if total is not None:
+                if total:
+                    args.append('--total=on')
+                else:
+                    args.append('--total=off')
             invoice_main(
                 printer=p,
                 logger=self.logger,
@@ -785,28 +794,46 @@ KNTCRK01G01H663X 2014      5
             self.assertEqual(p.string(), output)
 
     def test_invoice_main_stats_year(self):
-        return self._test_invoice_main_stats('year', False, self.STATS_YEAR)
+        return self._test_invoice_main_stats('year', None, self.STATS_YEAR_DEFAULT)
+
+    def test_invoice_main_stats_year_no_total(self):
+        return self._test_invoice_main_stats('year', False, self.STATS_YEAR_NO_TOTAL)
 
     def test_invoice_main_stats_year_total(self):
         return self._test_invoice_main_stats('year', True, self.STATS_YEAR_TOTAL)
 
     def test_invoice_main_stats_month(self):
-        return self._test_invoice_main_stats('month', False, self.STATS_MONTH)
+        return self._test_invoice_main_stats('month', None, self.STATS_MONTH_DEFAULT)
+
+    def test_invoice_main_stats_month_no_total(self):
+        return self._test_invoice_main_stats('month', False, self.STATS_MONTH_NO_TOTAL)
 
     def test_invoice_main_stats_month_total(self):
         return self._test_invoice_main_stats('month', True, self.STATS_MONTH_TOTAL)
 
     def test_invoice_main_stats_week(self):
-        return self._test_invoice_main_stats('week', False, self.STATS_WEEK)
+        return self._test_invoice_main_stats('week', None, self.STATS_WEEK_DEFAULT)
+
+    def test_invoice_main_stats_week_no_total(self):
+        return self._test_invoice_main_stats('week', False, self.STATS_WEEK_NO_TOTAL)
+
+    def test_invoice_main_stats_week_total(self):
+        return self._test_invoice_main_stats('week', True, self.STATS_WEEK_TOTAL)
 
     def test_invoice_main_stats_day(self):
-        return self._test_invoice_main_stats('day', False, self.STATS_DAY)
+        return self._test_invoice_main_stats('day', None, self.STATS_DAY_DEFAULT)
+
+    def test_invoice_main_stats_day_no_total(self):
+        return self._test_invoice_main_stats('day', False, self.STATS_DAY_NO_TOTAL)
 
     def test_invoice_main_stats_day_total(self):
         return self._test_invoice_main_stats('day', True, self.STATS_DAY_TOTAL)
 
-    def test_invoice_main_stats_default(self):
-        return self._test_invoice_main_stats(None, False, self.STATS_DEFAULT)
+    def test_invoice_main_stats_none(self):
+        return self._test_invoice_main_stats(None, None, self.STATS_NONE_DEFAULT)
 
-    def test_invoice_main_stats_default_total(self):
-        return self._test_invoice_main_stats(None, True, self.STATS_DEFAULT_TOTAL)
+    def test_invoice_main_stats_none_no_total(self):
+        return self._test_invoice_main_stats(None, False, self.STATS_NONE_NO_TOTAL)
+
+    def test_invoice_main_stats_none_total(self):
+        return self._test_invoice_main_stats(None, True, self.STATS_NONE_TOTAL)
