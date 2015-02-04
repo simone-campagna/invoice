@@ -149,35 +149,47 @@ anno                       2012
 
 """
 
-    STATS_OUTPUT_NONE = """\
-#clienti #fatture incasso %incasso
-       4        5  433.00  100.00%
-"""
-
     STATS_OUTPUT_YEAR = """\
-anno         da          a #clienti #fatture incasso %incasso
+anno        da:         a: #clienti #fatture incasso %incasso
 2014 2014-01-01 2014-12-31        4        5  433.00  100.00%
 """
 
+    STATS_OUTPUT_YEAR_TOTAL = """\
+anno          da:         a: #clienti #fatture incasso %incasso
+2014   2014-01-01 2014-12-31        4        5  433.00  100.00%
+TOTALE                              4        5  433.00  100.00%
+"""
     STATS_OUTPUT_MONTH = """\
-mese            da          a #clienti #fatture incasso %incasso
+mese           da:         a: #clienti #fatture incasso %incasso
 2014-01 2014-01-01 2014-01-31        4        5  433.00  100.00%
 """
 
+    STATS_OUTPUT_MONTH_TOTAL = STATS_OUTPUT_MONTH + """\
+TOTALE                               4        5  433.00  100.00%
+"""
+
     STATS_OUTPUT_WEEK = """\
-settimana         da          a #clienti #fatture incasso %incasso
+settimana        da:         a: #clienti #fatture incasso %incasso
 2014:01   2014-01-01 2014-01-05        2        2  127.50   29.45%
 2014:04   2014-01-20 2014-01-26        2        2  153.00   35.33%
 2014:05   2014-01-27 2014-02-02        1        1  152.50   35.22%
 """
 
+    STATS_OUTPUT_WEEK_TOTAL = STATS_OUTPUT_WEEK + """\
+TOTALE                                 4        5  433.00  100.00%
+"""
+
     STATS_OUTPUT_DAY = """\
-giorno             da          a #clienti #fatture incasso %incasso
+giorno            da:         a: #clienti #fatture incasso %incasso
 2014-01-03 2014-01-03 2014-01-03        2        2  127.50   29.45%
 2014-01-22 2014-01-22 2014-01-22        1        1  102.00   23.56%
 2014-01-25 2014-01-25 2014-01-25        1        1   51.00   11.78%
 2014-01-29 2014-01-29 2014-01-29        1        1  152.50   35.22%
 """
+    STATS_OUTPUT_DAY_TOTAL = STATS_OUTPUT_DAY + """\
+TOTALE                                  4        5  433.00  100.00%
+"""
+
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
         self.logger = get_null_logger()
@@ -738,7 +750,7 @@ KNTCRK01G01H663X 2014      5
     def test_InvoiceProgram_remove_orphaned_off(self):
         self._test_InvoiceProgram_remove_orphaned(False)
 
-    def _test_InvoiceProgram_stats(self, stats_group, expected_output):
+    def _test_InvoiceProgram_stats(self, stats_group, expected_output, total):
         with tempfile.NamedTemporaryFile() as db_file:
             p = StringPrinter()
             invoice_program = InvoiceProgram(
@@ -765,32 +777,56 @@ KNTCRK01G01H663X 2014      5
             invoice_program.impl_stats(
                 filters=(),
                 stats_group=stats_group,
+                total=total,
             )
             self.maxDiff = None
             self.assertEqual(p.string(), expected_output)
 
-    def test_InvoiceProgram_stats_NONE(self):
-        self._test_InvoiceProgram_stats(
-            stats_group=InvoiceProgram.STATS_GROUP_NONE,
-            expected_output=self.STATS_OUTPUT_NONE)
-
     def test_InvoiceProgram_stats_YEAR(self):
         self._test_InvoiceProgram_stats(
             stats_group=InvoiceProgram.STATS_GROUP_YEAR,
-            expected_output=self.STATS_OUTPUT_YEAR)
+            expected_output=self.STATS_OUTPUT_YEAR,
+            total=False)
+
+    def test_InvoiceProgram_stats_YEAR_total(self):
+        self._test_InvoiceProgram_stats(
+            stats_group=InvoiceProgram.STATS_GROUP_YEAR,
+            expected_output=self.STATS_OUTPUT_YEAR_TOTAL,
+            total=True)
 
     def test_InvoiceProgram_stats_MONTH(self):
         self._test_InvoiceProgram_stats(
             stats_group=InvoiceProgram.STATS_GROUP_MONTH,
-            expected_output=self.STATS_OUTPUT_MONTH)
+            expected_output=self.STATS_OUTPUT_MONTH,
+            total=False)
+
+    def test_InvoiceProgram_stats_MONTH_total(self):
+        self._test_InvoiceProgram_stats(
+            stats_group=InvoiceProgram.STATS_GROUP_MONTH,
+            expected_output=self.STATS_OUTPUT_MONTH_TOTAL,
+            total=True)
 
     def test_InvoiceProgram_stats_WEEK(self):
         self._test_InvoiceProgram_stats(
             stats_group=InvoiceProgram.STATS_GROUP_WEEK,
-            expected_output=self.STATS_OUTPUT_WEEK)
+            expected_output=self.STATS_OUTPUT_WEEK,
+            total=False)
+
+    def test_InvoiceProgram_stats_WEEK_total(self):
+        self._test_InvoiceProgram_stats(
+            stats_group=InvoiceProgram.STATS_GROUP_WEEK,
+            expected_output=self.STATS_OUTPUT_WEEK_TOTAL,
+            total=True)
 
     def test_InvoiceProgram_stats_DAY(self):
         self._test_InvoiceProgram_stats(
             stats_group=InvoiceProgram.STATS_GROUP_DAY,
-            expected_output=self.STATS_OUTPUT_DAY)
+            expected_output=self.STATS_OUTPUT_DAY,
+            total=False)
+
+    def test_InvoiceProgram_stats_DAY_total(self):
+        self._test_InvoiceProgram_stats(
+            stats_group=InvoiceProgram.STATS_GROUP_DAY,
+            expected_output=self.STATS_OUTPUT_DAY_TOTAL,
+            total=True)
 

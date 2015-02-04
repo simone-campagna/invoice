@@ -160,6 +160,45 @@ patterns:
 versione del database:  {0}
 versione del programma: {0}
 """.format("{}.{}.{}".format(*InvoiceDb.VERSION))
+
+    STATS_YEAR = """\
+anno        da:         a: #clienti #fatture incasso %incasso
+2014 2014-01-10 2014-01-27        2        2  153.00  100.00%
+"""
+    STATS_YEAR_TOTAL = """\
+anno          da:         a: #clienti #fatture incasso %incasso
+2014   2014-01-10 2014-01-27        2        2  153.00  100.00%
+TOTALE                              2        2  153.00  100.00%
+"""
+
+    STATS_MONTH = """\
+mese           da:         a: #clienti #fatture incasso %incasso
+2014-01 2014-01-10 2014-01-27        2        2  153.00  100.00%
+"""
+
+    STATS_MONTH_TOTAL = STATS_MONTH + """\
+TOTALE                               2        2  153.00  100.00%
+"""
+    STATS_WEEK = """\
+settimana        da:         a: #clienti #fatture incasso %incasso
+2014:04   2014-01-20 2014-01-26        2        2  153.00  100.00%
+"""
+    STATS_WEEK_TOTAL = STATS_WEEK + """\
+TOTALE                                 2        2  153.00  100.00%
+"""
+
+    STATS_DAY = """\
+giorno            da:         a: #clienti #fatture incasso %incasso
+2014-01-22 2014-01-22 2014-01-22        1        1  102.00   66.67%
+2014-01-25 2014-01-25 2014-01-25        1        1   51.00   33.33%
+"""
+    STATS_DAY_TOTAL = STATS_DAY + """\
+TOTALE                                  2        2  153.00  100.00%
+"""
+
+    STATS_DEFAULT = STATS_MONTH
+    STATS_DEFAULT_TOTAL = STATS_MONTH_TOTAL
+
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
         self.logger = get_null_logger()
@@ -713,7 +752,7 @@ KNTCRK01G01H663X 2014      5
                 )
             self.assertEqual(cm.exception.code, 2)
 
-    def _test_invoice_main_stats(self, stats_group, output):
+    def _test_invoice_main_stats(self, stats_group, total, output):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = StringPrinter()
 
@@ -733,40 +772,41 @@ KNTCRK01G01H663X 2014      5
             )
             self.assertEqual(p.string(), '')
 
+            args=['-d', db_filename.name, 'stats', '-S', '2014-01-10', '-E', '2014-01-27']
+            if stats_group:
+                args.append('-g{}'.format(stats_group))
+            if total:
+                args.append('--total')
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'stats', '-S', '2014-01-10', '-E', '2014-01-27', '-g{}'.format(stats_group)],
+                args=args,
             )
             self.assertEqual(p.string(), output)
 
     def test_invoice_main_stats_year(self):
-        return self._test_invoice_main_stats('year', """\
-anno         da          a #clienti #fatture incasso %incasso
-2014 2014-01-10 2014-01-27        2        2  153.00  100.00%
-""")
+        return self._test_invoice_main_stats('year', False, self.STATS_YEAR)
+
+    def test_invoice_main_stats_year_total(self):
+        return self._test_invoice_main_stats('year', True, self.STATS_YEAR_TOTAL)
 
     def test_invoice_main_stats_month(self):
-        return self._test_invoice_main_stats('month', """\
-mese            da          a #clienti #fatture incasso %incasso
-2014-01 2014-01-10 2014-01-27        2        2  153.00  100.00%
-""")
+        return self._test_invoice_main_stats('month', False, self.STATS_MONTH)
+
+    def test_invoice_main_stats_month_total(self):
+        return self._test_invoice_main_stats('month', True, self.STATS_MONTH_TOTAL)
 
     def test_invoice_main_stats_week(self):
-        return self._test_invoice_main_stats('week', """\
-settimana         da          a #clienti #fatture incasso %incasso
-2014:04   2014-01-20 2014-01-26        2        2  153.00  100.00%
-""")
+        return self._test_invoice_main_stats('week', False, self.STATS_WEEK)
 
     def test_invoice_main_stats_day(self):
-        return self._test_invoice_main_stats('day', """\
-giorno             da          a #clienti #fatture incasso %incasso
-2014-01-22 2014-01-22 2014-01-22        1        1  102.00   66.67%
-2014-01-25 2014-01-25 2014-01-25        1        1   51.00   33.33%
-""")
+        return self._test_invoice_main_stats('day', False, self.STATS_DAY)
 
-    def test_invoice_main_stats_none(self):
-        return self._test_invoice_main_stats('none', """\
-#clienti #fatture incasso %incasso
-       2        2  153.00  100.00%
-""")
+    def test_invoice_main_stats_day_total(self):
+        return self._test_invoice_main_stats('day', True, self.STATS_DAY_TOTAL)
+
+    def test_invoice_main_stats_default(self):
+        return self._test_invoice_main_stats(None, False, self.STATS_DEFAULT)
+
+    def test_invoice_main_stats_default_total(self):
+        return self._test_invoice_main_stats(None, True, self.STATS_DEFAULT_TOTAL)

@@ -70,8 +70,7 @@ class InvoiceProgram(object):
     STATS_GROUP_MONTH = 'month'
     STATS_GROUP_WEEK = 'week'
     STATS_GROUP_DAY = 'day'
-    STATS_GROUP_NONE = 'none'
-    STATS_GROUPS = (STATS_GROUP_YEAR, STATS_GROUP_MONTH, STATS_GROUP_WEEK, STATS_GROUP_DAY, STATS_GROUP_NONE)
+    STATS_GROUPS = (STATS_GROUP_YEAR, STATS_GROUP_MONTH, STATS_GROUP_WEEK, STATS_GROUP_DAY)
 
     def __init__(self, db_filename, logger, printer=print, trace=False):
         self.db_filename = db_filename
@@ -167,8 +166,8 @@ class InvoiceProgram(object):
         self.impl_report(filters=filters)
         return 0
 
-    def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None):
-        self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group)
+    def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=True):
+        self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group, total=total)
         return 0
 
     def legacy(self, patterns, filters, validate, list, report, warning_mode, error_mode):
@@ -343,9 +342,6 @@ class InvoiceProgram(object):
         elif stats_group == self.STATS_GROUP_DAY:
             group_function = lambda invoice: (invoice.date, )
             group_value_function = self._get_day_group_value
-        else:
-            group_function = lambda invoice: (0, )
-            group_value_function = lambda group_value: (None, None, None)
         group_value = None
         group = []
         for invoice in invoice_collection:
@@ -360,7 +356,7 @@ class InvoiceProgram(object):
         if group:
             yield group_value_function(*group_value), group
    
-    def impl_stats(self, *, date_from=None, date_to=None, filters=None, stats_group=None):
+    def impl_stats(self, *, date_from=None, date_to=None, filters=None, stats_group=None, total=True):
         self.db.check()
         if filters is None:
             filters = ()
@@ -370,7 +366,7 @@ class InvoiceProgram(object):
             filters.append(lambda invoice: invoice.date <= date_to)
 
         if stats_group is None:
-            stats_group = self.STATS_GROUP_NONE
+            stats_group = self.STATS_GROUP_MONTH
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters)
         invoice_collection.sort()
         if invoice_collection:
@@ -379,9 +375,8 @@ class InvoiceProgram(object):
                 self.STATS_GROUP_MONTH:	'mese',
                 self.STATS_GROUP_WEEK:	'settimana',
                 self.STATS_GROUP_DAY:	'giorno',
-                self.STATS_GROUP_NONE:	'',
-                'from':			'da',
-                'to':			'a',
+                'from':			'da:',
+                'to':			'a:',
             }
             convert = {
                 'group_income': lambda income: '{:.2f}'.format(income),
@@ -397,10 +392,8 @@ class InvoiceProgram(object):
             }
             field_names = ('client_count', 'invoice_count', 'group_income', 'group_income_percentage')
             header = ('#clienti', '#fatture', 'incasso', '%incasso')
-            if stats_group == self.STATS_GROUP_NONE:
-                group_field_names = ()
-            else:
-                group_field_names = (stats_group, 'from', 'to')
+            group_field_names = (stats_group, 'from', 'to')
+            group_total = ('TOTAL', '', '')
             group_header = tuple(group_translation[field_name] for field_name in group_field_names)
             all_field_names = group_field_names + field_names
             all_header = group_header + header
@@ -410,6 +403,12 @@ class InvoiceProgram(object):
             last_date = last_invoice.date
             total_income = sum(invoice.income for invoice in invoice_collection)
             rows = []
+            if total:
+                total_row = {field_name: 0 for field_name in field_names}
+                total_row[stats_group] = "TOTALE"
+                total_row['from'] = ""
+                total_row['to'] = ""
+            total_client_count = len(set(invoice.tax_code for invoice in invoice_collection))
             for (group_value, group_date_from, group_date_to), group in self.group_by(invoice_collection, stats_group):
                 if date_from is not None and group_date_from is not None:
                     group_date_from = max(group_date_from, date_from)
@@ -431,7 +430,13 @@ class InvoiceProgram(object):
                     'from':			group_date_from,
                     'to':			group_date_to,
                 }
+                if total:
+                    for field_name in field_names:
+                        total_row[field_name] += data[field_name]
+                    total_row['client_count'] = total_client_count
                 rows.append(data)
+            if total:
+                rows.append(total_row)
             t = Table(
                 field_names=all_field_names,
                 header=all_header,
