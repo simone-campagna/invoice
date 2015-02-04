@@ -616,11 +616,11 @@ e validati.
         default=default_stats_group,
         help="raggruppa le fatture per anno/mese/settimana/giorno/tutto il periodo")
 
-    stats_parser.add_argument("--total", "-T",
+    stats_parser.add_argument("--no-total", "-T",
         dest="total",
-        action="store_true",
-        default=False,
-        help="mostra il totale per l'intero periodo")
+        action="store_false",
+        default=True,
+        help="rimuove il totale per l'intero periodo")
 
     ### warnings and error options
     for parser in init_parser, config_parser, scan_parser, validate_parser, legacy_parser:

@@ -775,8 +775,8 @@ KNTCRK01G01H663X 2014      5
             args=['-d', db_filename.name, 'stats', '-S', '2014-01-10', '-E', '2014-01-27']
             if stats_group:
                 args.append('-g{}'.format(stats_group))
-            if total:
-                args.append('--total')
+            if not total:
+                args.append('--no-total')
             invoice_main(
                 printer=p,
                 logger=self.logger,
