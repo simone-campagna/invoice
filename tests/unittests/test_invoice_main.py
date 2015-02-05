@@ -28,7 +28,7 @@ import sys
 import tempfile
 import unittest
 
-from invoice.log import get_default_logger, get_null_logger
+from invoice.log import get_null_logger
 from invoice.invoice_collection import InvoiceCollection
 from invoice.invoice_main import invoice_main
 from invoice.invoice_db import InvoiceDb

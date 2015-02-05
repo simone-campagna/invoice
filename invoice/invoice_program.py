@@ -822,10 +822,11 @@ anno                       {year}
 
     def impl_help(self, *, parser_dict, command):
         if not command in parser_dict:
-            self.logger.error("non è disponibile alcun help per il comando sconosciuto {!r}")
             if command == 'snow': # pragma: no cover
-                from .easter_eggs.snow import make_it_snow
+                from .ee.snow import make_it_snow
                 make_it_snow()
+            else:
+                self.logger.error("non è disponibile alcun help per il comando sconosciuto {!r}")
         else:
             parser = parser_dict[command]
             parser.print_help(file=self.printer.stream)
