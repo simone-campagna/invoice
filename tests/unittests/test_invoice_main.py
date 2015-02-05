@@ -800,6 +800,20 @@ KNTCRK01G01H663X Smallville         5  152.50
         
         self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.REPORT_OUTPUT)
 
+    def test_invoice_main_legacy_err(self):
+        p = StringPrinter()
+
+        pattern0 = os.path.join(self.dirname, '*.doc')
+        pattern1 = os.path.join(self.dirname, 'error_duplicated_line', '*.doc')
+
+        p.reset()
+        invoice_main(
+            printer=p,
+            logger=self.logger,
+            args=['legacy', pattern0, pattern1, '-l', '-eraise']
+        )
+            
+
     def test_invoice_main_help(self):
         p = StringPrinter()
 
