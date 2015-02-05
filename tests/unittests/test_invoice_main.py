@@ -129,6 +129,7 @@ configuration:
   + total                = True
   + stats_group          = 'month'
   + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + num_threads          = 0
 """
     CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
 configuration:
@@ -140,6 +141,7 @@ configuration:
   + total                = True
   + stats_group          = 'month'
   + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + num_threads          = 0
 """
     CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
 configuration:
@@ -151,6 +153,7 @@ configuration:
   + total                = True
   + stats_group          = 'month'
   + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + num_threads          = 0
 """
     CONFIG_SHOW_MIX = """\
 configuration:
@@ -162,6 +165,7 @@ configuration:
   + total                = True
   + stats_group          = 'week'
   + list_field_names     = ('tax_code', 'city', 'number', 'income')
+  + num_threads          = 0
 """
 
     PATTERNS_CLEAR = """\
@@ -234,15 +238,18 @@ TOTALE                                  2        2  153.00  100.00%
         self.logger = get_null_logger()
         self.maxDiff = None
 
-    def test_invoice_main(self):
+    def _test_invoice_main_nt(self, num_threads):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = StringPrinter()
 
+            args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')]
+            if num_threads:
+                args.extend(['--num-threads', str(num_threads)])
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=args,
             )
             self.assertEqual(p.string(), '')
 
@@ -344,6 +351,21 @@ PRKPRT01G01H663M 2014      2
                 args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--header=off', '--filter', 'città == Rome'], # InvoiceSyntaxError
             )
             self.assertEqual(p.string(), '')
+
+    def test_invoice_main_nt_0(self):
+        self._test_invoice_main_nt(0)
+
+    def test_invoice_main_nt_1(self):
+        self._test_invoice_main_nt(1)
+
+    def test_invoice_main_nt_2(self):
+        self._test_invoice_main_nt(2)
+
+    def test_invoice_main_nt_3(self):
+        self._test_invoice_main_nt(3)
+
+    def test_invoice_main_nt_4(self):
+        self._test_invoice_main_nt(4)
 
     def test_invoice_main_list(self):
         with tempfile.NamedTemporaryFile() as db_filename:

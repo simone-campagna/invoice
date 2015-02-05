@@ -40,7 +40,8 @@ class InvoiceDb(Db):
         ('warning_mode', 'error_mode',
          'partial_update', 'remove_orphaned',
          'header', 'total',
-         'stats_group', 'list_field_names'))
+         'stats_group', 'list_field_names',
+         'num_threads'))
     Version = collections.namedtuple('Version', ('major', 'minor', 'patch'))
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
     VERSION = Version(
@@ -55,7 +56,8 @@ class InvoiceDb(Db):
         header=True,
         total=True,
         stats_group=conf.DEFAULT_STATS_GROUP,
-        list_field_names=conf.DEFAULT_LIST_FIELD_NAMES)
+        list_field_names=conf.DEFAULT_LIST_FIELD_NAMES,
+        num_threads=0)
     
     TABLES = {
         'version': DbTable(
@@ -76,6 +78,7 @@ class InvoiceDb(Db):
                 ('total', Bool()),
                 ('stats_group', Str()),
                 ('list_field_names', StrTuple()),
+                ('num_threads', Int()),
             ),
             dict_type=Configuration,
         ),

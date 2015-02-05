@@ -28,6 +28,8 @@ import math
 import os
 import time
 import traceback
+import queue
+import threading
 
 from .error import InvoiceSyntaxError, \
                    InvoiceDateError, \
@@ -49,7 +51,6 @@ from .database.db_types import Path
 from .table import Table
 from . import conf
 from .ee import snow
-
 
 class FileDateTimes(object):
     def __init__(self):
@@ -106,6 +107,7 @@ class InvoiceProgram(object):
                                 total=True,
                                 list_field_names=None,
                                 stats_group=None,
+                                num_threads=None,
                                 reset=False):
         self.impl_config(
             warning_mode=warning_mode,
@@ -116,6 +118,7 @@ class InvoiceProgram(object):
             total=total,
             list_field_names=list_field_names,
             stats_group=stats_group,
+            num_threads=num_threads,
             reset=reset,
         )
         return 0
@@ -124,12 +127,13 @@ class InvoiceProgram(object):
         self.impl_patterns(reset=reset, patterns=patterns)
         return 0
 
-    def program_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=False):
+    def program_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=False, num_threads=None):
         validation_result, invoice_collection = self.impl_scan(
             warning_mode=warning_mode,
             error_mode=error_mode,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
+            num_threads=num_threads,
         )
         if validation_result.num_errors():
             failing_invoices = InvoiceCollection(validation_result.filter_failing_invoices(invoice_collection))
@@ -209,6 +213,7 @@ class InvoiceProgram(object):
                            total=True,
                            stats_group=None,
                            list_field_names=None,
+                           num_threads=None,
                            reset=False):
         if list_field_names is None:
             lsit_field_names = conf.DEFAULT_LIST_FIELD_NAMES
@@ -225,6 +230,7 @@ class InvoiceProgram(object):
             total=total,
             list_field_names=list_field_names,
             stats_group=stats_group,
+            num_threads=num_threads,
         )
         configuration = self.db.store_configuration(configuration)
         #self.show_configuration(configuration)
@@ -247,6 +253,7 @@ class InvoiceProgram(object):
                              total=True,
                              list_field_names=None,
                              stats_group=None,
+                             num_threads=None,
                              reset=False):
         self.db.check()
         if reset:
@@ -261,6 +268,7 @@ class InvoiceProgram(object):
             total=total,
             list_field_names=list_field_names,
             stats_group=stats_group,
+            num_threads=num_threads,
         )
         configuration = self.db.store_configuration(configuration)
         self.show_configuration(configuration)
@@ -497,8 +505,9 @@ class InvoiceProgram(object):
                 traceback.print_exc()
             self.logger.error("{}: {}\n".format(type(err).__name__, err))
 
-    def impl_scan(self, warning_mode=None, error_mode=None, partial_update=None, remove_orphaned=None):
+    def impl_scan(self, warning_mode=None, error_mode=None, partial_update=None, remove_orphaned=None, num_threads=None):
         self.db.check()
+        num_threads = self.db.get_config_option('num_threads', num_threads)
         found_doc_filenames = set()
         db = self.db
         file_date_times = FileDateTimes()
@@ -549,21 +558,68 @@ class InvoiceProgram(object):
                 result.append((False, doc_filename))
 
             validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
+
+            multi_threading = num_threads >= 1
             if result:
-                invoice_reader = InvoiceReader(logger=self.logger)
                 new_invoices = []
                 old_invoices = []
                 scan_date_times = collections.OrderedDict()
-                for existing, doc_filename in result:
-                    invoice = invoice_reader(validation_result, doc_filename)
-                    updated_invoice_collection.add(invoice)
-                    if existing:
-                        old_invoices.append(invoice)
-                    else:
-                        new_invoices.append(invoice)
-                    scan_date_times[invoice.doc_filename] = db.ScanDateTime(
-                        doc_filename=invoice.doc_filename,
-                        scan_date_time=file_date_times[invoice.doc_filename])
+                if multi_threading:
+                    work = queue.Queue()
+                    def create_worker(w_id, w_validation_result, w_new, w_old, w_scan_date_times):
+                        def worker():
+                            w_invoice_reader = InvoiceReader(logger=self.logger)
+                            w_file_date_times = FileDateTimes()
+                            while True:
+                                w_existing, w_doc_filename = work.get()
+                                w_invoice = w_invoice_reader(w_validation_result, w_doc_filename)
+                                if existing:
+                                    w_old.append(w_invoice)
+                                else:
+                                    w_new.append(w_invoice)
+                                w_scan_date_times[w_invoice.doc_filename] = db.ScanDateTime(
+                                    doc_filename=w_invoice.doc_filename,
+                                    scan_date_time=w_file_date_times[w_invoice.doc_filename])
+                                work.task_done()
+                        return worker
+                    w_args_list = []
+                    w_ids = tuple(range(num_threads))
+                    for w_id in w_ids:
+                        w_validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
+                        w_validation_result.can_raise = False
+                        w_new = []
+                        w_old = []
+                        w_scan_date_times = collections.OrderedDict()
+                        w_args = (w_id, w_validation_result, w_new, w_old, w_scan_date_times)
+                        w_args_list.append(w_args)
+                        w = create_worker(*w_args)
+                        w_thread = threading.Thread(target=w)
+                        w_thread.daemon = True
+                        w_thread.start()
+                    for existing, doc_filename in result:
+                        work.put((existing, doc_filename))
+                        
+                    work.join()
+
+                    for (w_id, w_validation_result, w_new, w_old, w_scan_date_times) in w_args_list:
+                        validation_result.update(w_validation_result)
+                        new_invoices.extend(w_new)
+                        old_invoices.extend(w_old)
+                        scan_date_times.update(w_scan_date_times)
+                    for invoice in new_invoices + old_invoices:
+                        updated_invoice_collection.add(invoice)
+                else:
+                    invoice_reader = InvoiceReader(logger=self.logger)
+                    for existing, doc_filename in result:
+                        invoice = invoice_reader(validation_result, doc_filename)
+                        updated_invoice_collection.add(invoice)
+                        if existing:
+                            old_invoices.append(invoice)
+                        else:
+                            new_invoices.append(invoice)
+                        scan_date_times[invoice.doc_filename] = db.ScanDateTime(
+                            doc_filename=invoice.doc_filename,
+                            scan_date_time=file_date_times[invoice.doc_filename])
                 self.validate_invoice_collection(validation_result, updated_invoice_collection)
                 if validation_result.num_errors():
                     message = "validazione fallita - {} errori".format(validation_result.num_errors())
@@ -572,12 +628,6 @@ class InvoiceProgram(object):
                     else:
                         old_invoices = validation_result.filter_validated_invoices(old_invoices)
                         new_invoices = validation_result.filter_validated_invoices(new_invoices)
-                        #partially_updated_invoices = validation_result.filter_validated_invoices(updated_invoice_collection)
-                        #partially_updated_invoice_collection = InvoiceCollection(partially_updated_invoices)
-                        #partial_validation_result = self.create_validation_result()
-                        #self.validate_invoice_collection(partial_validation_result, partially_updated_invoice_collection)
-                        #if partial_validation_result.num_errors():
-                        #    raise InvoicePartialUpdateError("validation of partial invoice collection failed")
                         if old_invoices or new_invoices or removed_doc_filenames:
                             self.logger.warning(message + ' - update parziale')
                 scan_date_times_l = []
@@ -806,6 +856,7 @@ anno                       {year}
                               total=True,
                               stats_group=None,
                               list_field_names=None,
+                              num_threads=None,
                               reset=False):
         self.impl_init(
             patterns=patterns,
@@ -817,6 +868,7 @@ anno                       {year}
             total=total,
             list_field_names=list_field_names,
             stats_group=stats_group,
+            num_threads=num_threads,
             reset=reset,
         )
         return 0

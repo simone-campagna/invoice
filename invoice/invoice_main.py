@@ -107,6 +107,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_total = None
     default_stats_group = None
     default_list_field_names = None
+    default_num_threads = None
 
     common_parser = argparse.ArgumentParser(
         add_help=False,
@@ -289,7 +290,8 @@ per una spiegazione di questi valori
                             'warning_mode', 'error_mode',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
-                            'list_field_names', 'stats_group'),
+                            'list_field_names', 'stats_group',
+                            'num_threads'),
     )
 
     ### version ###
@@ -338,6 +340,7 @@ supportati sono:
  * stats_group[={sg}]: raggruppamento preferito per il comando 'stats'
  * list_field_names[={fn}]:
    lista predefinita dei campi per il comando 'list'
+ * num_threads[={nt}]: numero di thread per la scansione dei documenti
 """.format(
             wm=InvoiceDb.DEFAULT_CONFIGURATION.warning_mode,
             em=InvoiceDb.DEFAULT_CONFIGURATION.error_mode,
@@ -347,6 +350,7 @@ supportati sono:
             tt=InvoiceDb.DEFAULT_CONFIGURATION.total,
             sg=InvoiceDb.DEFAULT_CONFIGURATION.stats_group,
             fn=','.join(InvoiceDb.DEFAULT_CONFIGURATION.list_field_names),
+            nt=InvoiceDb.DEFAULT_CONFIGURATION.num_threads,
         ),
     )
     config_parser.set_defaults(
@@ -355,7 +359,8 @@ supportati sono:
                             'warning_mode', 'error_mode',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
-                            'list_field_names', 'stats_group'),
+                            'list_field_names', 'stats_group',
+                            'num_threads'),
     )
 
     ### patterns ###
@@ -407,7 +412,7 @@ il relativo DOC file non sia stato modificato.
     )
     scan_parser.set_defaults(
         function_name="program_scan",
-        function_arguments=('warning_mode', 'error_mode', 'remove_orphaned', 'partial_update'),
+        function_arguments=('warning_mode', 'error_mode', 'remove_orphaned', 'partial_update', 'num_threads'),
     )
 
     ### clear_parser ###
@@ -697,6 +702,14 @@ e validati.
             default=default_partial_update,
             nargs='?',
             help="abilita/disabilita l'update parziale del database (in caso di errori di validazione, l'update parziale fa in modo che le fatture corrette vengano comunque archiviate)")
+
+    ### num threads
+    for parser in init_parser, config_parser, scan_parser:
+        parser.add_argument("--num-threads", "-n",
+            dest="num_threads",
+            default=default_num_threads,
+            type=int,
+            help='numero di thread per la scansione dei documenti')
 
     ### patterns option
     for parser in init_parser, legacy_parser:

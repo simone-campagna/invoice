@@ -34,12 +34,13 @@ class ValidationResult(object):
     ERROR_MODES = (ERROR_MODE_LOG, ERROR_MODE_RAISE)
     ERROR_MODE_DEFAULT = ERROR_MODE_LOG
 
-    Entry = collections.namedtuple('Entry', ('exc_type', 'message'))
-    def __init__(self, logger, warning_mode=WARNING_MODE_DEFAULT, error_mode=ERROR_MODE_DEFAULT):
+    Entry = collections.namedtuple('Entry', ('invoice', 'exc_type', 'message'))
+    def __init__(self, logger, warning_mode=WARNING_MODE_DEFAULT, error_mode=ERROR_MODE_DEFAULT, can_raise=True):
         self._failing_invoices = set()
         self.logger = logger
         self._errors = collections.OrderedDict()
         self._warnings = collections.OrderedDict()
+        self.can_raise = can_raise
 
         if error_mode is None: # pragma: no cover
             error_mode = self.ERROR_MODE_DEFAULT
@@ -66,6 +67,17 @@ class ValidationResult(object):
         self.warning_mode = warning_mode
         self.error_mode = error_mode
 
+    def update(self, validation_result):
+        #self._failing_invoices.update(validation_result._failing_invoices)
+        #self._errors.update(validation_result._errors)
+        #self._warnings.update(validation_result._warnings)
+        for doc_filename, errors in validation_result._errors.items():
+            for invoice, exc_type, message in errors:
+                self.add_error(invoice, exc_type, message)
+        for doc_filename, warnings in validation_result._warnings.items():
+            for invoice, exc_type, message in warnings:
+                self.add_warning(invoice, exc_type, message)
+
     def filter_invoices(self, invoices):
         validated_invoices = []
         failing_invoices = []
@@ -86,18 +98,19 @@ class ValidationResult(object):
         return self._failing_invoices
 
     def impl_add_critical(self, invoice, exc_type, message):
-        self._errors.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
+        self._errors.setdefault(invoice.doc_filename, []).append(self.Entry(invoice, exc_type, message))
         self._failing_invoices.add(invoice.doc_filename)
         self.logger.critical(message)
-        raise exc_type(message)
+        if self.can_raise:
+            raise exc_type(message)
 
     def impl_add_error(self, invoice, exc_type, message):
-        self._errors.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
+        self._errors.setdefault(invoice.doc_filename, []).append(self.Entry(invoice, exc_type, message))
         self._failing_invoices.add(invoice.doc_filename)
         self.logger.error(message)
 
     def impl_add_warning(self, invoice, exc_type, message):
-        self._warnings.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
+        self._warnings.setdefault(invoice.doc_filename, []).append(self.Entry(invoice, exc_type, message))
         self.logger.warning(message)
 
     def impl_ignore(self, invoice, exc_type, message):

@@ -527,7 +527,7 @@ KNTCRK01G01H663X 2014      5
             for doc_filename, errors in validation_result.errors().items():
                 self.assertEqual(doc_filename, self._invoice_004_peter_parker_wrong_number.doc_filename)
                 self.assertEqual(len(errors), 1)
-                exc_type, message = errors[0]
+                exc_type = errors[0].exc_type
                 self.assertIs(exc_type, InvoiceWrongNumberError)
     
     def test_InvoiceProgram_validate_error_duplicated_number(self):
@@ -548,7 +548,7 @@ KNTCRK01G01H663X 2014      5
             for doc_filename, errors in validation_result.errors().items():
                 self.assertEqual(doc_filename, self._invoice_004_peter_parker_duplicated_number.doc_filename)
                 self.assertEqual(len(errors), 1)
-                exc_type, message = errors[0]
+                exc_type = errors[0].exc_type
                 self.assertIs(exc_type, InvoiceDuplicatedNumberError)
         
     def _test_InvoiceProgram_undefined_field(self, warning_mode):
@@ -586,7 +586,7 @@ KNTCRK01G01H663X 2014      5
             for doc_filename, errors in validation_result.errors().items():
                 self.assertEqual(doc_filename, invoice_a.doc_filename)
                 self.assertEqual(len(errors), len(expected_errors))
-                exc_types = [error[0] for error in errors]
+                exc_types = [entry.exc_type for entry in errors]
                 for exc_type in exc_types:
                     self.assertIn(exc_type, expected_errors)
 
@@ -594,7 +594,7 @@ KNTCRK01G01H663X 2014      5
             for doc_filename, warnings in validation_result.warnings().items():
                 self.assertEqual(doc_filename, invoice_a.doc_filename)
                 self.assertEqual(len(warnings), len(expected_warnings))
-                exc_types = [warning[0] for warning in warnings]
+                exc_types = [entry.exc_type for entry in warnings]
                 for exc_type in exc_types:
                     self.assertIn(exc_type, expected_warnings)
            
