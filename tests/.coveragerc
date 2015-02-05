@@ -1,7 +1,5 @@
 [run]
 source = "invoice", "invoice.database"
-omit =
-    "*/easter_eggs/*"
 
 
 [report]
@@ -11,5 +9,3 @@ exclude_lines =
     raise AssertionError
     raise NotImplementedError
     if __name__ == .__main__.:
-omit =
-    "*/easter_eggs/*"

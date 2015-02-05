@@ -48,6 +48,7 @@ from .week import WeekManager
 from .database.db_types import Path
 from .table import Table
 from . import conf
+from .ee import snow
 
 
 class FileDateTimes(object):
@@ -822,9 +823,12 @@ anno                       {year}
 
     def impl_help(self, *, parser_dict, command):
         if not command in parser_dict:
-            if command == 'snow': # pragma: no cover
-                from .ee.snow import make_it_snow
-                make_it_snow()
+            if command == 'snow':
+                snow.set_flake_symbols()
+                snow.make_it_snow()
+            elif command == 'money_snow':
+                snow.set_currency_symbols()
+                snow.make_it_snow()
             else:
                 self.logger.error("non è disponibile alcun help per il comando sconosciuto {!r}")
         else:
