@@ -3,8 +3,6 @@
 ### From:
 ### https://gist.github.com/sontek/1508912
 
-# pragma: no cover
-
 import os
 import random
 import time

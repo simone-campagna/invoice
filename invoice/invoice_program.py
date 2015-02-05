@@ -824,7 +824,7 @@ anno                       {year}
         if not command in parser_dict:
             self.logger.error("non è disponibile alcun help per il comando sconosciuto {!r}")
             if command == 'snow': # pragma: no cover
-                from invoice.snow import make_it_snow
+                from .easter_eggs.snow import make_it_snow
                 make_it_snow()
         else:
             parser = parser_dict[command]
