@@ -88,14 +88,6 @@ VERSION = '{}.{}.{}'.format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 RC_DIR_VAR = 'INVOICE_RC_DIR'
 DB_FILE_VAR = 'INVOICE_DB_FILE'
 
-def field_name(f):
-    if not f in LIST_FIELD_NAMES_FULL:
-        if not field_name in Invoice.ALL_FIELDS:
-            raise ValueError("campo {!r} non valido".format(field_name))
-        field_names.append(field_name)
-    return field_names
-
-
 def setup():
     global RC_DIR_EXPR
     global DB_FILE_EXPR
