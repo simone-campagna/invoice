@@ -3,7 +3,7 @@ source = "invoice", "invoice.database"
 
 [report]
 omit =
-    "*/easter_eggs/*"
+    "*/snow*"
 
 exclude_lines =
     pragma: no cover
