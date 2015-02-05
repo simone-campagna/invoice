@@ -85,8 +85,7 @@ class InvoiceProgram(object):
         )
 
     def program_help(self, *, parser_dict, command):
-        parser = parser_dict[command]
-        parser.print_help(file=self.printer.stream)
+        self.impl_help(parser_dict=parser_dict, command=command)
         return 0
 
     def program_missing_subcommand(self, *, parser):
@@ -820,3 +819,14 @@ anno                       {year}
             reset=reset,
         )
         return 0
+
+    def impl_help(self, *, parser_dict, command):
+        if not command in parser_dict:
+            self.logger.error("non è disponibile alcun help per il comando sconosciuto {!r}")
+            if command == 'snow': # pragma: no cover
+                from invoice.snow import make_it_snow
+                make_it_snow()
+        else:
+            parser = parser_dict[command]
+            parser.print_help(file=self.printer.stream)
+

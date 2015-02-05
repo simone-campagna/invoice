@@ -831,6 +831,13 @@ KNTCRK01G01H663X Smallville         5  152.50
             args=["help", "scan"]
         )
 
+        p.reset()
+        invoice_main(
+            printer=p,
+            logger=self.logger,
+            args=["help", "unknown_command"]
+        )
+
     def test_invoice_main_missing_subcommand(self):
         p = StringPrinter()
 
