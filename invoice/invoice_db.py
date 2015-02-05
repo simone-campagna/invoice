@@ -24,13 +24,13 @@ import collections
 import datetime
 import sqlite3
 
-from .conf import VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH
+from . import conf
 from .error import InvoiceError
 from .invoice import Invoice
 from .invoice_collection import InvoiceCollection
 from .database.db import Db, DbError
 from .database.db_table import DbTable
-from .database.db_types import Str, Int, Float, Date, DateTime, Path, Bool
+from .database.db_types import Str, Int, Float, Date, DateTime, Path, Bool, StrTuple
 from .validation_result import ValidationResult
 
 class InvoiceDb(Db):
@@ -39,20 +39,23 @@ class InvoiceDb(Db):
         'Configuration',
         ('warning_mode', 'error_mode',
          'partial_update', 'remove_orphaned',
-         'header', 'total'))
+         'header', 'total',
+         'stats_group', 'list_field_names'))
     Version = collections.namedtuple('Version', ('major', 'minor', 'patch'))
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
     VERSION = Version(
-        major=VERSION_MAJOR,
-        minor= VERSION_MINOR,
-        patch= VERSION_PATCH)
+        major=conf.VERSION_MAJOR,
+        minor= conf.VERSION_MINOR,
+        patch= conf.VERSION_PATCH)
     DEFAULT_CONFIGURATION = Configuration(
         warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
         error_mode=ValidationResult.ERROR_MODE_DEFAULT,
         remove_orphaned=False,
         partial_update=True,
         header=True,
-        total=True)
+        total=True,
+        stats_group=conf.DEFAULT_STATS_GROUP,
+        list_field_names=conf.DEFAULT_LIST_FIELD_NAMES)
     
     TABLES = {
         'version': DbTable(
@@ -71,6 +74,8 @@ class InvoiceDb(Db):
                 ('partial_update', Bool()),
                 ('header', Bool()),
                 ('total', Bool()),
+                ('stats_group', Str()),
+                ('list_field_names', StrTuple()),
             ),
             dict_type=Configuration,
         ),

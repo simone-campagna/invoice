@@ -21,6 +21,20 @@ __all__ = [
     'VERSION_MINOR',
     'VERSION_PATCH',
     'VERSION',
+    'FIELD_NAMES',
+    'FIELD_TRANSLATION',
+    'REV_FIELD_TRANSLATION',
+    'ALL_FIELDS',
+    'LIST_FIELD_NAMES_SHORT',
+    'LIST_FIELD_NAMES_LONG',
+    'LIST_FIELD_NAMES_FULL',
+    'DEFAULT_LIST_FIELD_NAMES',
+    'STATS_GROUP_YEAR',
+    'STATS_GROUP_MONTH',
+    'STATS_GROUP_WEEK',
+    'STATS_GROUP_DAY',
+    'STATS_GROUPS',
+    'DEFAULT_STATS_GROUP',
     'RC_DIR_VAR',
     'DB_FILE_VAR',
     'RC_DIR_EXPR',
@@ -30,7 +44,40 @@ __all__ = [
     'setup',
 ]
 
+import collections
 import os
+
+
+FIELD_TRANSLATION = collections.OrderedDict((
+    ('doc_filename',	'documento'),
+    ('year', 		'anno'),
+    ('number',		'numero'),
+    ('name',		'nome'),
+    ('tax_code',	'codice_fiscale'),
+    ('city',		'città'),
+    ('date',		'data'),
+    ('income',		'importo'),
+    ('currency',	'valuta'),
+))
+
+FIELD_NAMES = tuple(FIELD_TRANSLATION.keys())
+REV_FIELD_TRANSLATION = dict(
+    (FIELD_TRANSLATION.get(field_name, field_name), field_name) for field_name in FIELD_NAMES
+)
+ALL_FIELDS = FIELD_NAMES + tuple(REV_FIELD_TRANSLATION.keys())
+
+LIST_FIELD_NAMES_SHORT = ('year', 'number', 'date', 'tax_code', 'income', 'currency')
+LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+LIST_FIELD_NAMES_FULL = FIELD_NAMES
+DEFAULT_LIST_FIELD_NAMES = LIST_FIELD_NAMES_LONG
+
+
+STATS_GROUP_YEAR = 'year'
+STATS_GROUP_MONTH = 'month'
+STATS_GROUP_WEEK = 'week'
+STATS_GROUP_DAY = 'day'
+STATS_GROUPS = (STATS_GROUP_YEAR, STATS_GROUP_MONTH, STATS_GROUP_WEEK, STATS_GROUP_DAY)
+DEFAULT_STATS_GROUP = STATS_GROUP_MONTH
 
 VERSION_MAJOR = 2
 VERSION_MINOR = 0
@@ -40,6 +87,13 @@ VERSION = '{}.{}.{}'.format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 
 RC_DIR_VAR = 'INVOICE_RC_DIR'
 DB_FILE_VAR = 'INVOICE_DB_FILE'
+
+def field_name(f):
+    if not f in LIST_FIELD_NAMES_FULL:
+        if not field_name in Invoice.ALL_FIELDS:
+            raise ValueError("campo {!r} non valido".format(field_name))
+        field_names.append(field_name)
+    return field_names
 
 
 def setup():

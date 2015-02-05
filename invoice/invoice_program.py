@@ -47,6 +47,7 @@ from .validation_result import ValidationResult
 from .week import WeekManager
 from .database.db_types import Path
 from .table import Table
+from . import conf
 
 
 class FileDateTimes(object):
@@ -62,16 +63,6 @@ class FileDateTimes(object):
         return self._date_times[filename]
 
 class InvoiceProgram(object):
-    LIST_FIELD_NAMES_SHORT = ('year', 'number', 'date', 'tax_code', 'income', 'currency')
-    LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
-    LIST_FIELD_NAMES_FULL = Invoice._fields
-
-    STATS_GROUP_YEAR = 'year'
-    STATS_GROUP_MONTH = 'month'
-    STATS_GROUP_WEEK = 'week'
-    STATS_GROUP_DAY = 'day'
-    STATS_GROUPS = (STATS_GROUP_YEAR, STATS_GROUP_MONTH, STATS_GROUP_WEEK, STATS_GROUP_DAY)
-
     def __init__(self, db_filename, logger, printer=print, trace=False):
         self.db_filename = db_filename
         self.logger = logger
@@ -113,6 +104,8 @@ class InvoiceProgram(object):
                                 remove_orphaned=False,
                                 header=True,
                                 total=True,
+                                list_field_names=None,
+                                stats_group=None,
                                 reset=False):
         self.impl_config(
             warning_mode=warning_mode,
@@ -121,6 +114,8 @@ class InvoiceProgram(object):
             remove_orphaned=remove_orphaned,
             header=header,
             total=total,
+            list_field_names=list_field_names,
+            stats_group=stats_group,
             reset=reset,
         )
         return 0
@@ -158,8 +153,8 @@ class InvoiceProgram(object):
         self.impl_validate(warning_mode=warning_mode, error_mode=error_mode)
         return 0
 
-    def program_list(self, *, field_names=None, header=None, filters=None, date_from=None, date_to=None):
-        self.impl_list(field_names=field_names, header=header, filters=filters, date_from=date_from, date_to=date_to)
+    def program_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None):
+        self.impl_list(list_field_names=list_field_names, header=header, filters=filters, date_from=date_from, date_to=date_to)
         return 0
 
     def program_dump(self, *, filters=None, date_from=None, date_to=None):
@@ -212,7 +207,11 @@ class InvoiceProgram(object):
                            remove_orphaned=False,
                            header=True,
                            total=True,
+                           stats_group=None,
+                           list_field_names=None,
                            reset=False):
+        if list_field_names is None:
+            lsit_field_names = conf.DEFAULT_LIST_FIELD_NAMES
         if reset and os.path.exists(self.db_filename):
             self.logger.info("cancellazione del db {!r}...".format(self.db_filename))
             os.remove(self.db_filename)
@@ -224,6 +223,8 @@ class InvoiceProgram(object):
             remove_orphaned=remove_orphaned,
             header=header,
             total=total,
+            list_field_names=list_field_names,
+            stats_group=stats_group,
         )
         configuration = self.db.store_configuration(configuration)
         #self.show_configuration(configuration)
@@ -244,10 +245,13 @@ class InvoiceProgram(object):
                              remove_orphaned=False,
                              header=True,
                              total=True,
+                             list_field_names=None,
+                             stats_group=None,
                              reset=False):
         self.db.check()
         if reset:
             self.db.clear('configuration')
+        list_field_names = self.db.get_config_option('list_field_names', list_field_names)
         configuration = self.db.Configuration(
             warning_mode=warning_mode,
             error_mode=error_mode,
@@ -255,6 +259,8 @@ class InvoiceProgram(object):
             remove_orphaned=remove_orphaned,
             header=header,
             total=total,
+            list_field_names=list_field_names,
+            stats_group=stats_group,
         )
         configuration = self.db.store_configuration(configuration)
         self.show_configuration(configuration)
@@ -298,14 +304,13 @@ class InvoiceProgram(object):
         self.validate_invoice_collection(validation_result, invoice_collection)
         return validation_result.num_errors()
 
-    def impl_list(self, *, field_names=None, header=None, filters=None, date_from=None, date_to=None):
+    def impl_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None):
         self.db.check()
-        if field_names is None:
-            field_names = Invoice._fields
+        list_field_names = self.db.get_config_option('list_field_names', list_field_names)
         if filters is None:
             filters = ()
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters, date_from=date_from, date_to=date_to)
-        self.list_invoice_collection(invoice_collection, header=header, field_names=field_names)
+        self.list_invoice_collection(invoice_collection, header=header, list_field_names=list_field_names)
 
     def impl_dump(self, *, filters=None, date_from=None, date_to=None):
         self.db.check()
@@ -344,16 +349,16 @@ class InvoiceProgram(object):
 
     def group_by(self, invoice_collection, stats_group):
         invoice_collection.sort()
-        if stats_group == self.STATS_GROUP_YEAR:
+        if stats_group == conf.STATS_GROUP_YEAR:
             group_function = lambda invoice: (invoice.year, )
             group_value_function = self._get_year_group_value
-        elif stats_group == self.STATS_GROUP_MONTH:
+        elif stats_group == conf.STATS_GROUP_MONTH:
             group_function = lambda invoice: (invoice.year, invoice.date.month)
             group_value_function = self._get_month_group_value
-        elif stats_group == self.STATS_GROUP_WEEK:
+        elif stats_group == conf.STATS_GROUP_WEEK:
             group_function = lambda invoice: (invoice.year, self.get_week_number(invoice.date))
             group_value_function = self._get_week_group_value
-        elif stats_group == self.STATS_GROUP_DAY:
+        elif stats_group == conf.STATS_GROUP_DAY:
             group_function = lambda invoice: (invoice.date, )
             group_value_function = self._get_day_group_value
         group_value = None
@@ -377,15 +382,15 @@ class InvoiceProgram(object):
             filters = ()
 
         if stats_group is None:
-            stats_group = self.STATS_GROUP_MONTH
+            stats_group = conf.STATS_GROUP_MONTH
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters, date_from=date_from, date_to=date_to)
         invoice_collection.sort()
         if invoice_collection:
             group_translation = {
-                self.STATS_GROUP_YEAR:	'anno',
-                self.STATS_GROUP_MONTH:	'mese',
-                self.STATS_GROUP_WEEK:	'settimana',
-                self.STATS_GROUP_DAY:	'giorno',
+                conf.STATS_GROUP_YEAR:	'anno',
+                conf.STATS_GROUP_MONTH:	'mese',
+                conf.STATS_GROUP_WEEK:	'settimana',
+                conf.STATS_GROUP_DAY:	'giorno',
                 'from':			'da:',
                 'to':			'a:',
             }
@@ -673,16 +678,16 @@ class InvoiceProgram(object):
             validation_result.num_warnings()))
         return validation_result
 
-    def list_invoice_collection(self, invoice_collection, field_names, header=None):
+    def list_invoice_collection(self, invoice_collection, list_field_names, header=None):
         header = self.db.get_config_option('header', header)
         invoice_collection.sort()
-        if field_names is None:
-            field_names = Invoice._fields
+        if list_field_names is None:
+            list_field_names = Invoice._fields
         if header:
-            header = [Invoice.get_field_translation(field_name) for field_name in field_names]
+            header = [Invoice.get_field_translation(field_name) for field_name in list_field_names]
         digits = 1 + int(math.log10(max(1, len(invoice_collection))))
         table = Table(
-            field_names=field_names,
+            field_names=list_field_names,
             header=header,
             convert={
                 'number': lambda n: "{n:0{digits}d}".format(n=n, digits=digits),
@@ -799,6 +804,8 @@ anno                       {year}
                               remove_orphaned=False,
                               header=True,
                               total=True,
+                              stats_group=None,
+                              list_field_names=None,
                               reset=False):
         self.impl_init(
             patterns=patterns,
@@ -808,6 +815,8 @@ anno                       {year}
             remove_orphaned=remove_orphaned,
             header=header,
             total=total,
+            list_field_names=list_field_names,
+            stats_group=stats_group,
             reset=reset,
         )
         return 0

@@ -31,31 +31,9 @@ from .error import InvoiceUndefinedFieldError, \
                    InvoiceSyntaxError
 
 from .validation_result import ValidationResult
+from . import conf
 
-InvoiceNamedTuple = collections.namedtuple('InvoiceNamedTuple', (
-    'doc_filename',
-    'year',
-    'number',
-    'name',
-    'tax_code',
-    'city',
-    'date',
-    'income',
-    'currency',
-))
-
-
-_FIELD_TRANSLATION = {
-    'doc_filename': 'documento',
-    'year':         'anno',
-    'number':       'numero',
-    'name':         'nome',
-    'tax_code':     'codice_fiscale',
-    'city':         'città',
-    'date':         'data',
-    'income':       'importo',
-    'currency':     'valuta',
-}
+InvoiceNamedTuple = collections.namedtuple('InvoiceNamedTuple', conf.FIELD_NAMES)
 
 _TAX_CODE_EVEN_ODD = {
     'A':	(0,	1),
@@ -94,23 +72,17 @@ _TAX_CODE_CONTROL_LETTER = {i: chr(i + ord('A')) for i in range(26)}
 
 
 class Invoice(InvoiceNamedTuple):
-    FIELD_TRANSLATION = _FIELD_TRANSLATION
-    REV_FIELD_TRANSLATION = dict(
-        (_FIELD_TRANSLATION.get(field_name, field_name), field_name) for field_name in InvoiceNamedTuple._fields
-    )
-    ALL_FIELDS = set(tuple(InvoiceNamedTuple._fields) + tuple(REV_FIELD_TRANSLATION.keys()))
-
     def _asdict(self):
         return collections.OrderedDict(((field, getattr(self, field)) for field in self._fields))
     __dict__ = property(_asdict)
 
     @classmethod
     def get_field_translation(cls, field_name):
-        return cls.FIELD_TRANSLATION.get(field_name, field_name)
+        return conf.FIELD_TRANSLATION.get(field_name, field_name)
 
     @classmethod
     def get_field_name_from_translation(cls, field_translation):
-        return cls.REV_FIELD_TRANSLATION.get(field_translation, field_translation)
+        return conf.REV_FIELD_TRANSLATION.get(field_translation, field_translation)
 
     @classmethod
     def compile_filter_function(cls, function_source):
@@ -120,7 +92,7 @@ class Invoice(InvoiceNamedTuple):
             raise InvoiceSyntaxError("funzione filtro {!r} non valida".format(function_source), "funzione filter non valida", function_source, err)
         def filter(invoice):
             d = invoice._asdict()
-            for field_name, name in cls.FIELD_TRANSLATION.items():
+            for field_name, name in conf.FIELD_TRANSLATION.items():
                 if field_name != name:
                     d[name] = d[field_name]
             locals().update(datetime=datetime, **d)

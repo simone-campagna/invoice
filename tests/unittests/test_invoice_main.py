@@ -126,6 +126,8 @@ configuration:
   + remove_orphaned      = False
   + header               = True
   + total                = True
+  + stats_group          = 'month'
+  + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
 """
     CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
 configuration:
@@ -135,6 +137,8 @@ configuration:
   + remove_orphaned      = False
   + header               = True
   + total                = True
+  + stats_group          = 'month'
+  + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
 """
     CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
 configuration:
@@ -144,6 +148,19 @@ configuration:
   + remove_orphaned      = False
   + header               = True
   + total                = True
+  + stats_group          = 'month'
+  + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+"""
+    CONFIG_SHOW_MIX = """\
+configuration:
+  + warning_mode         = 'log'
+  + error_mode           = 'log'
+  + partial_update       = True
+  + remove_orphaned      = False
+  + header               = True
+  + total                = True
+  + stats_group          = 'week'
+  + list_field_names     = ('tax_code', 'city', 'number', 'income')
 """
 
     PATTERNS_CLEAR = """\
@@ -520,6 +537,63 @@ KNTCRK01G01H663X 2014      5
                 args=['-d', db_filename.name, 'config', '--partial-update'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
+
+    def test_invoice_main_init_config_var(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc'), '-gweek', '-s'],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,importo'],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_MIX)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'scan'],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number'],
+            )
+            self.assertEqual(p.string(), """\
+codice_fiscale   anno numero
+WNYBRC01G01H663S 2014      1
+PRKPRT01G01H663M 2014      2
+BNNBRC01G01H663S 2014      3
+WNYBRC01G01H663S 2014      4
+KNTCRK01G01H663X 2014      5
+""")
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list'],
+            )
+            self.assertEqual(p.string(), """\
+codice_fiscale   città         numero importo
+WNYBRC01G01H663S Gotham City        1   51.00
+PRKPRT01G01H663M New York City      2   76.50
+BNNBRC01G01H663S Greenville         3  102.00
+WNYBRC01G01H663S Gotham City        4   51.00
+KNTCRK01G01H663X Smallville         5  152.50
+""")
 
     def test_invoice_main_config(self):
         with tempfile.NamedTemporaryFile() as db_filename:

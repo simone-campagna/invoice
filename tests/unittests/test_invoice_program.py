@@ -44,6 +44,7 @@ from invoice.database.db_types import Path
 from invoice.database.db import DbError
 from invoice.validation_result import ValidationResult
 from invoice.string_printer import StringPrinter
+from invoice import conf
 
 class TestInvoiceProgram(unittest.TestCase):
     DUMP_OUTPUT = """\
@@ -269,7 +270,7 @@ TOTALE                                  4        5  433.00  100.00%
 
             p.reset()
             invoice_program.impl_list(
-                field_names=('tax_code', 'year', 'number'),
+                list_field_names=('tax_code', 'year', 'number'),
                 header=True,
                 filters=(),
             )
@@ -293,7 +294,7 @@ KNTCRK01G01H663X 2014      5
 
             p.reset()
             invoice_program.impl_list(
-                field_names=None,
+                list_field_names=None,
                 header=False,
                 filters=(),
             )
@@ -784,49 +785,49 @@ KNTCRK01G01H663X 2014      5
 
     def test_InvoiceProgram_stats_YEAR(self):
         self._test_InvoiceProgram_stats(
-            stats_group=InvoiceProgram.STATS_GROUP_YEAR,
+            stats_group=conf.STATS_GROUP_YEAR,
             expected_output=self.STATS_OUTPUT_YEAR,
             total=False)
 
     def test_InvoiceProgram_stats_YEAR_total(self):
         self._test_InvoiceProgram_stats(
-            stats_group=InvoiceProgram.STATS_GROUP_YEAR,
+            stats_group=conf.STATS_GROUP_YEAR,
             expected_output=self.STATS_OUTPUT_YEAR_TOTAL,
             total=True)
 
     def test_InvoiceProgram_stats_MONTH(self):
         self._test_InvoiceProgram_stats(
-            stats_group=InvoiceProgram.STATS_GROUP_MONTH,
+            stats_group=conf.STATS_GROUP_MONTH,
             expected_output=self.STATS_OUTPUT_MONTH,
             total=False)
 
     def test_InvoiceProgram_stats_MONTH_total(self):
         self._test_InvoiceProgram_stats(
-            stats_group=InvoiceProgram.STATS_GROUP_MONTH,
+            stats_group=conf.STATS_GROUP_MONTH,
             expected_output=self.STATS_OUTPUT_MONTH_TOTAL,
             total=True)
 
     def test_InvoiceProgram_stats_WEEK(self):
         self._test_InvoiceProgram_stats(
-            stats_group=InvoiceProgram.STATS_GROUP_WEEK,
+            stats_group=conf.STATS_GROUP_WEEK,
             expected_output=self.STATS_OUTPUT_WEEK,
             total=False)
 
     def test_InvoiceProgram_stats_WEEK_total(self):
         self._test_InvoiceProgram_stats(
-            stats_group=InvoiceProgram.STATS_GROUP_WEEK,
+            stats_group=conf.STATS_GROUP_WEEK,
             expected_output=self.STATS_OUTPUT_WEEK_TOTAL,
             total=True)
 
     def test_InvoiceProgram_stats_DAY(self):
         self._test_InvoiceProgram_stats(
-            stats_group=InvoiceProgram.STATS_GROUP_DAY,
+            stats_group=conf.STATS_GROUP_DAY,
             expected_output=self.STATS_OUTPUT_DAY,
             total=False)
 
     def test_InvoiceProgram_stats_DAY_total(self):
         self._test_InvoiceProgram_stats(
-            stats_group=InvoiceProgram.STATS_GROUP_DAY,
+            stats_group=conf.STATS_GROUP_DAY,
             expected_output=self.STATS_OUTPUT_DAY_TOTAL,
             total=True)
 

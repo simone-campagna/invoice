@@ -29,13 +29,7 @@ import traceback
 
 from .database.filecopy import tempcopy, nocopy
 from .error import InvoiceSyntaxError
-from .conf import VERSION, \
-                  DB_FILE_VAR, \
-                  DB_FILE_EXPR, \
-                  DB_FILE, \
-                  RC_DIR_VAR, \
-                  RC_DIR_EXPR, \
-                  RC_DIR
+from . import conf
 from .log import get_default_logger, set_verbose_level
 from .invoice import Invoice
 from .validation_result import ValidationResult
@@ -49,37 +43,14 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     if logger is None:
         logger = get_default_logger()
 
-    all_field_names = []
-    for field_name in Invoice._fields:
-        all_field_names.append(field_name)
-        n = Invoice.get_field_translation(field_name)
-        if n != field_name:
-            all_field_names.append(n)
-
-    top_level_parser_name = 'main'
-    default_validate = True
-    default_list_field_names = InvoiceProgram.LIST_FIELD_NAMES_LONG
-    default_filters = []
-    default_stats_group = InvoiceProgram.STATS_GROUP_MONTH
-    default_dry_run = False
-
-    # configuration
-    default_warning_mode = None
-    default_error_mode = None
-    default_partial_update = None
-    default_remove_orphaned = None
-    default_header = None
-    default_total = None
-    default_trace = None
-
     def type_fields(s):
         field_names = []
         for field_name in s.split(','):
             field_name = field_name.strip()
-            if not field_name in Invoice.ALL_FIELDS:
+            if not field_name in conf.ALL_FIELDS:
                 raise ValueError("campo {!r} non valido".format(field_name))
             field_names.append(field_name)
-        return field_names
+        return tuple(Invoice.get_field_name_from_translation(field_name) for field_name in field_names)
 
     def type_years_filter(s):
         years = tuple(int(y.strip()) for y in s.split(','))
@@ -114,6 +85,29 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     def type_pattern(s):
         return InvoiceDb.make_pattern(s)
 
+    all_field_names = []
+    for field_name in Invoice._fields:
+        all_field_names.append(field_name)
+        n = Invoice.get_field_translation(field_name)
+        if n != field_name:
+            all_field_names.append(n)
+
+    top_level_parser_name = 'main'
+    default_validate = True
+    default_filters = []
+    default_dry_run = False
+    default_trace = type_onoff(os.environ.get("INVOICE_TRACE", "off"))
+
+    # configuration
+    default_warning_mode = None
+    default_error_mode = None
+    default_partial_update = None
+    default_remove_orphaned = None
+    default_header = None
+    default_total = None
+    default_stats_group = None
+    default_list_field_names = None
+
     common_parser = argparse.ArgumentParser(
         add_help=False,
     )
@@ -125,7 +119,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     common_parser.add_argument("--db", "-d",
         metavar="F",
         dest="db_filename",
-        default=DB_FILE,
+        default=conf.DB_FILE,
         help="file contenente il database")
 
     common_parser.add_argument("--verbose", "-v",
@@ -144,7 +138,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
 
     common_parser.add_argument('--version',
         action='version',
-        version='%(prog)s {}'.format(VERSION),
+        version='%(prog)s {}'.format(conf.VERSION),
         help='mostra la versione ed esce')
 
     common_parser.add_argument("--trace", "-t",
@@ -213,11 +207,11 @@ fattura:                   '/home/simone/Programs/Programming/invoice/example/20
   importo:                 51.00 [euro]
 ...
 
-""".format(db_file_var=DB_FILE_VAR,
-           db_file_expr=DB_FILE_EXPR,
-           rc_dir_var=RC_DIR_VAR,
-           rc_dir_expr=RC_DIR_EXPR,
-           version=VERSION),
+""".format(db_file_var=conf.DB_FILE_VAR,
+           db_file_expr=conf.DB_FILE_EXPR,
+           rc_dir_var=conf.RC_DIR_VAR,
+           rc_dir_expr=conf.RC_DIR_EXPR,
+           version=conf.VERSION),
         epilog="",
         parents=(common_parser, ),
         add_help=False,
@@ -294,7 +288,8 @@ per una spiegazione di questi valori
         function_arguments=('patterns', 'reset',
                             'warning_mode', 'error_mode',
                             'remove_orphaned', 'partial_update',
-                            'header', 'total'),
+                            'header', 'total',
+                            'list_field_names', 'stats_group'),
     )
 
     ### version ###
@@ -340,6 +335,9 @@ supportati sono:
    completamente implementata)
  * header[={hd}]: mostra un header per i comandi 'list' e 'stats'
  * total[={tt}]: mostra la riga del TOTALE per il comando 'stats'
+ * stats_group[={sg}]: raggruppamento preferito per il comando 'stats'
+ * list_field_names[={fn}]:
+   lista predefinita dei campi per il comando 'list'
 """.format(
             wm=InvoiceDb.DEFAULT_CONFIGURATION.warning_mode,
             em=InvoiceDb.DEFAULT_CONFIGURATION.error_mode,
@@ -347,6 +345,8 @@ supportati sono:
             ro=InvoiceDb.DEFAULT_CONFIGURATION.remove_orphaned,
             hd=InvoiceDb.DEFAULT_CONFIGURATION.header,
             tt=InvoiceDb.DEFAULT_CONFIGURATION.total,
+            sg=InvoiceDb.DEFAULT_CONFIGURATION.stats_group,
+            fn=','.join(InvoiceDb.DEFAULT_CONFIGURATION.list_field_names),
         ),
     )
     config_parser.set_defaults(
@@ -354,7 +354,8 @@ supportati sono:
         function_arguments=('reset',
                             'warning_mode', 'error_mode',
                             'remove_orphaned', 'partial_update',
-                            'header', 'total'),
+                            'header', 'total',
+                            'list_field_names', 'stats_group'),
     )
 
     ### patterns ###
@@ -451,7 +452,7 @@ Mostra una lista delle fatture contenute nel database.
     )
     list_parser.set_defaults(
         function_name="program_list",
-        function_arguments=('filters', 'date_from', 'date_to', 'field_names', 'header'),
+        function_arguments=('filters', 'date_from', 'date_to', 'list_field_names', 'header'),
     )
 
     ### dump_parser ###
@@ -564,33 +565,34 @@ e validati.
             nargs='?',
             help="abilita/disabilita l'header")
 
-    list_argument_group = list_parser.add_mutually_exclusive_group()
-    list_argument_group.add_argument("--short", "-s",
-        dest="field_names",
-        action="store_const",
-        const=InvoiceProgram.LIST_FIELD_NAMES_SHORT,
-        default=default_list_field_names,
-        help="lista breve (mostra i campi {}".format(','.join(InvoiceProgram.LIST_FIELD_NAMES_SHORT)))
-
-    list_argument_group.add_argument("--long", "-l",
-        dest="field_names",
-        action="store_const",
-        const=InvoiceProgram.LIST_FIELD_NAMES_LONG,
-        default=default_list_field_names,
-        help="lista lunga (mostra i campi {}".format(','.join(InvoiceProgram.LIST_FIELD_NAMES_LONG)))
-
-    list_argument_group.add_argument("--full", "-f",
-        dest="field_names",
-        action="store_const",
-        const=InvoiceProgram.LIST_FIELD_NAMES_FULL,
-        default=default_list_field_names,
-        help="lista lunga (mostra i tutti i campi: {}".format(','.join(InvoiceProgram.LIST_FIELD_NAMES_FULL)))
-
-    list_argument_group.add_argument("--fields", "-o",
-        dest="field_names",
-        type=type_fields,
-        default=default_list_field_names,
-        help="selezione manuale dei campi, ad esempio 'anno,codice_fiscale,città' [{}]".format('|'.join(all_field_names)))
+    for parser in init_parser, config_parser, list_parser:
+        list_argument_group = parser.add_mutually_exclusive_group()
+        list_argument_group.add_argument("--short", "-s",
+            dest="list_field_names",
+            action="store_const",
+            const=conf.LIST_FIELD_NAMES_SHORT,
+            default=default_list_field_names,
+            help="lista breve (mostra i campi {}".format(','.join(conf.LIST_FIELD_NAMES_SHORT)))
+    
+        list_argument_group.add_argument("--long", "-l",
+            dest="list_field_names",
+            action="store_const",
+            const=conf.LIST_FIELD_NAMES_LONG,
+            default=default_list_field_names,
+            help="lista lunga (mostra i campi {}".format(','.join(conf.LIST_FIELD_NAMES_LONG)))
+    
+        list_argument_group.add_argument("--full", "-f",
+            dest="list_field_names",
+            action="store_const",
+            const=conf.LIST_FIELD_NAMES_FULL,
+            default=default_list_field_names,
+            help="lista lunga (mostra i tutti i campi: {}".format(','.join(conf.LIST_FIELD_NAMES_FULL)))
+    
+        list_argument_group.add_argument("--fields", "-o",
+            dest="list_field_names",
+            type=type_fields,
+            default=default_list_field_names,
+            help="selezione manuale dei campi, ad esempio 'anno,codice_fiscale,città' [{}]".format('|'.join(all_field_names)))
 
     ### year filter option
     for parser in list_parser, dump_parser, legacy_parser, report_parser, stats_parser:
@@ -627,11 +629,12 @@ e validati.
             default=default_filters,
             help="aggiunge un filtro generico sulle fatture (ad esempio 'anno == 2014')")
 
-    stats_parser.add_argument("--group", "-g",
-        dest="stats_group",
-        choices=InvoiceProgram.STATS_GROUPS,
-        default=default_stats_group,
-        help="raggruppa le fatture per anno/mese/settimana/giorno/tutto il periodo")
+    for parser in init_parser, config_parser, stats_parser:
+        parser.add_argument("--group", "-g",
+            dest="stats_group",
+            choices=conf.STATS_GROUPS,
+            default=default_stats_group,
+            help="raggruppa le fatture per anno/mese/settimana/giorno/tutto il periodo")
 
     for parser in init_parser, config_parser, stats_parser:
         parser.add_argument("--total", "-T",
