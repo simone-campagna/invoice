@@ -1,5 +1,6 @@
 [run]
 source = "invoice", "invoice.database"
+omit = "*/snow*"
 
 
 [report]
