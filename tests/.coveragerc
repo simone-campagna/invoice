@@ -1,10 +1,10 @@
 [run]
 source = "invoice", "invoice.database"
+omit =
+    "*/easter_eggs/*"
+
 
 [report]
-omit =
-    "*/snow*"
-
 exclude_lines =
     pragma: no cover
     def __repr__
