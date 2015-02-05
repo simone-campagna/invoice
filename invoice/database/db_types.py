@@ -25,6 +25,21 @@ __all__ = [
     'DateTime',
     'Path',
     'Bool',
+    'BaseSequence',
+    'StrList',
+    'IntList',
+    'FloatList',
+    'BoolList',
+    'PathList',
+    'DateList',
+    'DateTimeList',
+    'StrTuple',
+    'IntTuple',
+    'FloatTuple',
+    'BoolTuple',
+    'PathTuple',
+    'DateTuple',
+    'DateTimeTuple',
 ]
 
 import datetime
@@ -120,17 +135,92 @@ class Bool(BaseType):
     PY_TYPE = bool
 
     @classmethod
+    def fromstr(cls, value):
+        if value == "True":
+            return True
+        elif value == "False":
+            return False
+        else:
+            raise ValueError("{}: valore {!r} non valido (i valori leciti sono True|False)".format(cls.__name__, value, type(value).__name__))
+    @classmethod
     def impl_db_from(cls, i):
-        return bool(i)
+        if isinstance(i, str):
+            return cls.fromstr(i)
+        else:
+            return bool(i)
 
     @classmethod
     def impl_db_to(cls, value):
         if isinstance(value, str):
-            if value == "True":
-                return True
-            elif value == "False":
-                return False
-            else:
-                raise ValueError("{}: valore {!r} non valido (i valori leciti sono True|False)".format(cls.__name__, value, type(value).__name__))
+            return cls.fromstr(value)
         else:
             return bool(value)
+
+class BaseSequence(BaseType):
+    SEPARATOR = ','
+    SCALAR_TYPE = BaseType
+    SEQUENCE_TYPE = list
+
+    @classmethod
+    def impl_db_from(cls, s):
+        return cls.SEQUENCE_TYPE(cls.SCALAR_TYPE.impl_db_from(v.strip()) for v in s.split(cls.SEPARATOR))
+
+    @classmethod
+    def impl_db_to(cls, l):
+        return cls.SEPARATOR.join(str(cls.SCALAR_TYPE.impl_db_to(e)) for e in l)
+
+class StrList(BaseSequence):
+    SCALAR_TYPE = Str
+    SEQUENCE_TYPE = list
+
+class IntList(BaseSequence):
+    SCALAR_TYPE = Int
+    SEQUENCE_TYPE = list
+
+class FloatList(BaseSequence):
+    SCALAR_TYPE = Float
+    SEQUENCE_TYPE = list
+
+class BoolList(BaseSequence):
+    SCALAR_TYPE = Bool
+    SEQUENCE_TYPE = list
+
+class PathList(BaseSequence):
+    SCALAR_TYPE = Path
+    SEQUENCE_TYPE = list
+
+class DateList(BaseSequence):
+    SCALAR_TYPE = Date
+    SEQUENCE_TYPE = list
+
+class DateTimeList(BaseSequence):
+    SCALAR_TYPE = DateTime
+    SEQUENCE_TYPE = list
+
+class StrTuple(BaseSequence):
+    SCALAR_TYPE = Str
+    SEQUENCE_TYPE = tuple
+
+class IntTuple(BaseSequence):
+    SCALAR_TYPE = Int
+    SEQUENCE_TYPE = tuple
+
+class FloatTuple(BaseSequence):
+    SCALAR_TYPE = Float
+    SEQUENCE_TYPE = tuple
+
+class BoolTuple(BaseSequence):
+    SCALAR_TYPE = Bool
+    SEQUENCE_TYPE = tuple
+
+class PathTuple(BaseSequence):
+    SCALAR_TYPE = Path
+    SEQUENCE_TYPE = tuple
+
+class DateTuple(BaseSequence):
+    SCALAR_TYPE = Date
+    SEQUENCE_TYPE = tuple
+
+class DateTimeTuple(BaseSequence):
+    SCALAR_TYPE = DateTime
+    SEQUENCE_TYPE = tuple
