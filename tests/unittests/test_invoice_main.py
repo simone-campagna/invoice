@@ -862,7 +862,7 @@ KNTCRK01G01H663X Smallville         5  152.50
         invoice_main(
             printer=p,
             logger=self.logger,
-            args=["help", "money_snow"]
+            args=["help", "money"]
         )
 
     def test_invoice_main_missing_subcommand(self):

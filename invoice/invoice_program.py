@@ -826,7 +826,7 @@ anno                       {year}
             if command == 'snow':
                 snow.set_flake_symbols()
                 snow.make_it_snow()
-            elif command == 'money_snow':
+            elif command == 'money':
                 snow.set_currency_symbols()
                 snow.make_it_snow()
             else:
