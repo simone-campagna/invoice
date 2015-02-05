@@ -32,4 +32,5 @@ branches:
   only:
     - master
     - devel
+    - multithreading
     - 
