@@ -2,9 +2,6 @@
 source = "invoice", "invoice.database"
 
 [report]
-
-
-[report]
 omit =
     "*/easter_eggs/*"
 
