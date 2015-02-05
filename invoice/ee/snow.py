@@ -94,7 +94,7 @@ def clear_screen(numlines=100):
     elif os.name in ("nt", "dos", "ce"): # pragma: no cover
         # DOS/Windows
         os.system('cls')
-    else:
+    else: # pragma: no cover
         # Fallback for other operating systems.
         _PRINTER('\n' * rows)
  
@@ -110,13 +110,13 @@ def get_random_flake():
             flake = cmd(random.choice(_SYMBOLS))
  
             return flake
-        except:
+        except: # pragma: no cover
             pass
  
     return " *"
  
 def move_flake(col):
-    if snowflakes[col][0]+1 == rows:
+    if snowflakes[col][0]+1 == rows: # pragma: no cover
         snowflakes[col] = [1, get_random_flake()]
     else:
         _PRINTER("\033[%s;%sH  " % (snowflakes[col][0], col))
@@ -152,7 +152,7 @@ def make_it_snow():
                 move_flake(flake)
      
             time.sleep(_DELAY)
-    except KeyboardInterrupt:
+    except KeyboardInterrupt: # pragma: no cover
         pass
     finally:
         clear_screen()
