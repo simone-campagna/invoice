@@ -31,7 +31,7 @@ from .log import get_default_logger
 
 class InvoiceReader(object):
     RE_YEAR_AND_NUMBER = re.compile("^[Ff]attura\s+n.\s+(?P<year>\d+)/(?P<number>\d+)\s*$")
-    RE_NAME = re.compile("^\s*[Ss]pett\.(?:\s*[Ss]ig\.?)?\s*(?P<name>[\w\s'\.]+)\s*$")
+    RE_NAME = re.compile("^\s*[Ss]pett\.\s*(?:[Ss]ig\.?|[Dd]ott\.?)?\s*(?P<name>[\w\s'\.]+)\s*$")
     RE_TAX_CODE = re.compile("^.*[^\w]?(?P<tax_code>[A-Z]{6,6}\d{2,2}[A-Z]\d{2,2}[A-Z]\d{3,3}[A-Z])\s*$")
     RE_MALFORMED_TAX_CODE = re.compile("^.*[^\w](?P<tax_code>[A-Za-z0]{6,6}[\dO]{2,2}[A-Za-z0][\dO]{2,2}[A-Za-z0][\dO]{3,3}[A-Za-z0])\s*$")
     RE_CITY_AND_DATE = re.compile("^\s*(?P<city>[^,]+)(?:,|\s)\s*(?P<date>\d{1,2}/\d{1,2}/\d\d\d\d)\s*$")
