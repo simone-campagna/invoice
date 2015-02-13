@@ -28,39 +28,21 @@ import subprocess
 from .error import InvoiceDuplicatedLineError
 from .invoice import Invoice
 from .log import get_default_logger
-from .scanner import Scanner, ScanLine
+from .scanner import Scanner, load_scanner
+from . import conf
 
+SCANNER = None
+SCANNER_CONFIG_FILE = None
+def get_scanner():
+    global SCANNER
+    global SCANNER_CONFIG_FILE
+    scanner_config_file = conf.get_scanner_config_file()
+    if SCANNER is None or SCANNER_CONFIG_FILE != scanner_config_file:
+        SCANNER = load_scanner(scanner_config_file)
+        SCANNER_CONFIG_FILE = scanner_config_file
+    return SCANNER
 
 class InvoiceReader(object):
-    RE_YEAR_AND_NUMBER = "^[Ff]attura\s+n.\s+(?P<year>\d+)/(?P<number>\d+)\s*$"
-    RE_NAME = "^\s*[Ss]pett\.\s*(?:[Ss]ig\.?|[Dd]ott\.?)?\s*(?P<name>[\w\s'\.]+)\s*$"
-    RE_TAX_CODE = "^.*[^\w]?(?P<tax_code>[A-Z]{6,6}\d{2,2}[A-Z]\d{2,2}[A-Z]\d{3,3}[A-Z])\s*$"
-    RE_MALFORMED_TAX_CODE = "^.*[^\w](?P<tax_code>[A-Za-z0]{6,6}[\dO]{2,2}[A-Za-z0][\dO]{2,2}[A-Za-z0][\dO]{3,3}[A-Za-z0])\s*$"
-    RE_CITY_AND_DATE = "^\s*(?P<city>[^,]+)(?:,|\s)\s*(?P<date>\d{1,2}/\d{1,2}/\d\d\d\d)\s*$"
-    RE_INCOME_AND_CURRENCY = "Totale\s+fattura\s+(?P<income>[\d,\.]*)\s+(?P<currency>\w+)\s*$"
-    SCANNER = Scanner((
-        ScanLine(tag='year_and_number', regexpr=RE_YEAR_AND_NUMBER),
-        ScanLine(tag='name', regexpr=RE_NAME),
-        ScanLine(tag='tax_code', regexpr=RE_TAX_CODE),
-        ScanLine(tag='malformed_tax_code', regexpr=RE_MALFORMED_TAX_CODE, priority=-1),
-        ScanLine(tag='city_and_date', regexpr=RE_CITY_AND_DATE),
-        ScanLine(tag='income_and_currency', regexpr=RE_INCOME_AND_CURRENCY),
-    ))
-
-    CRE_YEAR_AND_NUMBER = re.compile(RE_YEAR_AND_NUMBER)
-    CRE_NAME = re.compile(RE_NAME)
-    CRE_TAX_CODE = re.compile(RE_TAX_CODE)
-    CRE_MALFORMED_TAX_CODE = re.compile(RE_MALFORMED_TAX_CODE)
-    CRE_CITY_AND_DATE = re.compile(RE_CITY_AND_DATE)
-    CRE_INCOME_AND_CURRENCY = re.compile(RE_INCOME_AND_CURRENCY)
-    CRE_DICT = collections.OrderedDict((
-        ('year_and_number',	(None,		CRE_YEAR_AND_NUMBER)),
-        ('name',		(None,		CRE_NAME)),
-        ('tax_code',		(None,		CRE_TAX_CODE)),
-        ('malformed_tax_code',	('tax_code',	CRE_MALFORMED_TAX_CODE)),
-        ('city_and_date',	(None,		CRE_CITY_AND_DATE)),
-        ('income_and_currency',	(None,		CRE_INCOME_AND_CURRENCY)),
-    ))
     DATE_FORMATS = (
         "%d/%m/%Y",
     )
@@ -82,7 +64,8 @@ class InvoiceReader(object):
             'income': self.convert_income,
             'currency': str,
         }
-        lines_dict, values_dict = self.SCANNER.scan(self.read_text(doc_filename))
+        scanner = get_scanner()
+        lines_dict, values_dict = scanner.scan(self.read_text(doc_filename))
         postponed_errors = []
         for label, lines in lines_dict.items():
             if len(lines) > 1:

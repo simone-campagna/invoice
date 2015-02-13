@@ -18,10 +18,14 @@
 __author__ = "Simone Campagna"
 __all__ = [
     'Scanner',
+    'load_scanner',
 ]
 
 import collections
+import configparser
+import os
 import re
+from .files import create_file_dir
 
 class ScanLine(object):
     def __init__(self, tag, regexpr, label=None, priority=0):
@@ -88,3 +92,55 @@ class Scanner(object):
                         values_dict.update(scan_line_dict)
                         lines_tag_prio[scan_line.tag] = scan_line.priority
         return lines_dict, values_dict
+
+_DEFAULT_SCANNER_CONFIG = """\
+[DEFAULT]
+priority = 0
+label =
+
+[anno e numero]
+regexpr = ^[Ff]attura\s+n.\s+(?P<year>\d+)/(?P<number>\d+)\s*$
+
+[nome]
+regexpr = ^\s*[Ss]pett\.\s*(?:[Ss]ig\.?|[Dd]ott\.?)?\s*(?P<name>[\w\s'\.]+)\s*$
+
+[codice fiscale]
+regexpr = ^.*[^\w]?(?P<tax_code>[A-Z]{6,6}\d{2,2}[A-Z]\d{2,2}[A-Z]\d{3,3}[A-Z])\s*$
+
+[codice fiscale sbagliato]
+regexpr = ^.*[^\w](?P<tax_code>[A-Za-z0]{6,6}[\dO]{2,2}[A-Za-z0][\dO]{2,2}[A-Za-z0][\dO]{3,3}[A-Za-z0])\s*$
+priority = -1
+label = codice fiscale
+
+[città e data]
+regexpr = ^\s*(?P<city>[^,]+)(?:,|\s)\s*(?P<date>\d{1,2}/\d{1,2}/\d\d\d\d)\s*$
+
+[importo e valuta]
+regexpr = Totale\s+fattura\s+(?P<income>[\d,\.]*)\s+(?P<currency>\w+)\s*$
+"""
+
+def load_scanner(scanner_config_filename):
+    if not os.path.exists(scanner_config_filename):
+        create_file_dir(scanner_config_filename)
+        with open(scanner_config_filename, "w") as f_out:
+            f_out.write(_DEFAULT_SCANNER_CONFIG)
+
+    config = configparser.ConfigParser()
+    config.read(scanner_config_filename)
+    scanner = Scanner()
+    for section_name in config.sections():
+        section = config[section_name]
+        tag = section_name
+        label = section['label']
+        regexpr = section['regexpr']
+        priority = section['priority']
+        if not label:
+            label = tag
+        scanner.add(ScanLine(
+            tag=tag,
+            label=label,
+            regexpr=regexpr,
+            priority=priority,
+        ))
+    return scanner
+

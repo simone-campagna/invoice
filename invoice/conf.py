@@ -41,7 +41,11 @@ __all__ = [
     'DB_FILE_EXPR',
     'RC_DIR',
     'DB_FILE',
+    'SCANNER_CONFIG_FILE',
     'setup',
+    'get_rc_dir',
+    'get_db_file',
+    'get_scanner_config_file',
 ]
 
 import collections
@@ -88,6 +92,8 @@ VERSION = '{}.{}.{}'.format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 RC_DIR_VAR = 'INVOICE_RC_DIR'
 DB_FILE_VAR = 'INVOICE_DB_FILE'
 
+SCANNER_CONFIG_FILE = ""
+
 def setup(rc_dir=None, db_file=None):
     def expand(p):
         return os.path.expandvars(os.path.expanduser(p))
@@ -95,6 +101,7 @@ def setup(rc_dir=None, db_file=None):
     global DB_FILE_EXPR
     global RC_DIR
     global DB_FILE
+    global SCANNER_CONFIG_FILE
     if rc_dir is None:
         rc_dir = os.path.join('~', '.invoice')
     RC_DIR_EXPR = os.environ.get(RC_DIR_VAR, rc_dir)
@@ -111,11 +118,16 @@ def setup(rc_dir=None, db_file=None):
     if not os.path.isabs(DB_FILE):
         DB_FILE = os.path.join(RC_DIR, DB_FILE)
 
+    SCANNER_CONFIG_FILE = os.path.join(RC_DIR, "scanner.config")
+
 def get_rc_dir():
     return RC_DIR
 
 def get_db_file():
     return DB_FILE
+
+def get_scanner_config_file():
+    return SCANNER_CONFIG_FILE
 
 setup()
 

@@ -43,6 +43,7 @@ class TestConf(unittest.TestCase):
             self.assertEqual(conf.DB_FILE, db_file)
         finally:
             self._update_env_dict(os.environ, saved_env_dict)
+            conf.setup()
  
 
     def test_env_0(self):
