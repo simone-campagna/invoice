@@ -225,6 +225,18 @@ TOTALE                                  2        2  153.00  100.00%
 """
     STATS_DAY_DEFAULT = STATS_DAY_TOTAL
 
+    STATS_CLIENT_NO_TOTAL = """\
+codice_fiscale          da:         a: nome                #fatture incasso %incasso
+BNNBRC01G01H663S 2014-01-22 2014-01-22 Robert Bruce Banner        1  102.00   66.67%
+WNYBRC01G01H663S 2014-01-25 2014-01-25 Bruce Wayne                1   51.00   33.33%
+"""
+
+    STATS_CLIENT_TOTAL = STATS_CLIENT_NO_TOTAL + """\
+TOTALE                                 --                         2  153.00  100.00%
+"""
+
+    STATS_CLIENT_DEFAULT = STATS_CLIENT_TOTAL
+
     STATS_NONE_DEFAULT = STATS_MONTH_DEFAULT
     STATS_NONE_TOTAL = STATS_MONTH_TOTAL
     STATS_NONE_NO_TOTAL = STATS_MONTH_NO_TOTAL
@@ -956,6 +968,15 @@ KNTCRK01G01H663X Smallville         5  152.50
 
     def test_invoice_main_stats_day_total(self):
         return self._test_invoice_main_stats('day', True, self.STATS_DAY_TOTAL)
+
+    def test_invoice_main_stats_client(self):
+        return self._test_invoice_main_stats('client', None, self.STATS_CLIENT_DEFAULT)
+
+    def test_invoice_main_stats_client_no_total(self):
+        return self._test_invoice_main_stats('client', False, self.STATS_CLIENT_NO_TOTAL)
+
+    def test_invoice_main_stats_client_total(self):
+        return self._test_invoice_main_stats('client', True, self.STATS_CLIENT_TOTAL)
 
     def test_invoice_main_stats_none(self):
         return self._test_invoice_main_stats(None, None, self.STATS_NONE_DEFAULT)

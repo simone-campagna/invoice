@@ -324,31 +324,37 @@ class InvoiceProgram(object):
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters)
         self.report_invoice_collection(invoice_collection)
 
-    def _get_year_group_value(self, year):
+    def _get_year_group_value(self, invoices, year):
         return (year,
                 datetime.date(year, 1, 1),
                 datetime.date(year, 12, 31))
 
-    def _get_month_group_value(self, year, month):
+    def _get_month_group_value(self, invoices, year, month):
         date_from = datetime.date(year, month, 1)
         date_to = datetime.date(year, month, calendar.monthrange(year, month)[1])
         return (date_from.strftime("%Y-%m"),
                 date_from,
                 date_to)
 
-    def _get_week_group_value(self, year, week_number):
+    def _get_week_group_value(self, invoices, year, week_number):
         date_from, date_to = self.get_week_range(year, week_number)
         return ("{:4d}:{:02d}".format(year, week_number),
                 date_from,
                 date_to)
 
-    def _get_day_group_value(self, date):
+    def _get_day_group_value(self, invoices, date):
         return (date,
                 date,
                 date)
 
+    def _get_client_group_value(self, invoices, tax_code):
+        return (tax_code,
+                invoices[0].date,
+                invoices[-1].date)
+
     def group_by(self, invoice_collection, stats_group):
         invoice_collection.sort()
+        invoices = invoice_collection
         if stats_group == conf.STATS_GROUP_YEAR:
             group_function = lambda invoice: (invoice.year, )
             group_value_function = self._get_year_group_value
@@ -361,19 +367,23 @@ class InvoiceProgram(object):
         elif stats_group == conf.STATS_GROUP_DAY:
             group_function = lambda invoice: (invoice.date, )
             group_value_function = self._get_day_group_value
+        elif stats_group == conf.STATS_GROUP_CLIENT:
+            invoices = sorted(invoice_collection, key=lambda invoice: invoice.tax_code)
+            group_function = lambda invoice: (invoice.tax_code, )
+            group_value_function = self._get_client_group_value
         group_value = None
         group = []
-        for invoice in invoice_collection:
+        for invoice in invoices:
             value = group_function(invoice)
             if group_value is None:
                 group_value = value
             if value != group_value:
-                yield group_value_function(*group_value), tuple(group)
+                yield group_value_function(group, *group_value), tuple(group)
                 del group[:]
                 group_value = value
             group.append(invoice)
         if group:
-            yield group_value_function(*group_value), group
+            yield group_value_function(group, *group_value), group
    
     def impl_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None):
         total = self.db.get_config_option('total', total)
@@ -387,12 +397,13 @@ class InvoiceProgram(object):
         invoice_collection.sort()
         if invoice_collection:
             group_translation = {
-                conf.STATS_GROUP_YEAR:	'anno',
-                conf.STATS_GROUP_MONTH:	'mese',
-                conf.STATS_GROUP_WEEK:	'settimana',
-                conf.STATS_GROUP_DAY:	'giorno',
-                'from':			'da:',
-                'to':			'a:',
+                conf.STATS_GROUP_YEAR:		'anno',
+                conf.STATS_GROUP_MONTH:		'mese',
+                conf.STATS_GROUP_WEEK:		'settimana',
+                conf.STATS_GROUP_DAY:		'giorno',
+                conf.STATS_GROUP_CLIENT:	Invoice.get_field_translation('tax_code'),
+                'from':				'da:',
+                'to':				'a:',
             }
             convert = {
                 'group_income': lambda income: '{:.2f}'.format(income),
@@ -406,8 +417,23 @@ class InvoiceProgram(object):
                 'from': '>',
                 'to': '>',
             }
-            field_names = ('client_count', 'invoice_count', 'group_income', 'group_income_percentage')
-            header = ('#clienti', '#fatture', 'incasso', '%incasso')
+            if stats_group == conf.STATS_GROUP_CLIENT:
+                cc_field_name = 'name'
+                cc_header = Invoice.get_field_translation(cc_field_name)
+                cc_total = '--'
+            else:
+                cc_field_name = 'client_count'
+                cc_header = '#clienti'
+                cc_total = 0
+            header_d = {
+                cc_field_name: cc_header,
+                'invoice_count': '#fatture',
+                'group_income': 'incasso',
+                'group_income_percentage': '%incasso',
+            }
+            cum_field_names = ('invoice_count', 'group_income', 'group_income_percentage')
+            field_names = (cc_field_name, ) + cum_field_names
+            header = tuple(header_d.get(field_name, field_name) for field_name in field_names)
             group_field_names = (stats_group, 'from', 'to')
             group_total = ('TOTAL', '', '')
             group_header = tuple(group_translation[field_name] for field_name in group_field_names)
@@ -420,8 +446,9 @@ class InvoiceProgram(object):
             total_income = sum(invoice.income for invoice in invoice_collection)
             rows = []
             if total:
-                total_row = {field_name: 0 for field_name in field_names}
+                total_row = {field_name: 0 for field_name in cum_field_names}
                 total_row[stats_group] = "TOTALE"
+                total_row[cc_field_name] = cc_total
                 total_row['from'] = ""
                 total_row['to'] = ""
             total_client_count = len(set(invoice.tax_code for invoice in invoice_collection))
@@ -447,9 +474,11 @@ class InvoiceProgram(object):
                     'to':			group_date_to,
                 }
                 if total:
-                    for field_name in field_names:
+                    for field_name in cum_field_names:
                         total_row[field_name] += data[field_name]
                     total_row['client_count'] = total_client_count
+                if stats_group == conf.STATS_GROUP_CLIENT:
+                    data[cc_field_name] = group[0].name
                 rows.append(data)
             if total:
                 rows.append(total_row)
