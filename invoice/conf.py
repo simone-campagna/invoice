@@ -88,20 +88,34 @@ VERSION = '{}.{}.{}'.format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 RC_DIR_VAR = 'INVOICE_RC_DIR'
 DB_FILE_VAR = 'INVOICE_DB_FILE'
 
-def setup():
+def setup(rc_dir=None, db_file=None):
+    def expand(p):
+        return os.path.expandvars(os.path.expanduser(p))
     global RC_DIR_EXPR
     global DB_FILE_EXPR
     global RC_DIR
     global DB_FILE
-    RC_DIR_EXPR = os.environ.get(RC_DIR_VAR, os.path.join('~', '.invoice'))
-    DB_FILE_EXPR = os.environ.get(DB_FILE_VAR, 'invoices.db')
-    RC_DIR = os.path.expandvars(os.path.expanduser(RC_DIR_EXPR))
-    DB_FILE = os.path.expandvars(os.path.expanduser(DB_FILE_EXPR))
-
+    if rc_dir is None:
+        rc_dir = os.path.join('~', '.invoice')
+    RC_DIR_EXPR = os.environ.get(RC_DIR_VAR, rc_dir)
+    RC_DIR = expand(RC_DIR_EXPR)
     if not os.path.isabs(RC_DIR):
         RC_DIR = os.path.abspath(RC_DIR)
 
+    if db_file is None:
+        db_file = os.path.join(RC_DIR, "invoices.db")
+    else:
+        db_file = expand(db_file)
+    DB_FILE_EXPR = os.environ.get(DB_FILE_VAR, db_file)
+    DB_FILE = expand(DB_FILE_EXPR)
     if not os.path.isabs(DB_FILE):
         DB_FILE = os.path.join(RC_DIR, DB_FILE)
 
+def get_rc_dir():
+    return RC_DIR
+
+def get_db_file():
+    return DB_FILE
+
 setup()
+

@@ -118,9 +118,15 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
 
     common_parser.add_argument("--db", "-d",
         metavar="F",
-        dest="db_filename",
-        default=conf.DB_FILE,
+        dest="db_file",
+        default=None,
         help="file contenente il database")
+
+    common_parser.add_argument("--rc-dir", "-R",
+        metavar="D",
+        dest="rc_dir",
+        default=None,
+        help="directory di configurazione")
 
     common_parser.add_argument("--verbose", "-v",
         dest="verbose_level",
@@ -750,7 +756,11 @@ e validati.
     else:
         file_context_manager = nocopy
 
-    with file_context_manager(args.db_filename) as fcm:
+    conf.setup(
+        rc_dir=args.rc_dir,
+        db_file=args.db_file,
+    )
+    with file_context_manager(conf.get_db_file()) as fcm:
         invoice_program = InvoiceProgram(
             db_filename=fcm.get_filename(),
             logger=logger,
