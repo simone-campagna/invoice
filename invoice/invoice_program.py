@@ -509,7 +509,7 @@ class InvoiceProgram(object):
 
 
     def impl_legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode):
-        invoice_collection_reader = InvoiceCollectionReader(trace=self.trace)
+        invoice_collection_reader = InvoiceCollectionReader(trace=self.trace, logger=self.logger)
 
         validation_result=self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
         invoice_collection = invoice_collection_reader(validation_result, *[pattern.pattern for pattern in patterns])

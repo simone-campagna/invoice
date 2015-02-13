@@ -22,7 +22,6 @@ __all__ = [
 
 import datetime
 import glob
-import io
 import os
 import sys
 import tempfile
@@ -34,7 +33,6 @@ from invoice.invoice_main import invoice_main
 from invoice.invoice_db import InvoiceDb
 from invoice.database.db_types import Path
 from invoice.string_printer import StringPrinter
-from invoice.ee import snow
 
 class Test_invoice_main(unittest.TestCase):
     DUMP_OUTPUT = """\
@@ -444,32 +442,6 @@ KNTCRK01G01H663X 2014      5
             printer=p,
             logger=self.logger,
             args=["help", "unknown_command"]
-        )
-
-    def test_invoice_main_ee_snow_flakes(self):
-        p = StringPrinter()
-
-        snow.set_animation(delay=0.01, duration=0.1)
-        snow.set_printer(p)
-
-        p.reset()
-        invoice_main(
-            printer=p,
-            logger=self.logger,
-            args=["help", "snow"]
-        )
-
-    def test_invoice_main_ee_snow_money(self):
-        p = StringPrinter()
-
-        snow.set_animation(delay=0.01, duration=0.1)
-        snow.set_printer(p)
-
-        p.reset()
-        invoice_main(
-            printer=p,
-            logger=self.logger,
-            args=["help", "money"]
         )
 
     def test_invoice_main_missing_subcommand(self):
