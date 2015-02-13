@@ -46,7 +46,7 @@ class InvoiceReader(object):
     DATE_FORMATS = (
         "%d/%m/%Y",
     )
-    def __init__(self, logger):
+    def __init__(self, logger=None):
         if logger is None:
             logger = get_default_logger()
         self.logger = logger

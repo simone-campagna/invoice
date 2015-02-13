@@ -61,6 +61,9 @@ class TestInvoiceCollection(unittest.TestCase):
     def test_InvoiceCollection_default(self):
         invoice_collection = InvoiceCollection(logger=self.logger)
         
+    def test_InvoiceCollection_default_logger(self):
+        invoice_collection = InvoiceCollection()
+        
     def test_InvoiceCollection_init(self):
         invoice_collection = InvoiceCollection(self._invoices, logger=self.logger)
 

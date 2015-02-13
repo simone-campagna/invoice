@@ -34,7 +34,13 @@ class TestInvoiceCollectionReader(unittest.TestCase):
         self.dirname = os.path.join(os.path.dirname(__file__), '..', '..', 'example')
         self.logger = get_null_logger()
 
-    # invoice
+    def test_InvoiceCollectionReader_default(self):
+        invoice_collection_reader = InvoiceCollectionReader(logger=self.logger)
+
+    def test_InvoiceCollectionReader_default_logger(self):
+        invoice_collection_reader = InvoiceCollectionReader()
+
+
     def test_InvoiceCollectionReader(self):
         doc_filename = os.path.normpath(os.path.abspath(os.path.join(self.dirname, '2014_001_bruce_wayne.doc')))
         glob_filename = doc_filename.replace('bruce_wayne', '*')

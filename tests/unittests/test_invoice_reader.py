@@ -34,7 +34,12 @@ class TestInvoiceReader(unittest.TestCase):
         self.dirname = os.path.join(os.path.dirname(__file__), '..', '..', 'example')
         self.logger = get_null_logger()
 
-    # invoice
+    def test_InvoiceReader_default(self):
+        invoice_reader = InvoiceReader(logger=self.logger)
+
+    def test_InvoiceReader_default_logger(self):
+        invoice_reader = InvoiceReader()
+
     def test_InvoiceReader(self):
         doc_filename = os.path.normpath(os.path.abspath(os.path.join(self.dirname, '2014_001_bruce_wayne.doc')))
         invoice_reader = InvoiceReader(logger=self.logger)
