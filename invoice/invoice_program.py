@@ -352,7 +352,7 @@ class InvoiceProgram(object):
                 invoices[0].date,
                 invoices[-1].date)
 
-    def _get_list_group_value(self, invoices, value):
+    def _get_group_value(self, invoices, value):
         return (value,
                 invoices[0].date,
                 invoices[-1].date)
@@ -379,11 +379,11 @@ class InvoiceProgram(object):
         elif stats_group == conf.STATS_GROUP_CLIENT:
             invoices = sorted(invoice_collection, key=lambda invoice: invoice.tax_code)
             group_function = lambda invoice: (invoice.tax_code, )
-            group_value_function = self._get_list_group_value
+            group_value_function = self._get_group_value
         elif stats_group == conf.STATS_GROUP_CITY:
             invoices = sorted(invoice_collection, key=lambda invoice: invoice.city)
             group_function = lambda invoice: (invoice.city, )
-            group_value_function = self._get_list_group_value
+            group_value_function = self._get_group_value
         group_value = None
         group = []
         for invoice in invoices:

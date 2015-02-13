@@ -519,13 +519,16 @@ essere selezionate utilizzando i filtri.
 
 Tutte le fatture che fanno parte del periodo selezionato possono
 essere raggruppate per
- * anno		(--group=year/-gyear)
- * mese		(--group=month/-gmonth) [default]
- * settimana	(--group=week/-gweek)
- * giorno	(--group=day/-gday)
- * cliente	(--group=client/-gclient)
+ * anno                   (--group=year/-gyear)
+ * mese                   (--group=month/-gmonth) [default]
+ * settimana              (--group=week/-gweek)
+ * giorno della settimana (--group=weekday/-gweekday)
+ * giorno                 (--group=day/-gday)
+ * cliente                (--group=client/-gclient)
+ * città                  (--group=city/-gcity)
 
-Per i raggruppamenti anno/mese/settimana/giorno vengono mostrati:
+Per i raggruppamenti anno/mese/settimana/giorno della settimana/giorno
+vengono mostrati:
   * periodo di riferimento
   * data di inizio del periodo di riferimento
   * data di fine del periodo di riferimento
@@ -534,11 +537,20 @@ Per i raggruppamenti anno/mese/settimana/giorno vengono mostrati:
   * incasso totale
   * incasso percentuale
 
-Per il raggruppamento cliente:
+Per il raggruppamento cliente vengono mostrati:
   * codice fiscale del cliente
   * data di prima fattura per il cliente
   * data di ultima fattura per il cliente
   * nome del cliente
+  * numero di fatture
+  * incasso totale
+  * incasso percentuale
+
+Per il raggruppamento città vengono mostrati:
+  * città
+  * data di prima fattura per la città
+  * data di ultima fattura per la città
+  * numero di clienti
   * numero di fatture
   * incasso totale
   * incasso percentuale
