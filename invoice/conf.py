@@ -32,8 +32,10 @@ __all__ = [
     'STATS_GROUP_YEAR',
     'STATS_GROUP_MONTH',
     'STATS_GROUP_WEEK',
+    'STATS_GROUP_WEEKDAY',
     'STATS_GROUP_DAY',
     'STATS_GROUP_CLIENT',
+    'STATS_GROUP_CITY',
     'STATS_GROUPS',
     'DEFAULT_STATS_GROUP',
     'RC_DIR_VAR',
@@ -43,6 +45,9 @@ __all__ = [
     'RC_DIR',
     'DB_FILE',
     'SCANNER_CONFIG_FILE',
+    'WEEKDAY',
+    'WEEKDAY_TRANSLATION',
+    'WEEKDAY_TRANSLATION_DICT',
     'setup',
     'get_rc_dir',
     'get_db_file',
@@ -65,6 +70,18 @@ FIELD_TRANSLATION = collections.OrderedDict((
     ('currency',	'valuta'),
 ))
 
+WEEKDAY_TRANSLATION_DICT = collections.OrderedDict((
+    ('Monday',		'Lunedì'),
+    ('Tuesday',		'Martedì'),
+    ('Wednesday',	'Mercoledì'),
+    ('Thursday',	'Giovedì'),
+    ('Friday',		'Venerdì'),
+    ('Saturday',	'Sabato'),
+    ('Sunday',		'Domenica'),
+))
+
+WEEKDAY = tuple(WEEKDAY_TRANSLATION_DICT.keys())
+WEEKDAY_TRANSLATION = tuple(WEEKDAY_TRANSLATION_DICT.values())
 FIELD_NAMES = tuple(FIELD_TRANSLATION.keys())
 REV_FIELD_TRANSLATION = dict(
     (FIELD_TRANSLATION.get(field_name, field_name), field_name) for field_name in FIELD_NAMES
@@ -81,8 +98,10 @@ STATS_GROUP_YEAR = 'year'
 STATS_GROUP_MONTH = 'month'
 STATS_GROUP_WEEK = 'week'
 STATS_GROUP_DAY = 'day'
+STATS_GROUP_WEEKDAY = 'weekday'
 STATS_GROUP_CLIENT = 'client'
-STATS_GROUPS = (STATS_GROUP_YEAR, STATS_GROUP_MONTH, STATS_GROUP_WEEK, STATS_GROUP_DAY, STATS_GROUP_CLIENT)
+STATS_GROUP_CITY = 'city'
+STATS_GROUPS = (STATS_GROUP_YEAR, STATS_GROUP_MONTH, STATS_GROUP_WEEK, STATS_GROUP_WEEKDAY, STATS_GROUP_DAY, STATS_GROUP_CLIENT, STATS_GROUP_CITY)
 DEFAULT_STATS_GROUP = STATS_GROUP_MONTH
 
 VERSION_MAJOR = 2
