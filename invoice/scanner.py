@@ -59,7 +59,7 @@ class Scanner(object):
 
     def process(self):
         if not self._processed:
-            self._processed = False
+            self._processed = True
             self._scan_lines.sort(key=lambda scan_line: scan_line.priority, reverse=True)
 
     def scan(self, document):
@@ -69,10 +69,10 @@ class Scanner(object):
         self.process()
         lines_dict = {}
         values_dict = {}
-        lines_tag_prio = {}
+        lines_label_prio = {}
         for line in lines:
             for scan_line in self._scan_lines:
-                prio = lines_tag_prio.get(scan_line.tag, None)
+                prio = lines_label_prio.get(scan_line.tag, None)
                 if prio is None or prio < scan_line.priority:
                     reset = True
                     scan = True
@@ -90,7 +90,7 @@ class Scanner(object):
                         else:
                             lines_dict.setdefault(scan_line.label, []).append(line)
                         values_dict.update(scan_line_dict)
-                        lines_tag_prio[scan_line.tag] = scan_line.priority
+                        lines_label_prio[scan_line.label] = scan_line.priority
         return lines_dict, values_dict
 
 _DEFAULT_SCANNER_CONFIG = """\
