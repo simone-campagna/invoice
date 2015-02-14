@@ -34,6 +34,17 @@ from invoice.database.db_types import Path
 from invoice.string_printer import StringPrinter
 
 class Test_invoice_main_config(unittest.TestCase):
+    CONFIG_SHOW_WIGNORE_EIGNORE = """\
+configuration:
+  + warning_mode         = 'ignore'
+  + error_mode           = 'ignore'
+  + partial_update       = True
+  + remove_orphaned      = False
+  + header               = True
+  + total                = True
+  + stats_group          = 'month'
+  + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+"""
     CONFIG_SHOW_WERROR_ERAISE = """\
 configuration:
   + warning_mode         = 'error'
@@ -144,6 +155,26 @@ versione del programma: {0}
                 args=['-d', db_filename.name, 'config', '-werror', '-eraise'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_WERROR_ERAISE)
+
+    def test_invoice_main_config_wignore_eignore(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'config', '-wignore', '-eignore'],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_WIGNORE_EIGNORE)
 
     def test_invoice_main_config_partial_update_on(self):
         with tempfile.NamedTemporaryFile() as db_filename:

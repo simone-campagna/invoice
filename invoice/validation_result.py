@@ -30,8 +30,9 @@ class ValidationResult(object):
     WARNING_MODE_DEFAULT = WARNING_MODE_LOG
 
     ERROR_MODE_LOG = 'log'
+    ERROR_MODE_IGNORE = 'ignore'
     ERROR_MODE_RAISE = 'raise'
-    ERROR_MODES = (ERROR_MODE_LOG, ERROR_MODE_RAISE)
+    ERROR_MODES = (ERROR_MODE_LOG, ERROR_MODE_IGNORE, ERROR_MODE_RAISE)
     ERROR_MODE_DEFAULT = ERROR_MODE_LOG
 
     Entry = collections.namedtuple('Entry', ('exc_type', 'message'))
@@ -48,6 +49,8 @@ class ValidationResult(object):
             self._function_error = self.impl_add_error
         elif error_mode == self.ERROR_MODE_RAISE:
             self._function_error = self.impl_add_critical
+        elif error_mode == self.ERROR_MODE_IGNORE:
+            self._function_error = self.impl_ignore
         else: # pragma: no cover
             raise ValueError("error_mode {!r} non valido (i valori leciti sono {})".format(error_mode, '|'.join(self.ERROR_MODES)))
           
