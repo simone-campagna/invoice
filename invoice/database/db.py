@@ -34,9 +34,12 @@ class Db(object):
         self.db_filename = db_filename
         self.logger.info("il db file è {}".format(self.db_filename))
 
-    def check(self):
+    def check_existence(self):
         if not os.path.exists(self.db_filename):
             raise DbError("database {!r} non inizializzato".format(self.db_filename))
+
+    def check(self):
+        self.check_existence()
 
     def connect(self, connection=None):
         if connection:

@@ -235,7 +235,7 @@ class InvoiceProgram(object):
 
        
     def impl_version(self):
-        self.db.check()
+        self.db.check_existence()
         version = self.db.load_version()
         self.printer("versione del database:  {}.{}.{}".format(*version))
         self.printer("versione del programma: {}.{}.{}".format(*self.db.VERSION))
