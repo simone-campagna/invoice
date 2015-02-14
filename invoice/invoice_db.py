@@ -34,7 +34,7 @@ from .database.db_types import Str, Int, Float, Date, DateTime, Path, Bool, StrT
 from .validation_result import ValidationResult
 
 class InvoiceDb(Db):
-    Pattern = collections.namedtuple('Pattern', ('pattern'))
+    Pattern = collections.namedtuple('Pattern', ('pattern', 'skip'))
     Configuration = collections.namedtuple(
         'Configuration',
         ('warning_mode', 'error_mode',
@@ -80,6 +80,13 @@ class InvoiceDb(Db):
             dict_type=Configuration,
         ),
         'patterns': DbTable(
+            fields=(
+                ('pattern', Path('UNIQUE')),
+                ('skip', Bool()),
+            ),
+            dict_type=Pattern,
+        ),
+        'skip_patterns': DbTable(
             fields=(
                 ('pattern', Path('UNIQUE')),
             ),
@@ -152,7 +159,12 @@ END"""
     @classmethod
     def make_pattern(cls, pattern):
         if not isinstance(pattern, cls.Pattern):
-            pattern = cls.Pattern(pattern=Path.db_to(pattern))
+            if pattern.startswith('!'):
+                skip = True
+                pattern = pattern[1:]
+            else:
+                skip = False
+            pattern = cls.Pattern(pattern=Path.db_to(pattern), skip=skip)
         return pattern
 
     @classmethod

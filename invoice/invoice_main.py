@@ -286,7 +286,15 @@ di configurazione; vedi
 
 $ %(prog)s config -h
 
-per una spiegazione di questi valori
+per una spiegazione di questi valori.
+
+Se un pattern inizia con '!', i file già inclusi che fanno match con esso
+vengono scartati; dunque l'ordine è importante. Ad esempio,
+
+$ %(prog)s init 'docs/*.doc' 'docs/*.ERR.doc' 'docs/2015*.ERR.doc'
+
+include tutti i file 'docs/*.doc', poi fra questi scarta tutti i file
+'docs/*.ERR.doc', infine aggiunge tutti i file 'docs/2015*.ERR.doc'.
 """,
     )
     init_parser.set_defaults(
@@ -742,7 +750,7 @@ e validati.
         default=[],
         action="append",
         type=lambda x: ('+', type_pattern(x)),
-        help='aggiunge un pattern per la ricerca dei DOC delle fatture')
+        help="aggiunge un pattern per la ricerca dei DOC delle fatture (! all'inizio per invertire il pattern)")
 
     patterns_parser.add_argument("--remove-pattern", "-x",
         metavar="P",

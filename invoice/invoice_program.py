@@ -23,6 +23,7 @@ __all__ = [
 import calendar
 import collections
 import datetime
+import fnmatch
 import glob
 import math
 import os
@@ -556,8 +557,11 @@ class InvoiceProgram(object):
                 partial_update = configuration.partial_update
 
             for pattern in db.load_patterns(connection=connection):
-                for doc_filename in glob.glob(pattern.pattern):
-                    found_doc_filenames.add(Path.db_to(doc_filename))
+                if pattern.skip:
+                    found_doc_filenames.difference_update(fnmatch.filter(found_doc_filenames, pattern.pattern))
+                else:
+                    for doc_filename in glob.glob(pattern.pattern):
+                        found_doc_filenames.add(Path.db_to(doc_filename))
             doc_filename_d = {}
             for scan_date_time in db.read('scan_date_times', connection=connection):
                 doc_filename_d[scan_date_time.doc_filename] = scan_date_time.scan_date_time

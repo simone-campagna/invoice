@@ -407,6 +407,59 @@ KNTCRK01G01H663X 2014      5
             self.assertEqual(validation_result.num_errors(), 0)
             self.assertEqual(validation_result.num_warnings(), 0)
 
+    def _test_InvoiceProgramSkip(self, reverse):
+        with tempfile.NamedTemporaryFile() as db_file:
+            p = StringPrinter()
+
+            invoice_program = InvoiceProgram(
+                db_filename=db_file.name,
+                logger=self.logger,
+                trace=False,
+                printer=p,
+            )
+
+            patterns=[os.path.join(self.dirname, '*.doc'), '!' + os.path.join(self.dirname, '*kent*.doc')]
+            if reverse:
+                patterns.reverse()
+            p.reset()
+            invoice_program.impl_init(
+                patterns=patterns,
+                reset=True,
+            )
+
+            p.reset()
+            validation_result, invoice_collection = invoice_program.impl_scan(
+                warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                error_mode=ValidationResult.ERROR_MODE_RAISE,
+            )
+            self.assertEqual(validation_result.num_errors(), 0)
+            self.assertEqual(validation_result.num_warnings(), 0)
+
+            p.reset()
+            invoice_program.impl_list(
+                list_field_names=('tax_code', 'year', 'number'),
+                header=True,
+                filters=(),
+            )
+            cmp_text = """\
+codice_fiscale   anno numero
+WNYBRC01G01H663S 2014      1
+PRKPRT01G01H663M 2014      2
+BNNBRC01G01H663S 2014      3
+WNYBRC01G01H663S 2014      4
+"""
+            if reverse:
+                cmp_text += """\
+KNTCRK01G01H663X 2014      5
+"""
+            self.assertEqual(p.string(), cmp_text)
+
+    def test_InvoiceProgramSkip(self):
+        self._test_InvoiceProgramSkip(reverse=False)
+
+    def test_InvoiceProgramSkipReverse(self):
+        self._test_InvoiceProgramSkip(reverse=True)
+
     def test_InvoiceProgramErrorDuplicatedNumber(self):
         with tempfile.NamedTemporaryFile() as db_file:
             p = StringPrinter()

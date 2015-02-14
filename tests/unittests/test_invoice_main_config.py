@@ -96,14 +96,14 @@ patterns:
 
     PATTERNS_DEFAULT = """\
 patterns:
-  + Pattern(pattern='<DIRNAME>/*.doc')
+  + Pattern(pattern='<DIRNAME>/*.doc', skip=False)
 """
 
     PATTERNS_ADD_REMOVE = """\
 patterns:
-  + Pattern(pattern='<DIRNAME>/*.doc')
-  + Pattern(pattern='<DIRNAME>/*.Doc')
-  + Pattern(pattern='<DIRNAME>/*.DOC')
+  + Pattern(pattern='<DIRNAME>/*.doc', skip=False)
+  + Pattern(pattern='<DIRNAME>/*.Doc', skip=True)
+  + Pattern(pattern='<DIRNAME>/*.DOC', skip=False)
 """
 
     VERSION_OUTPUT = """\
@@ -356,7 +356,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '-p', 'example/*.Doc', '-p', 'example/*.DOC'],
+                args=['-d', db_filename.name, 'patterns', '-p', '!example/*.Doc', '-p', 'example/*.DOC'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
 
@@ -364,7 +364,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '-x', 'example/*.Doc', '-x', 'example/*.DOC'],
+                args=['-d', db_filename.name, 'patterns', '-x', '!example/*.Doc', '-x', 'example/*.DOC'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_DEFAULT)
 
