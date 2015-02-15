@@ -317,6 +317,8 @@ WNYBRC01G01H663S 2014      4
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
+BNNBRC01G01H663S 2014      3
+KNTCRK01G01H663X 2014      5
 PRKPRT01G01H663M 2014      2
 WNYBRC01G01H663S 2014      1
 WNYBRC01G01H663S 2014      4
@@ -330,6 +332,8 @@ WNYBRC01G01H663S 2014      4
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
+BNNBRC01G01H663S 2014      3
+KNTCRK01G01H663X 2014      5
 PRKPRT01G01H663M 2014      2
 WNYBRC01G01H663S 2014      4
 WNYBRC01G01H663S 2014      1
