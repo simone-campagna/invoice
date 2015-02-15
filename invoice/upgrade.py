@@ -36,107 +36,118 @@ class MetaUpgrader(abc.ABCMeta):
     def __new__(mcls, class_name, class_bases, class_dict):
         cls = super().__new__(mcls, class_name, class_bases, class_dict)
         if not cls.isabstract():
-            mcls.REGISTRY.append(cls)
+            mcls.REGISTRY.append(cls())
         return cls
 
 class Upgrader(metaclass=MetaUpgrader):
-    VERSION_FROM = None
-    VERSION_TO = None
-
-    @classmethod
-    def upgrade_version_from(cls):
-        return cls.VERSION_FROM
+    @abc.abstractmethod
+    def upgrade_accepts(self, version_from, version_to):
+        """accepts(version_from, version_to) -> upgrade_version_to"""
+        pass
     
-    @classmethod
-    def upgrade_version_to(cls):
-        return cls.VERSION_TO
+    @abc.abstractmethod
+    def downgrade_accepts(self, version_from, version_to):
+        """downgrade_accepts(version_from, version_to) -> downgrade_version_to"""
+        pass
     
-    @classmethod
-    def downgrade_version_from(cls):
-        return cls.VERSION_TO
-    
-    @classmethod
-    def downgrade_version_to(cls):
-        return cls._replace_None(cls.VERSION_FROM, 0)
-    
-    @classmethod
-    def _replace_None(cls, version, default=0):
-        l = []
-        for v in version:
-            if v is None:
-                l.append(default)
-            else:
-                l.append(v)
-        return Version(*l)
-
     @classmethod
     def isabstract(cls):
         return inspect.isabstract(cls)
-    
-    @classmethod
-    def matches(cls, version):
-        for vf, vt in zip(cls.upgrade_version_from(), version):
-            if vf is not None and vf != vt:
-                return False
-        return True
 
-    @classmethod
-    def upgrade(cls, db, connection=None):
-        cls.impl_upgrade(db, connection=connection)
-        cls.update_version(db, connection=connection)
-
-    @classmethod
-    def downgrade(cls, db, connection=None):
-        """only for testing"""
-        cls.impl_downgrade(db, connection=connection)
-        cls.update_version(db, version_to=cls.downgrade_version_to(), connection=connection)
-
-    @classmethod
-    def update_version(cls, db, version_to=None, connection=None):
-        if version_to is None:
-            version_to = cls.upgrade_version_to()
+    def update_version(self, db, version_to, connection=None):
         with db.connect(connection) as connection:
             db.clear('version', connection=connection)
             db.write('version', [version_to], connection=connection)
         
-    @abc.abstractmethod
-    def impl_upgrade(db, connection=None):
-        pass
+    
+    def upgrade(self, db, version_from, version_to, connection=None):
+        db.logger.info("upgrade di versione da {} a {}".format(version_from, version_to))
+        self.impl_upgrade(db, version_from, version_to, connection=connection)
+        self.update_version(db, version_to, connection=connection)
 
     @abc.abstractmethod
-    def impl_downgrade(db, connection=None):
+    def impl_upgrade(db, version_from, version_to, connection=None):
+        pass
+
+    def downgrade(self, db, version_from, version_to, connection=None):
+        db.logger.info("downgrade di versione da {} a {}".format(version_from, version_to))
+        self.impl_downgrade(db, version_from, version_to, connection=connection)
+        self.update_version(db, version_to, connection=connection)
+
+    @abc.abstractmethod
+    def impl_downgrade(db, version_from, version_to, connection=None):
         pass
 
     @classmethod
-    def full_upgrade(cls, db):
+    def _full_upgrade_downgrade(cls, method_name, db, final_version=None):
+        if method_name == 'upgrade':
+            art = "l'"
+            default_final_version = VERSION
+            stop_condition = lambda version_from, final_version: version_from < final_version
+        else:
+            art = "il "
+            default_final_version = Version(2, 0, 0)
+            stop_condition = lambda version_from, final_version: version_from > final_version
+        if final_version is None:
+            final_version = default_final_version
+        accepts_method_name = "{}_accepts".format(method_name)
         with db.connect() as connection:
             version_from = db.load_version(connection=connection)
-            version_to = VERSION
+            db.logger.info("full {} di versione da {} a {}".format(method_name, version_from, final_version))
             upgraders = []
-            while not db.version_is_valid(version_from):
+            while stop_condition(version_from, final_version):
                 valid_upgraders = []
                 for upgrader in cls.REGISTRY:
-                    if upgrader.matches(version_from):
-                        distance = version_to - upgrader.upgrade_version_to()
-                        valid_upgraders.append((distance, upgrader))
+                    accepts_method = getattr(upgrader, accepts_method_name)
+                    version_to = accepts_method(version_from, final_version)
+                    if version_to is not None:
+                        valid_upgraders.append((version_to, upgrader))
                 if valid_upgraders:
                     valid_upgraders.sort(key=lambda x: x[0], reverse=True)
-                    distance, upgrader = valid_upgraders[0]
-                    upgraders.append((version_from, upgrader))
-                    version_from = upgrader.upgrade_version_to()
+                    version_to, upgrader = valid_upgraders[0]
+                    upgraders.append((version_from, version_to, upgrader))
+                    version_from = version_to
                 else:
-                    db.logger.warning("non è possibile eseguire l'upgrade dalla versione {} alla versione {}".format(version_from, version_to))
+                    db.logger.warning("non è possibile eseguire {}{} dalla versione {} alla versione {}".format(art, method_name, version_from, final_version))
                     break
-            for version_from, upgrader in upgraders:
-                db.logger.info("aggornamento di versione {} -> {}".format(version_from, upgrader.upgrade_version_to()))
-                upgrader().upgrade(db)
-        if db.version_is_valid(version_from):
-            db.logger.info("aggornamento di versione {} -> {}".format(version_from, version_to))
-            cls.update_version(version_to)
+            for version_from, version_to, upgrader in upgraders:
+                method = getattr(upgrader, method_name)
+                method(db, version_from, version_to)
 
-class Upgrader_v2_0_x__v_2_1_0(Upgrader):
-    VERSION_FROM = Version(2, 0, None)
-    VERSION_TO = Version(2, 1, 0)
+    @classmethod
+    def full_upgrade(cls, db, final_version=None):
+        return cls._full_upgrade_downgrade('upgrade', db=db, final_version=final_version)
+
+    @classmethod
+    def full_downgrade(cls, db, final_version=None):
+        return cls._full_upgrade_downgrade('downgrade', db=db, final_version=final_version)
+
+class Upgrader_Major_Minor(Upgrader):
+    VERSION_FROM_MAJOR_MINOR = Version(None, None, None)
+    VERSION_TO_MAJOR_MINOR = Version(None, None, None)
+    def upgrade_accepts(self, version_from, version_to):
+        if version_from[:2] == self.VERSION_FROM_MAJOR_MINOR[:2]:
+            return Version(
+                major=self.VERSION_TO_MAJOR_MINOR.major,
+                minor=self.VERSION_TO_MAJOR_MINOR.minor,
+                patch=0,
+            )
+        else:
+            return None
+
+    def downgrade_accepts(self, version_from, version_to):
+        if version_from[:2] == self.VERSION_TO_MAJOR_MINOR[:2]:
+            return Version(
+                major=self.VERSION_FROM_MAJOR_MINOR.major,
+                minor=self.VERSION_FROM_MAJOR_MINOR.minor,
+                patch=0,
+            )
+        else:
+            return None
+
+class Upgrader_v2_0_x__v_2_1_0(Upgrader_Major_Minor):
+    VERSION_FROM_MAJOR_MINOR = Version(2, 0, None)
+    VERSION_TO_MAJOR_MINOR = Version(2, 1, 0)
     Pattern_v2_0_x = collections.namedtuple('Pattern_v2_0_x', ('pattern', 'skip'))
     PATTERNS_TABLE_v2_0_x = DbTable(
         fields=(
@@ -153,8 +164,7 @@ class Upgrader_v2_0_x__v_2_1_0(Upgrader):
         dict_type=Pattern_v2_1_0,
     )
 
-    @classmethod
-    def impl_downgrade(cls, db, connection=None):
+    def impl_downgrade(self, db, version_from, version_to, connection=None):
         with db.connect(connection) as connection:
             sql = """SELECT pattern, skip FROM patterns;"""
             p_list = []
@@ -162,7 +172,7 @@ class Upgrader_v2_0_x__v_2_1_0(Upgrader):
             for pattern, skip in db.execute(cursor, sql):
                 p_list.append((Path.db_from(pattern), Bool.db_from(skip)))
             db.drop('patterns', connection=connection)
-            db.create_table('patterns', cls.PATTERNS_TABLE_v2_0_x.fields, connection=connection)
+            db.create_table('patterns', self.PATTERNS_TABLE_v2_0_x.fields, connection=connection)
             values = []
             for pattern, skip in p_list:
                 if not skip:
@@ -170,8 +180,7 @@ class Upgrader_v2_0_x__v_2_1_0(Upgrader):
             sql = """INSERT INTO patterns (pattern) VALUES (?);"""
             db.execute(cursor, sql, *values)
         
-    @classmethod
-    def impl_upgrade(cls, db, connection=None):
+    def impl_upgrade(self, db, version_from, version_to, connection=None):
         with db.connect(connection) as connection:
             sql = """SELECT pattern FROM patterns;"""
             p_list = []
@@ -179,10 +188,25 @@ class Upgrader_v2_0_x__v_2_1_0(Upgrader):
             for pattern, in db.execute(cursor, sql):
                 p_list.append(Path.db_from(pattern))
             db.drop('patterns', connection=connection)
-            db.create_table('patterns', cls.PATTERNS_TABLE_v2_1_0.fields, connection=connection)
+            db.create_table('patterns', self.PATTERNS_TABLE_v2_1_0.fields, connection=connection)
             values = []
             for p in p_list:
                 values.append((Path.db_to(p), Bool.db_to(False)))
             sql = """INSERT INTO patterns (pattern, skip) VALUES (?, ?);"""
             db.execute(cursor, sql, *values)
 
+class Upgrader_Patch(Upgrader):
+    def upgrade_accepts(self, version_from, version_to):
+        if version_from[:2] == version_to[:2]:
+            return version_to
+        else:
+            return None
+
+    def downgrade_accepts(self, version_from, version_to):
+        return self.upgrade_accepts(version_from, version_to)
+
+    def impl_downgrade(self, db, version_from, version_to, connection=None):
+        pass
+
+    def impl_upgrade(self, db, version_from, version_to, connection=None):
+        pass

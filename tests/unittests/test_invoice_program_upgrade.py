@@ -29,18 +29,21 @@ import tempfile
 import unittest
 
 from invoice.log import get_null_logger
+#from invoice.log import get_default_logger, set_verbose_level
 from invoice.error import InvoiceVersionError
 
 from invoice.invoice_program import InvoiceProgram
 from invoice.database.db_types import Path
 from invoice.string_printer import StringPrinter
 from invoice.version import Version, VERSION
-from invoice.upgrade import Upgrader_v2_0_x__v_2_1_0
+from invoice.upgrade import Upgrader
 
 class TestInvoiceProgramUpgrade(unittest.TestCase):
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
         self.logger = get_null_logger()
+        #self.logger = get_default_logger()
+        #set_verbose_level(self.logger, 1)
 
     def test_InvoiceProgramInvalidVersion(self):
         with tempfile.NamedTemporaryFile() as db_file:
@@ -61,7 +64,7 @@ class TestInvoiceProgramUpgrade(unittest.TestCase):
                 remove_orphaned=True,
             )
 
-            Upgrader_v2_0_x__v_2_1_0().downgrade(db=invoice_program.db)
+            Upgrader.full_downgrade(db=invoice_program.db)
             
             p.reset()
             invoice_program.impl_version(
@@ -87,3 +90,14 @@ upgrade...
 versione del database:  {}
 """.format(VERSION, Version(2, 0, 0), VERSION))
 
+            final_version = Version(VERSION.major, VERSION.minor, VERSION.patch + 100)
+            Upgrader.full_upgrade(db=invoice_program.db, final_version=final_version)
+
+            p.reset()
+            invoice_program.impl_version(
+                upgrade=False,
+            )
+            self.assertEqual(p.string(), """\
+versione del programma: {}
+versione del database:  {}
+""".format(VERSION, final_version))
