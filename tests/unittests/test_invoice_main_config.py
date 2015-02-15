@@ -32,6 +32,7 @@ from invoice.invoice_main import invoice_main
 from invoice.invoice_db import InvoiceDb
 from invoice.database.db_types import Path
 from invoice.string_printer import StringPrinter
+from invoice.version import VERSION
 
 class Test_invoice_main_config(unittest.TestCase):
     CONFIG_SHOW_WIGNORE_EIGNORE = """\
@@ -109,7 +110,7 @@ patterns:
     VERSION_OUTPUT = """\
 versione del database:  {0}
 versione del programma: {0}
-""".format("{}.{}.{}".format(*InvoiceDb.VERSION))
+""".format("{}.{}.{}".format(*VERSION))
 
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))

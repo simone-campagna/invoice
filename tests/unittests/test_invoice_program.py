@@ -44,6 +44,7 @@ from invoice.database.db_types import Path
 from invoice.database.db import DbError
 from invoice.validation_result import ValidationResult
 from invoice.string_printer import StringPrinter
+from invoice.version import Version
 from invoice import conf
 
 class TestInvoiceProgram(unittest.TestCase):
@@ -363,7 +364,7 @@ KNTCRK01G01H663X 2014      5
                 remove_orphaned=True,
             )
 
-            invoice_program.db.store_version(version=invoice_program.db.Version(0, 2, 0))
+            invoice_program.db.store_version(version=Version(0, 2, 0))
 
             p.reset()
             with self.assertRaises(DbError):

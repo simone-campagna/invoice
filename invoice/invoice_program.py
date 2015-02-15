@@ -49,6 +49,7 @@ from .week import WeekManager
 from .database.db_types import Path
 from .table import Table
 from . import conf
+from .version import VERSION
 from .ee import snow
 
 
@@ -238,7 +239,7 @@ class InvoiceProgram(object):
         self.db.check_existence()
         version = self.db.load_version()
         self.printer("versione del database:  {}.{}.{}".format(*version))
-        self.printer("versione del programma: {}.{}.{}".format(*self.db.VERSION))
+        self.printer("versione del programma: {}.{}.{}".format(*VERSION))
 
     def impl_config(self, *, warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                              error_mode=ValidationResult.ERROR_MODE_DEFAULT,

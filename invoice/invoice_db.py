@@ -26,6 +26,7 @@ import sqlite3
 
 from . import conf
 from .error import InvoiceError
+from .version import Version, VERSION
 from .invoice import Invoice
 from .invoice_collection import InvoiceCollection
 from .database.db import Db, DbError
@@ -41,12 +42,7 @@ class InvoiceDb(Db):
          'partial_update', 'remove_orphaned',
          'header', 'total',
          'stats_group', 'list_field_names'))
-    Version = collections.namedtuple('Version', ('major', 'minor', 'patch'))
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
-    VERSION = Version(
-        major=conf.VERSION_MAJOR,
-        minor= conf.VERSION_MINOR,
-        patch= conf.VERSION_PATCH)
     DEFAULT_CONFIGURATION = Configuration(
         warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
         error_mode=ValidationResult.ERROR_MODE_DEFAULT,
@@ -128,11 +124,11 @@ class InvoiceDb(Db):
             version = self.load_version(connection=connection)
             if not self.version_is_valid(version):
                 vdb = "{}.{}.{}".format(*version)
-                vcl = "{}.{}.{}".format(*self.VERSION)
+                vcl = "{}.{}.{}".format(*VERSION)
                 raise DbError("database {!r}: la versione {} non compatibile con quella del client {}".format(self.db_filename, vdb, vcl))
 
     def version_is_valid(self, version):
-        return version[:-1] == self.VERSION[:-1]
+        return version[:-1] == VERSION[:-1]
             
     def impl_initialize(self, connection=None):
         min_datetime = DateTime.db_to(datetime.datetime(1900, 1, 1))
@@ -154,7 +150,7 @@ BEGIN
 DELETE FROM scan_date_times WHERE doc_filename == old.doc_filename;
 END"""
             self.execute(cursor, sql)
-            self.write('version', [self.VERSION], connection=connection)
+            self.write('version', [VERSION], connection=connection)
 
     @classmethod
     def make_pattern(cls, pattern):
