@@ -18,6 +18,7 @@
 __author__ = "Simone Campagna"
 __all__ = [
     'InvoiceError',
+    'InvoiceVersionError',
     'InvoiceSyntaxError',
     'InvoiceDuplicatedLineError',
     'InvoiceValidationError',
@@ -35,6 +36,9 @@ __all__ = [
 ]
 
 class InvoiceError(Exception):
+    pass
+
+class InvoiceVersionError(InvoiceError):
     pass
 
 class InvoiceSyntaxError(Exception):

@@ -28,7 +28,7 @@ import sys
 import traceback
 
 from .database.filecopy import tempcopy, nocopy
-from .error import InvoiceSyntaxError
+from .error import InvoiceSyntaxError, InvoiceVersionError
 from . import conf
 from .log import get_default_logger, set_verbose_level
 from .invoice import Invoice
@@ -318,7 +318,7 @@ Permette di visualizzare la versione del programma e del database.
     )
     version_parser.set_defaults(
         function_name="program_version",
-        function_arguments=(),
+        function_arguments=('upgrade', ),
     )
 
     ### config ###
@@ -593,6 +593,12 @@ e validati.
         default=top_level_parser_name,
         help="comando di cui stampare l'help")
 
+    ### upgrade option
+    version_parser.add_argument("--upgrade", "-U",
+        action="store_true",
+        default=False,
+        help="esegue l'upgrade del database")
+
     ### list_mode option
     for parser in init_parser, config_parser, list_parser:
         parser.add_argument("--header", "-H",
@@ -818,9 +824,16 @@ e validati.
             logger.error("{}:".format(message))
             logger.error("    {}".format(function_source))
             logger.error("    {}".format(" " * max(0, syntax_error.offset - 1) + '^'))
-    
+            return 1
+        except InvoiceVersionError as err:
+            if args.trace:
+                traceback.print_exc()
+            logger.error(err)
+            logger.error("eseguire l'upgrade (comando 'version --upgrade')")
+            return 2
         except Exception as err:
             if args.trace:
                 traceback.print_exc()
             logger.error("{}: {}\n".format(type(err).__name__, err))
+            return 3
 

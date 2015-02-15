@@ -35,7 +35,8 @@ from invoice.error import InvoiceDuplicatedNumberError, \
                           InvoiceWrongNumberError, \
                           InvoiceUndefinedFieldError, \
                           InvoiceMultipleNamesError, \
-                          InvoiceMalformedTaxCodeError
+                          InvoiceMalformedTaxCodeError, \
+                          InvoiceVersionError
 
 from invoice.invoice_program import InvoiceProgram
 from invoice.invoice_collection import InvoiceCollection
@@ -367,7 +368,7 @@ KNTCRK01G01H663X 2014      5
             invoice_program.db.store_version(version=Version(0, 2, 0))
 
             p.reset()
-            with self.assertRaises(DbError):
+            with self.assertRaises(InvoiceVersionError):
                 invoice_program.impl_scan(
                     warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                     error_mode=None,

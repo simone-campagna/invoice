@@ -25,7 +25,7 @@ import datetime
 import sqlite3
 
 from . import conf
-from .error import InvoiceError
+from .error import InvoiceError, InvoiceVersionError
 from .version import Version, VERSION
 from .invoice import Invoice
 from .invoice_collection import InvoiceCollection
@@ -33,6 +33,7 @@ from .database.db import Db, DbError
 from .database.db_table import DbTable
 from .database.db_types import Str, Int, Float, Date, DateTime, Path, Bool, StrTuple
 from .validation_result import ValidationResult
+from .upgrade import Upgrader
 
 class InvoiceDb(Db):
     Pattern = collections.namedtuple('Pattern', ('pattern', 'skip'))
@@ -125,7 +126,7 @@ class InvoiceDb(Db):
             if not self.version_is_valid(version):
                 vdb = "{}.{}.{}".format(*version)
                 vcl = "{}.{}.{}".format(*VERSION)
-                raise DbError("database {!r}: la versione {} non compatibile con quella del client {}".format(self.db_filename, vdb, vcl))
+                raise InvoiceVersionError("database {!r}: la versione {} non compatibile con quella del client {}".format(self.db_filename, vdb, vcl))
 
     def version_is_valid(self, version):
         return version[:-1] == VERSION[:-1]
@@ -261,3 +262,6 @@ END"""
                 self._configuration = self.load_configuration(connection=connection)
             value = getattr(self._configuration, option)
         return value
+
+    def upgrade(self):
+        Upgrader.full_upgrade(db=self)

@@ -108,9 +108,9 @@ patterns:
 """
 
     VERSION_OUTPUT = """\
-versione del database:  {0}
-versione del programma: {0}
-""".format("{}.{}.{}".format(*VERSION))
+versione del programma: {}
+versione del database:  {}
+""".format(VERSION, VERSION)
 
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))

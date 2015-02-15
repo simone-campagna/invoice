@@ -96,8 +96,8 @@ class InvoiceProgram(object):
         self.logger.error("deve essere specificato un comando")
         return 1
 
-    def program_version(self):
-        self.impl_version()
+    def program_version(self, upgrade=False):
+        self.impl_version(upgrade=upgrade)
         return 0
 
     def program_config(self, *, warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
@@ -235,11 +235,18 @@ class InvoiceProgram(object):
         #self.show_patterns(patterns)
 
        
-    def impl_version(self):
+    def impl_version(self, upgrade=False):
         self.db.check_existence()
+        self.printer("versione del programma: {}.{}.{}".format(*VERSION))
+        if upgrade:
+            version = self.db.load_version()
+            self.printer("versione del database:  {}.{}.{}".format(*version))
+            self.printer("upgrade...")
+            self.db.upgrade()
         version = self.db.load_version()
         self.printer("versione del database:  {}.{}.{}".format(*version))
-        self.printer("versione del programma: {}.{}.{}".format(*VERSION))
+        if not self.db.version_is_valid(version):
+            self.logger.error("la versione del database non è valida; è necessario eseguire l'upgrade (opzione --upgrade/-U)")
 
     def impl_config(self, *, warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                              error_mode=ValidationResult.ERROR_MODE_DEFAULT,
@@ -269,6 +276,7 @@ class InvoiceProgram(object):
 
 
     def impl_patterns(self, *, reset, patterns, partial_update=True, remove_orphaned=False):
+        self.db.check()
         if reset:
             self.db.clear('patterns')
         new_patterns = []

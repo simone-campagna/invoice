@@ -125,6 +125,14 @@ class Db(object):
                 values = [getattr(record, field_name) for field_name in field_names] + [getattr(record, key)]
                 self.execute(cursor, sql, values)
 
+    def drop(self, table_name, connection=None):
+        sql = """DROP TABLE {table_name};""".format(
+            table_name=table_name,
+        )
+        with self.connect(connection) as connection:
+            cursor = connection.cursor()
+            self.execute(cursor, sql)
+
     def clear(self, table_name, connection=None):
         self.delete(table_name=table_name, where=None, connection=None)
 
