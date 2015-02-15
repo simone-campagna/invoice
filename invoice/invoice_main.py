@@ -52,6 +52,15 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
             field_names.append(field_name)
         return tuple(Invoice.get_field_name_from_translation(field_name) for field_name in field_names)
 
+    def type_client_filter(s):
+        clients = tuple(c.strip() for c in s.split(','))
+        if len(clients) == 1:
+            filter_source = 'tax_code == {!r}'.format(clients[0])
+        else:
+            filter_source = 'tax_code in {{{}}}'.format(', '.join(repr(client) for client in clients))
+        return filter_source
+
+      
     def type_years_filter(s):
         years = tuple(int(y.strip()) for y in s.split(','))
         if len(years) == 1:
@@ -673,6 +682,14 @@ e validati.
             action="append",
             default=default_filters,
             help="aggiunge un filtro generico sulle fatture (ad esempio 'anno == 2014')")
+
+        parser.add_argument("--client", "-C",
+            metavar="C",
+            dest="filters",
+            type=type_client_filter,
+            action="append",
+            default=default_filters,
+            help="aggiunge un filtro sul codice fiscale del cliente")
 
     for parser in init_parser, config_parser, stats_parser:
         parser.add_argument("--group", "-g",

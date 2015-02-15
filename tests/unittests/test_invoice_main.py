@@ -264,6 +264,37 @@ data       città      codice_fiscale   anno numero
 2014-01-22 Greenville BNNBRC01G01H663S 2014      3
 """)
 
+#WNYBRC01G01H663S 2014      1
+#PRKPRT01G01H663M 2014      2
+#BNNBRC01G01H663S 2014      3
+#WNYBRC01G01H663S 2014      4
+#KNTCRK01G01H663X 2014      5
+#
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--client', 'WNYBRC01G01H663S'],
+            )
+            self.assertEqual(p.string(), """\
+codice_fiscale   anno numero
+WNYBRC01G01H663S 2014      1
+WNYBRC01G01H663S 2014      4
+""")
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--client', 'PRKPRT01G01H663M,WNYBRC01G01H663S'],
+            )
+            self.assertEqual(p.string(), """\
+codice_fiscale   anno numero
+WNYBRC01G01H663S 2014      1
+PRKPRT01G01H663M 2014      2
+WNYBRC01G01H663S 2014      4
+""")
+
     def test_invoice_main_err(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = StringPrinter()
