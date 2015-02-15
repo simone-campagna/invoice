@@ -38,9 +38,9 @@ from .invoice_db import InvoiceDb
 from .stream_printer import StreamPrinter
 
 def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
-    if args is None:
+    if args is None: # pragma: no cover
         args = sys.argv[1:]
-    if logger is None:
+    if logger is None: # pragma: no cover
         logger = get_default_logger()
 
     def type_fields(s):

@@ -73,6 +73,10 @@ versione del database:  {}
 """.format(VERSION, Version(2, 0, 0)))
 
             p.reset()
+            with self.assertRaises(InvoiceVersionError) as cm:
+                invoice_program.impl_list()
+            
+            p.reset()
             invoice_program.impl_version(
                 upgrade=True,
             )
