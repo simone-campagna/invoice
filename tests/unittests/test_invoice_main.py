@@ -295,6 +295,46 @@ PRKPRT01G01H663M 2014      2
 WNYBRC01G01H663S 2014      4
 """)
 
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--client', 'PRKPRT01G01H663M,WNYBRC01G01H663S',
+                      '--order', 'tax_code' ],
+            )
+            self.assertEqual(p.string(), """\
+codice_fiscale   anno numero
+PRKPRT01G01H663M 2014      2
+WNYBRC01G01H663S 2014      1
+WNYBRC01G01H663S 2014      4
+""")
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--order', 'tax_code'],
+            )
+            self.assertEqual(p.string(), """\
+codice_fiscale   anno numero
+PRKPRT01G01H663M 2014      2
+WNYBRC01G01H663S 2014      1
+WNYBRC01G01H663S 2014      4
+""")
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--order', 'tax_code,!date'],
+            )
+            self.assertEqual(p.string(), """\
+codice_fiscale   anno numero
+PRKPRT01G01H663M 2014      2
+WNYBRC01G01H663S 2014      4
+WNYBRC01G01H663S 2014      1
+""")
+
     def test_invoice_main_err(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = StringPrinter()

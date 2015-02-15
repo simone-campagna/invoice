@@ -52,6 +52,23 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
             field_names.append(field_name)
         return tuple(Invoice.get_field_name_from_translation(field_name) for field_name in field_names)
 
+    def type_order_fields(s):
+        order_field_names = []
+        for field_name in s.split(','):
+            if field_name.startswith('+'):
+                field_name = field_name[1:].strip()
+                reverse = False
+            elif field_name.startswith('-') or field_name.startswith('!'):
+                field_name = field_name[1:].strip()
+                reverse = True
+            else:
+                reverse = False
+            field_name = field_name.strip()
+            if not field_name in conf.ALL_FIELDS:
+                raise ValueError("campo {!r} non valido".format(field_name))
+            order_field_names.append((reverse, Invoice.get_field_name_from_translation(field_name)))
+        return tuple(order_field_names)
+
     def type_client_filter(s):
         clients = tuple(c.strip() for c in s.split(','))
         if len(clients) == 1:
@@ -106,6 +123,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_filters = []
     default_dry_run = False
     default_trace = type_onoff(os.environ.get("INVOICE_TRACE", "off"))
+    default_order_field_names = None
 
     # configuration
     default_warning_mode = None
@@ -475,7 +493,7 @@ Mostra una lista delle fatture contenute nel database.
     )
     list_parser.set_defaults(
         function_name="program_list",
-        function_arguments=('filters', 'date_from', 'date_to', 'list_field_names', 'header'),
+        function_arguments=('filters', 'date_from', 'date_to', 'list_field_names', 'header', 'order_field_names'),
     )
 
     ### dump_parser ###
@@ -658,7 +676,7 @@ e validati.
             default=default_filters,
             help="filtra le fatture in base all'anno")
 
-    ### generic filter option
+    ### filter options
     for parser in list_parser, dump_parser, legacy_parser, stats_parser:
         parser.add_argument("--start", "-S",
             metavar="S",
@@ -674,7 +692,6 @@ e validati.
             default=None,
             help="seleziona solo le fatture con data precedente o uguale a E")
 
-    for parser in list_parser, dump_parser, legacy_parser, stats_parser:
         parser.add_argument("--filter", "-F",
             metavar="F",
             dest="filters",
@@ -690,6 +707,15 @@ e validati.
             action="append",
             default=default_filters,
             help="aggiunge un filtro sul codice fiscale del cliente")
+
+    ### order options
+    for parser in list_parser, :
+        parser.add_argument("--order", "-O",
+            metavar="O",
+            dest="order_field_names",
+            type=type_order_fields,
+            default=default_order_field_names,
+            help="ordina il risultato rispetto a uno o più campi")
 
     for parser in init_parser, config_parser, stats_parser:
         parser.add_argument("--group", "-g",

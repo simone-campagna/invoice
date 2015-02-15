@@ -155,8 +155,10 @@ class InvoiceProgram(object):
         self.impl_validate(warning_mode=warning_mode, error_mode=error_mode)
         return 0
 
-    def program_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None):
-        self.impl_list(list_field_names=list_field_names, header=header, filters=filters, date_from=date_from, date_to=date_to)
+    def program_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None, order_field_names=None):
+        self.impl_list(list_field_names=list_field_names, header=header,
+            filters=filters, date_from=date_from, date_to=date_to,
+            order_field_names=order_field_names)
         return 0
 
     def program_dump(self, *, filters=None, date_from=None, date_to=None):
@@ -314,13 +316,13 @@ class InvoiceProgram(object):
         self.validate_invoice_collection(validation_result, invoice_collection)
         return validation_result.num_errors()
 
-    def impl_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None):
+    def impl_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None, order_field_names=None):
         self.db.check()
         list_field_names = self.db.get_config_option('list_field_names', list_field_names)
         if filters is None:
             filters = ()
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters, date_from=date_from, date_to=date_to)
-        self.list_invoice_collection(invoice_collection, header=header, list_field_names=list_field_names)
+        self.list_invoice_collection(invoice_collection, header=header, list_field_names=list_field_names, order_field_names=order_field_names)
 
     def impl_dump(self, *, filters=None, date_from=None, date_to=None):
         self.db.check()
@@ -735,14 +737,18 @@ class InvoiceProgram(object):
             validation_result.num_warnings()))
         return validation_result
 
-    def list_invoice_collection(self, invoice_collection, list_field_names, header=None):
+    def list_invoice_collection(self, invoice_collection, list_field_names, header=None, order_field_names=None):
         header = self.db.get_config_option('header', header)
         invoice_collection.sort()
+        invoices = list(invoice_collection)
+        if order_field_names:
+            for reverse, field_name in reversed(order_field_names):
+                invoices.sort(key=lambda invoice: getattr(invoice, field_name), reverse=reverse)
         if list_field_names is None:
             list_field_names = Invoice._fields
         if header:
             header = [Invoice.get_field_translation(field_name) for field_name in list_field_names]
-        digits = 1 + int(math.log10(max(1, len(invoice_collection))))
+        digits = 1 + int(math.log10(max(1, len(invoices))))
         table = Table(
             field_names=list_field_names,
             header=header,
@@ -755,7 +761,7 @@ class InvoiceProgram(object):
                 'income': '>',
             },
         )
-        for line in table.getlines(invoice_collection):
+        for line in table.getlines(invoices):
             self.printer(line)
 
     def dump_invoice_collection(self, invoice_collection):
