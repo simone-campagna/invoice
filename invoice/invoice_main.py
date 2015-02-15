@@ -55,10 +55,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     def type_order_fields(s):
         order_field_names = []
         for field_name in s.split(','):
-            if field_name.startswith('+'):
-                field_name = field_name[1:].strip()
-                reverse = False
-            elif field_name.startswith('-') or field_name.startswith('!'):
+            if field_name.startswith('!'):
                 field_name = field_name[1:].strip()
                 reverse = True
             else:
@@ -489,6 +486,8 @@ Esegue una validazione del contenuto del database.
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Mostra una lista delle fatture contenute nel database.
+È possibile filtrare ed ordinare le fatture. È anche possibile
+selezionare i campi da mostrare.
 """,
     )
     list_parser.set_defaults(
@@ -715,7 +714,7 @@ e validati.
             dest="order_field_names",
             type=type_order_fields,
             default=default_order_field_names,
-            help="ordina il risultato rispetto a uno o più campi")
+            help="ordina il risultato rispetto a uno o più campi; è possibile invertire l'ordinamento rispetto ad un campo aggiungendo il carattere '!' davanti al campo: ad esempio, '--order tax_code,!date'")
 
     for parser in init_parser, config_parser, stats_parser:
         parser.add_argument("--group", "-g",
