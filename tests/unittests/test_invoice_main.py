@@ -41,31 +41,31 @@ fattura:                   '<DIRNAME>/2014_001_bruce_wayne.doc'
   città/data:              Gotham City/2014-01-03
   nome:                    Bruce Wayne
   codice fiscale:          WNYBRC01G01H663S
-  importo:                 51.00 [euro]
+  incasso:                 51.00 [euro]
 fattura:                   '<DIRNAME>/2014_002_peter_parker.doc'
   anno/numero:             2014/2
   città/data:              New York City/2014-01-03
   nome:                    Peter B. Parker
   codice fiscale:          PRKPRT01G01H663M
-  importo:                 76.50 [euro]
+  incasso:                 76.50 [euro]
 fattura:                   '<DIRNAME>/2014_003_bruce_banner.doc'
   anno/numero:             2014/3
   città/data:              Greenville/2014-01-22
   nome:                    Robert Bruce Banner
   codice fiscale:          BNNBRC01G01H663S
-  importo:                 102.00 [euro]
+  incasso:                 102.00 [euro]
 fattura:                   '<DIRNAME>/2014_004_bruce_wayne.doc'
   anno/numero:             2014/4
   città/data:              Gotham City/2014-01-25
   nome:                    Bruce Wayne
   codice fiscale:          WNYBRC01G01H663S
-  importo:                 51.00 [euro]
+  incasso:                 51.00 [euro]
 fattura:                   '<DIRNAME>/2014_005_clark_kent.doc'
   anno/numero:             2014/5
   città/data:              Smallville/2014-01-29
   nome:                    Clark Kent
   codice fiscale:          KNTCRK01G01H663X
-  importo:                 152.50 [euro]
+  incasso:                 152.50 [euro]
 """
     REPORT_OUTPUT = """\
 anno                       2014

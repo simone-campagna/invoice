@@ -63,9 +63,9 @@ Clark Kent   423.122 KNTCKR01A01B001C
         self._test_render(
             convert={'income': lambda value: '{:.2f}'.format(value)},
             align={'income': '>'},
-            header=('nome e cognome', 'importo', 'codice fiscale'),
+            header=('nome e cognome', 'incasso', 'codice fiscale'),
             output="""\
-nome e cognome importo codice fiscale  
+nome e cognome incasso codice fiscale  
 Peter Parker    400.00 PRKPRT01A01B001C
 Peter Parker    450.00 PRKPRT01A01B001C
 Clark Kent      423.12 KNTCKR01A01B001C

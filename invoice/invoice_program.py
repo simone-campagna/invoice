@@ -417,7 +417,8 @@ class InvoiceProgram(object):
             filters = ()
 
         if stats_group is None:
-            stats_group = conf.STATS_GROUP_MONTH
+            stats_group = conf.DEFAULT_STATS_GROUP
+
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters, date_from=date_from, date_to=date_to)
         invoice_collection.sort()
         if invoice_collection:
@@ -433,14 +434,14 @@ class InvoiceProgram(object):
                 'to':				'a:',
             }
             convert = {
-                'group_income': lambda income: '{:.2f}'.format(income),
-                'group_income_percentage': lambda income_percentage: '{:.2%}'.format(income_percentage),
+                'income': lambda income: '{:.2f}'.format(income),
+                'income_percentage': lambda income_percentage: '{:.2%}'.format(income_percentage),
             }
             align = {
                 'client_count': '>',
                 'invoice_count': '>',
-                'group_income': '>',
-                'group_income_percentage': '>',
+                'income': '>',
+                'income_percentage': '>',
                 'from': '>',
                 'to': '>',
             }
@@ -454,12 +455,15 @@ class InvoiceProgram(object):
                 cc_total = 0
             header_d = {
                 cc_field_name: cc_header,
-                'invoice_count': '#fatture',
-                'group_income': 'incasso',
-                'group_income_percentage': '%incasso',
+                'invoice_count':		'#fatture',
+                'income':			'incasso',
+                'income_percentage':		'%incasso',
+                'income_bar':			'h_incasso:',
+                'invoice_count_bar':		'h_fatture:',
             }
-            cum_field_names = ('invoice_count', 'group_income', 'group_income_percentage')
-            field_names = (cc_field_name, ) + cum_field_names
+            #field_names = (cc_field_name, 'invoice_count', 'invoice_count_bar', 'income', 'income_percentage', 'income_bar')
+            field_names = (cc_field_name, 'invoice_count', 'income', 'income_percentage')
+            cum_field_names = ('invoice_count', 'income', 'income_percentage')
             header = tuple(header_d.get(field_name, field_name) for field_name in field_names)
             group_field_names = (stats_group, 'from', 'to')
             group_total = ('TOTAL', '', '')
@@ -471,6 +475,14 @@ class InvoiceProgram(object):
             first_date = first_invoice.date
             last_date = last_invoice.date
             total_income = sum(invoice.income for invoice in invoice_collection)
+            total_invoice_count = len(invoice_collection)
+            def bar(value, max_value, length=10, block='#', empty=' '):
+                if max_value == 0: 
+                    block_length, empty_length = 0, length
+                else:
+                    block_length = int(round(value * length / max_value, 0))
+                    empty_length = length - block_length
+                return (block * block_length) + (empty * empty_length)
             rows = []
             if total:
                 total_row = {field_name: 0 for field_name in cum_field_names}
@@ -478,24 +490,28 @@ class InvoiceProgram(object):
                 total_row[cc_field_name] = cc_total
                 total_row['from'] = ""
                 total_row['to'] = ""
+                total_row['income_bar'] = "--"
+                total_row['invoice_count_bar'] = "--"
             total_client_count = len(set(invoice.tax_code for invoice in invoice_collection))
             for (group_value, group_date_from, group_date_to), group in self.group_by(invoice_collection, stats_group):
                 if date_from is not None and group_date_from is not None:
                     group_date_from = max(group_date_from, date_from)
                 if date_to is not None and group_date_to is not None:
                     group_date_to = min(group_date_to, date_to)
-                group_income = sum(invoice.income for invoice in group)
+                income = sum(invoice.income for invoice in group)
                 if total_income != 0.0:
-                    group_income_percentage = group_income / total_income
+                    income_percentage = income / total_income
                 else:
-                    group_income_percentage = 0.0
+                    income_percentage = 0.0
                 clients = set(invoice.tax_code for invoice in group)
                 data = {
                     'stats_group':		group_translation[stats_group],
                     'invoice_count':		len(group),
                     'client_count':		len(clients),
-                    'group_income':		group_income,
-                    'group_income_percentage':	group_income_percentage,
+                    'income':			income,
+                    'income_percentage':	income_percentage,
+                    'income_bar':		None,
+                    'invoice_count_bar':	None,
                     stats_group:		group_value,
                     'from':			group_date_from,
                     'to':			group_date_to,
@@ -507,6 +523,13 @@ class InvoiceProgram(object):
                 if stats_group == conf.STATS_GROUP_CLIENT:
                     data[cc_field_name] = group[0].name
                 rows.append(data)
+            #bars
+            max_income = max(row['income'] for row in rows)
+            for row in rows:
+                row['income_bar'] = bar(row['income'], max_income)
+            max_invoice_count = max(row['invoice_count'] for row in rows)
+            for row in rows:
+                row['invoice_count_bar'] = bar(row['invoice_count'], max_invoice_count)
             if total:
                 rows.append(total_row)
             table = Table(
@@ -774,7 +797,7 @@ fattura:                   {doc_filename!r}
   città/data:              {city}/{date}
   nome:                    {name}
   codice fiscale:          {tax_code}
-  importo:                 {income:.2f} [{currency}]""".format(digits=digits, **invoice._asdict()))
+  incasso:                 {income:.2f} [{currency}]""".format(digits=digits, **invoice._asdict()))
 
     def report_invoice_collection(self, invoice_collection):
         invoice_collection.sort()

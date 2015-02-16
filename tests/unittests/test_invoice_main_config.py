@@ -253,7 +253,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,importo'],
+                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,incasso'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_MIX)
 
@@ -286,7 +286,7 @@ KNTCRK01G01H663X 2014      5
                 args=['-d', db_filename.name, 'list'],
             )
             self.assertEqual(p.string(), """\
-codice_fiscale   città         numero importo
+codice_fiscale   città         numero incasso
 WNYBRC01G01H663S Gotham City        1   51.00
 PRKPRT01G01H663M New York City      2   76.50
 BNNBRC01G01H663S Greenville         3  102.00
