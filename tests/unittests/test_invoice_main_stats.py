@@ -33,86 +33,166 @@ from invoice.database.db_types import Path
 from invoice.string_printer import StringPrinter
 
 class Test_invoice_main_stats(unittest.TestCase):
-    STATS_YEAR_NO_TOTAL = """\
+    STATS_YEAR_NO_TOTAL_LONG = """\
 anno        da:         a: #clienti #fatture incasso %incasso
 2014 2014-01-10 2014-01-27        2        2  153.00  100.00%
 """
-    STATS_YEAR_TOTAL = """\
+    STATS_YEAR_TOTAL_LONG = """\
 anno          da:         a: #clienti #fatture incasso %incasso
 2014   2014-01-10 2014-01-27        2        2  153.00  100.00%
 TOTALE                              2        2  153.00  100.00%
 """
-    STATS_YEAR_DEFAULT = STATS_YEAR_TOTAL
+    STATS_YEAR_TOTAL_SHORT = """\
+anno   #clienti #fatture incasso %incasso
+2014          2        2  153.00  100.00%
+TOTALE        2        2  153.00  100.00%
+"""
+    STATS_YEAR_TOTAL_FULL = """\
+anno          da:         a: #clienti #fatture h_fatture: incasso %incasso h_incasso:
+2014   2014-01-10 2014-01-27        2        2 ##########  153.00  100.00% ##########
+TOTALE                              2        2 --          153.00  100.00% --        
+"""
+    STATS_YEAR_DEFAULT = STATS_YEAR_TOTAL_LONG
 
-    STATS_MONTH_NO_TOTAL = """\
+    STATS_MONTH_NO_TOTAL_LONG = """\
 mese           da:         a: #clienti #fatture incasso %incasso
 2014-01 2014-01-10 2014-01-27        2        2  153.00  100.00%
 """
-
-    STATS_MONTH_TOTAL = STATS_MONTH_NO_TOTAL + """\
+    STATS_MONTH_TOTAL_LONG = STATS_MONTH_NO_TOTAL_LONG + """\
 TOTALE                               2        2  153.00  100.00%
 """
-    STATS_MONTH_DEFAULT = STATS_MONTH_TOTAL
+    STATS_MONTH_TOTAL_SHORT = """\
+mese    #clienti #fatture incasso %incasso
+2014-01        2        2  153.00  100.00%
+TOTALE         2        2  153.00  100.00%
+"""
+    STATS_MONTH_TOTAL_FULL = """\
+mese           da:         a: #clienti #fatture h_fatture: incasso %incasso h_incasso:
+2014-01 2014-01-10 2014-01-27        2        2 ##########  153.00  100.00% ##########
+TOTALE                               2        2 --          153.00  100.00% --        
+"""
+    STATS_MONTH_DEFAULT = STATS_MONTH_TOTAL_LONG
 
-    STATS_WEEK_NO_TOTAL = """\
+    STATS_WEEK_NO_TOTAL_LONG = """\
 settimana        da:         a: #clienti #fatture incasso %incasso
 2014:04   2014-01-20 2014-01-26        2        2  153.00  100.00%
 """
-    STATS_WEEK_TOTAL = STATS_WEEK_NO_TOTAL + """\
+    STATS_WEEK_TOTAL_LONG = STATS_WEEK_NO_TOTAL_LONG + """\
 TOTALE                                 2        2  153.00  100.00%
 """
-    STATS_WEEK_DEFAULT = STATS_WEEK_TOTAL
+    STATS_WEEK_TOTAL_SHORT = """\
+settimana #clienti #fatture incasso %incasso
+2014:04          2        2  153.00  100.00%
+TOTALE           2        2  153.00  100.00%
+"""
+    STATS_WEEK_TOTAL_FULL = """\
+settimana        da:         a: #clienti #fatture h_fatture: incasso %incasso h_incasso:
+2014:04   2014-01-20 2014-01-26        2        2 ##########  153.00  100.00% ##########
+TOTALE                                 2        2 --          153.00  100.00% --        
+"""
+    STATS_WEEK_DEFAULT = STATS_WEEK_TOTAL_LONG
 
-    STATS_WEEKDAY_NO_TOTAL = """\
+    STATS_WEEKDAY_NO_TOTAL_LONG = """\
 giorno           da:         a: #clienti #fatture incasso %incasso
 Mercoledì 2014-01-22 2014-01-22        1        1  102.00   66.67%
 Sabato    2014-01-25 2014-01-25        1        1   51.00   33.33%
 """
-    STATS_WEEKDAY_TOTAL = STATS_WEEKDAY_NO_TOTAL + """\
+    STATS_WEEKDAY_TOTAL_LONG = STATS_WEEKDAY_NO_TOTAL_LONG + """\
 TOTALE                                 2        2  153.00  100.00%
 """
-    STATS_WEEKDAY_DEFAULT = STATS_WEEKDAY_TOTAL
+    STATS_WEEKDAY_TOTAL_SHORT = """\
+giorno    #clienti #fatture incasso %incasso
+Mercoledì        1        1  102.00   66.67%
+Sabato           1        1   51.00   33.33%
+TOTALE           2        2  153.00  100.00%
+"""
+    STATS_WEEKDAY_TOTAL_FULL = """\
+giorno           da:         a: #clienti #fatture h_fatture: incasso %incasso h_incasso:
+Mercoledì 2014-01-22 2014-01-22        1        1 ##########  102.00   66.67% ##########
+Sabato    2014-01-25 2014-01-25        1        1 ##########   51.00   33.33% #####     
+TOTALE                                 2        2 --          153.00  100.00% --        
+"""
+    STATS_WEEKDAY_DEFAULT = STATS_WEEKDAY_TOTAL_LONG
 
-    STATS_DAY_NO_TOTAL = """\
+    STATS_DAY_NO_TOTAL_LONG = """\
 giorno            da:         a: #clienti #fatture incasso %incasso
 2014-01-22 2014-01-22 2014-01-22        1        1  102.00   66.67%
 2014-01-25 2014-01-25 2014-01-25        1        1   51.00   33.33%
 """
-    STATS_DAY_TOTAL = STATS_DAY_NO_TOTAL + """\
+    STATS_DAY_TOTAL_LONG = STATS_DAY_NO_TOTAL_LONG + """\
 TOTALE                                  2        2  153.00  100.00%
 """
-    STATS_DAY_DEFAULT = STATS_DAY_TOTAL
+    STATS_DAY_TOTAL_SHORT = """\
+giorno     #clienti #fatture incasso %incasso
+2014-01-22        1        1  102.00   66.67%
+2014-01-25        1        1   51.00   33.33%
+TOTALE            2        2  153.00  100.00%
+"""
+    STATS_DAY_TOTAL_FULL = """\
+giorno            da:         a: #clienti #fatture h_fatture: incasso %incasso h_incasso:
+2014-01-22 2014-01-22 2014-01-22        1        1 ##########  102.00   66.67% ##########
+2014-01-25 2014-01-25 2014-01-25        1        1 ##########   51.00   33.33% #####     
+TOTALE                                  2        2 --          153.00  100.00% --        
+"""
+    STATS_DAY_DEFAULT = STATS_DAY_TOTAL_LONG
 
-    STATS_CLIENT_NO_TOTAL = """\
+    STATS_CLIENT_NO_TOTAL_LONG = """\
 codice_fiscale          da:         a: nome                #fatture incasso %incasso
 BNNBRC01G01H663S 2014-01-22 2014-01-22 Robert Bruce Banner        1  102.00   66.67%
 WNYBRC01G01H663S 2014-01-25 2014-01-25 Bruce Wayne                1   51.00   33.33%
 """
-    STATS_CLIENT_TOTAL = STATS_CLIENT_NO_TOTAL + """\
+    STATS_CLIENT_TOTAL_LONG = STATS_CLIENT_NO_TOTAL_LONG + """\
 TOTALE                                 --                         2  153.00  100.00%
 """
-    STATS_CLIENT_DEFAULT = STATS_CLIENT_TOTAL
+    STATS_CLIENT_TOTAL_SHORT = """\
+codice_fiscale   nome                #fatture incasso %incasso
+BNNBRC01G01H663S Robert Bruce Banner        1  102.00   66.67%
+WNYBRC01G01H663S Bruce Wayne                1   51.00   33.33%
+TOTALE           --                         2  153.00  100.00%
+"""
+    STATS_CLIENT_TOTAL_FULL = """\
+codice_fiscale          da:         a: nome                #fatture h_fatture: incasso %incasso h_incasso:
+BNNBRC01G01H663S 2014-01-22 2014-01-22 Robert Bruce Banner        1 ##########  102.00   66.67% ##########
+WNYBRC01G01H663S 2014-01-25 2014-01-25 Bruce Wayne                1 ##########   51.00   33.33% #####     
+TOTALE                                 --                         2 --          153.00  100.00% --        
+"""
+    STATS_CLIENT_DEFAULT = STATS_CLIENT_TOTAL_LONG
 
-    STATS_CITY_NO_TOTAL = """\
+    STATS_CITY_NO_TOTAL_LONG = """\
 città              da:         a: #clienti #fatture incasso %incasso
 Gotham City 2014-01-25 2014-01-25        1        1   51.00   33.33%
 Greenville  2014-01-22 2014-01-22        1        1  102.00   66.67%
 """
-    STATS_CITY_TOTAL = STATS_CITY_NO_TOTAL + """\
+    STATS_CITY_TOTAL_LONG = STATS_CITY_NO_TOTAL_LONG + """\
 TOTALE                                   2        2  153.00  100.00%
 """
-    STATS_CITY_DEFAULT = STATS_CITY_TOTAL
+    STATS_CITY_TOTAL_SHORT = """\
+città       #clienti #fatture incasso %incasso
+Gotham City        1        1   51.00   33.33%
+Greenville         1        1  102.00   66.67%
+TOTALE             2        2  153.00  100.00%
+"""
+    STATS_CITY_TOTAL_FULL = """\
+città              da:         a: #clienti #fatture h_fatture: incasso %incasso h_incasso:
+Gotham City 2014-01-25 2014-01-25        1        1 ##########   51.00   33.33% #####     
+Greenville  2014-01-22 2014-01-22        1        1 ##########  102.00   66.67% ##########
+TOTALE                                   2        2 --          153.00  100.00% --        
+"""
+    STATS_CITY_DEFAULT = STATS_CITY_TOTAL_LONG
 
     STATS_NONE_DEFAULT = STATS_MONTH_DEFAULT
-    STATS_NONE_TOTAL = STATS_MONTH_TOTAL
-    STATS_NONE_NO_TOTAL = STATS_MONTH_NO_TOTAL
+    STATS_NONE_TOTAL_LONG = STATS_MONTH_TOTAL_LONG
+    STATS_NONE_NO_TOTAL_LONG = STATS_MONTH_NO_TOTAL_LONG
+    STATS_NONE_TOTAL_SHORT = STATS_MONTH_TOTAL_SHORT
+    STATS_NONE_TOTAL_LONG = STATS_MONTH_TOTAL_LONG
+    STATS_NONE_TOTAL_FULL = STATS_MONTH_TOTAL_FULL
 
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
         self.logger = get_null_logger()
         self.maxDiff = None
 
-    def _test_invoice_main_stats(self, stats_group, total, output):
+    def _test_invoice_main_stats(self, stats_group, total, output, mode_flag=None):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = StringPrinter()
 
@@ -140,6 +220,8 @@ TOTALE                                   2        2  153.00  100.00%
                     args.append('--total=on')
                 else:
                     args.append('--total=off')
+            if mode_flag:
+                args.append(mode_flag)
             invoice_main(
                 printer=p,
                 logger=self.logger,
@@ -151,70 +233,142 @@ TOTALE                                   2        2  153.00  100.00%
         return self._test_invoice_main_stats('year', None, self.STATS_YEAR_DEFAULT)
 
     def test_invoice_main_stats_year_no_total(self):
-        return self._test_invoice_main_stats('year', False, self.STATS_YEAR_NO_TOTAL)
+        return self._test_invoice_main_stats('year', False, self.STATS_YEAR_NO_TOTAL_LONG)
 
     def test_invoice_main_stats_year_total(self):
-        return self._test_invoice_main_stats('year', True, self.STATS_YEAR_TOTAL)
+        return self._test_invoice_main_stats('year', True, self.STATS_YEAR_TOTAL_LONG)
+
+    def test_invoice_main_stats_year_total_short(self):
+        return self._test_invoice_main_stats('year', True, self.STATS_YEAR_TOTAL_SHORT, '-s')
+
+    def test_invoice_main_stats_year_total_long(self):
+        return self._test_invoice_main_stats('year', True, self.STATS_YEAR_TOTAL_LONG, '-l')
+
+    def test_invoice_main_stats_year_total_full(self):
+        return self._test_invoice_main_stats('year', True, self.STATS_YEAR_TOTAL_FULL, '-f')
 
     def test_invoice_main_stats_month(self):
         return self._test_invoice_main_stats('month', None, self.STATS_MONTH_DEFAULT)
 
     def test_invoice_main_stats_month_no_total(self):
-        return self._test_invoice_main_stats('month', False, self.STATS_MONTH_NO_TOTAL)
+        return self._test_invoice_main_stats('month', False, self.STATS_MONTH_NO_TOTAL_LONG)
 
     def test_invoice_main_stats_month_total(self):
-        return self._test_invoice_main_stats('month', True, self.STATS_MONTH_TOTAL)
+        return self._test_invoice_main_stats('month', True, self.STATS_MONTH_TOTAL_LONG)
+
+    def test_invoice_main_stats_month_total_short(self):
+        return self._test_invoice_main_stats('month', True, self.STATS_MONTH_TOTAL_SHORT, '-s')
+
+    def test_invoice_main_stats_month_total_long(self):
+        return self._test_invoice_main_stats('month', True, self.STATS_MONTH_TOTAL_LONG, '-l')
+
+    def test_invoice_main_stats_month_total_full(self):
+        return self._test_invoice_main_stats('month', True, self.STATS_MONTH_TOTAL_FULL, '-f')
 
     def test_invoice_main_stats_week(self):
         return self._test_invoice_main_stats('week', None, self.STATS_WEEK_DEFAULT)
 
     def test_invoice_main_stats_week_no_total(self):
-        return self._test_invoice_main_stats('week', False, self.STATS_WEEK_NO_TOTAL)
+        return self._test_invoice_main_stats('week', False, self.STATS_WEEK_NO_TOTAL_LONG)
 
     def test_invoice_main_stats_week_total(self):
-        return self._test_invoice_main_stats('week', True, self.STATS_WEEK_TOTAL)
+        return self._test_invoice_main_stats('week', True, self.STATS_WEEK_TOTAL_LONG)
+
+    def test_invoice_main_stats_week_total_short(self):
+        return self._test_invoice_main_stats('week', True, self.STATS_WEEK_TOTAL_SHORT, '-s')
+
+    def test_invoice_main_stats_week_total_long(self):
+        return self._test_invoice_main_stats('week', True, self.STATS_WEEK_TOTAL_LONG, '-l')
+
+    def test_invoice_main_stats_week_total_full(self):
+        return self._test_invoice_main_stats('week', True, self.STATS_WEEK_TOTAL_FULL, '-f')
 
     def test_invoice_main_stats_weekday(self):
         return self._test_invoice_main_stats('weekday', None, self.STATS_WEEKDAY_DEFAULT)
 
     def test_invoice_main_stats_weekday_no_total(self):
-        return self._test_invoice_main_stats('weekday', False, self.STATS_WEEKDAY_NO_TOTAL)
+        return self._test_invoice_main_stats('weekday', False, self.STATS_WEEKDAY_NO_TOTAL_LONG)
 
     def test_invoice_main_stats_weekday_total(self):
-        return self._test_invoice_main_stats('weekday', True, self.STATS_WEEKDAY_TOTAL)
+        return self._test_invoice_main_stats('weekday', True, self.STATS_WEEKDAY_TOTAL_LONG)
+
+    def test_invoice_main_stats_weekday_total_short(self):
+        return self._test_invoice_main_stats('weekday', True, self.STATS_WEEKDAY_TOTAL_SHORT, '--short')
+
+    def test_invoice_main_stats_weekday_total_long(self):
+        return self._test_invoice_main_stats('weekday', True, self.STATS_WEEKDAY_TOTAL_LONG, '--long')
+
+    def test_invoice_main_stats_weekday_total_full(self):
+        return self._test_invoice_main_stats('weekday', True, self.STATS_WEEKDAY_TOTAL_FULL, '--full')
 
     def test_invoice_main_stats_day(self):
         return self._test_invoice_main_stats('day', None, self.STATS_DAY_DEFAULT)
 
     def test_invoice_main_stats_day_no_total(self):
-        return self._test_invoice_main_stats('day', False, self.STATS_DAY_NO_TOTAL)
+        return self._test_invoice_main_stats('day', False, self.STATS_DAY_NO_TOTAL_LONG)
 
     def test_invoice_main_stats_day_total(self):
-        return self._test_invoice_main_stats('day', True, self.STATS_DAY_TOTAL)
+        return self._test_invoice_main_stats('day', True, self.STATS_DAY_TOTAL_LONG)
 
-    def test_invoice_main_stats_name(self):
+    def test_invoice_main_stats_day_total_short(self):
+        return self._test_invoice_main_stats('day', True, self.STATS_DAY_TOTAL_SHORT, '--short')
+
+    def test_invoice_main_stats_day_total_long(self):
+        return self._test_invoice_main_stats('day', True, self.STATS_DAY_TOTAL_LONG, '--long')
+
+    def test_invoice_main_stats_day_total_full(self):
+        return self._test_invoice_main_stats('day', True, self.STATS_DAY_TOTAL_FULL, '--full')
+
+    def test_invoice_main_stats_client(self):
         return self._test_invoice_main_stats('client', None, self.STATS_CLIENT_DEFAULT)
 
-    def test_invoice_main_stats_name_no_total(self):
-        return self._test_invoice_main_stats('client', False, self.STATS_CLIENT_NO_TOTAL)
+    def test_invoice_main_stats_client_no_total(self):
+        return self._test_invoice_main_stats('client', False, self.STATS_CLIENT_NO_TOTAL_LONG)
 
-    def test_invoice_main_stats_name_total(self):
-        return self._test_invoice_main_stats('client', True, self.STATS_CLIENT_TOTAL)
+    def test_invoice_main_stats_client_total(self):
+        return self._test_invoice_main_stats('client', True, self.STATS_CLIENT_TOTAL_LONG)
+
+    def test_invoice_main_stats_client_total_short(self):
+        return self._test_invoice_main_stats('client', True, self.STATS_CLIENT_TOTAL_SHORT, '--short')
+
+    def test_invoice_main_stats_client_total_long(self):
+        return self._test_invoice_main_stats('client', True, self.STATS_CLIENT_TOTAL_LONG, '--long')
+
+    def test_invoice_main_stats_client_total_full(self):
+        return self._test_invoice_main_stats('client', True, self.STATS_CLIENT_TOTAL_FULL, '--full')
 
     def test_invoice_main_stats_city(self):
         return self._test_invoice_main_stats('city', None, self.STATS_CITY_DEFAULT)
 
     def test_invoice_main_stats_city(self):
-        return self._test_invoice_main_stats('city', False, self.STATS_CITY_NO_TOTAL)
+        return self._test_invoice_main_stats('city', False, self.STATS_CITY_NO_TOTAL_LONG)
 
     def test_invoice_main_stats_city(self):
-        return self._test_invoice_main_stats('city', True, self.STATS_CITY_TOTAL)
+        return self._test_invoice_main_stats('city', True, self.STATS_CITY_TOTAL_LONG)
+
+    def test_invoice_main_stats_city_short(self):
+        return self._test_invoice_main_stats('city', True, self.STATS_CITY_TOTAL_SHORT, '--short')
+
+    def test_invoice_main_stats_city_long(self):
+        return self._test_invoice_main_stats('city', True, self.STATS_CITY_TOTAL_LONG, '--long')
+
+    def test_invoice_main_stats_city_full(self):
+        return self._test_invoice_main_stats('city', True, self.STATS_CITY_TOTAL_FULL, '--full')
 
     def test_invoice_main_stats_none(self):
         return self._test_invoice_main_stats(None, None, self.STATS_NONE_DEFAULT)
 
     def test_invoice_main_stats_none_no_total(self):
-        return self._test_invoice_main_stats(None, False, self.STATS_NONE_NO_TOTAL)
+        return self._test_invoice_main_stats(None, False, self.STATS_NONE_NO_TOTAL_LONG)
 
     def test_invoice_main_stats_none_total(self):
-        return self._test_invoice_main_stats(None, True, self.STATS_NONE_TOTAL)
+        return self._test_invoice_main_stats(None, True, self.STATS_NONE_TOTAL_LONG)
+
+    def test_invoice_main_stats_none_total_short(self):
+        return self._test_invoice_main_stats(None, True, self.STATS_NONE_TOTAL_SHORT, '-s')
+
+    def test_invoice_main_stats_none_total_long(self):
+        return self._test_invoice_main_stats(None, True, self.STATS_NONE_TOTAL_LONG, '-l')
+
+    def test_invoice_main_stats_none_total_full(self):
+        return self._test_invoice_main_stats(None, True, self.STATS_NONE_TOTAL_FULL, '-f')

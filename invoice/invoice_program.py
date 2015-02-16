@@ -169,8 +169,8 @@ class InvoiceProgram(object):
         self.impl_report(filters=filters)
         return 0
 
-    def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None):
-        self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group, total=total)
+    def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None):
+        self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group, total=total, stats_mode=stats_mode)
         return 0
 
     def legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode):
@@ -410,7 +410,7 @@ class InvoiceProgram(object):
         if group:
             yield group_value_function(group, *group_value), group
    
-    def impl_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None):
+    def impl_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None):
         total = self.db.get_config_option('total', total)
         self.db.check()
         if filters is None:
@@ -418,6 +418,9 @@ class InvoiceProgram(object):
 
         if stats_group is None:
             stats_group = conf.DEFAULT_STATS_GROUP
+
+        if stats_mode is None:
+            stats_mode = conf.DEFAULT_STATS_MODE
 
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters, date_from=date_from, date_to=date_to)
         invoice_collection.sort()
@@ -461,11 +464,18 @@ class InvoiceProgram(object):
                 'income_bar':			'h_incasso:',
                 'invoice_count_bar':		'h_fatture:',
             }
-            #field_names = (cc_field_name, 'invoice_count', 'invoice_count_bar', 'income', 'income_percentage', 'income_bar')
-            field_names = (cc_field_name, 'invoice_count', 'income', 'income_percentage')
+            field_names = (cc_field_name, 'invoice_count', 'invoice_count_bar', 'income', 'income_percentage', 'income_bar')
+            if stats_mode == conf.STATS_MODE_SHORT:
+                group_field_names = (stats_group, )
+                field_names = (cc_field_name, 'invoice_count', 'income', 'income_percentage')
+            elif stats_mode == conf.STATS_MODE_LONG:
+                group_field_names = (stats_group, 'from', 'to')
+                field_names = (cc_field_name, 'invoice_count', 'income', 'income_percentage')
+            elif stats_mode == conf.STATS_MODE_FULL:
+                group_field_names = (stats_group, 'from', 'to')
+                field_names = (cc_field_name, 'invoice_count', 'invoice_count_bar', 'income', 'income_percentage', 'income_bar')
             cum_field_names = ('invoice_count', 'income', 'income_percentage')
             header = tuple(header_d.get(field_name, field_name) for field_name in field_names)
-            group_field_names = (stats_group, 'from', 'to')
             group_total = ('TOTAL', '', '')
             group_header = tuple(group_translation[field_name] for field_name in group_field_names)
             all_field_names = group_field_names + field_names

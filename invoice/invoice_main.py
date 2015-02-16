@@ -131,6 +131,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_total = None
     default_stats_group = None
     default_list_field_names = None
+    default_stats_mode = None
 
     common_parser = argparse.ArgumentParser(
         add_help=False,
@@ -593,7 +594,7 @@ Per il raggruppamento città vengono mostrati:
     )
     stats_parser.set_defaults(
         function_name="program_stats",
-        function_arguments=('filters', 'date_from', 'date_to', 'stats_group', 'total'),
+        function_arguments=('filters', 'date_from', 'date_to', 'stats_group', 'total', 'stats_mode'),
     )
 
     ### legacy_parser ###
@@ -643,21 +644,21 @@ e validati.
             action="store_const",
             const=conf.LIST_FIELD_NAMES_SHORT,
             default=default_list_field_names,
-            help="lista breve (mostra i campi {}".format(','.join(conf.LIST_FIELD_NAMES_SHORT)))
+            help="lista breve (mostra i campi {})".format(','.join(conf.LIST_FIELD_NAMES_SHORT)))
     
         list_argument_group.add_argument("--long", "-l",
             dest="list_field_names",
             action="store_const",
             const=conf.LIST_FIELD_NAMES_LONG,
             default=default_list_field_names,
-            help="lista lunga (mostra i campi {}".format(','.join(conf.LIST_FIELD_NAMES_LONG)))
+            help="lista lunga (mostra i campi {})".format(','.join(conf.LIST_FIELD_NAMES_LONG)))
     
         list_argument_group.add_argument("--full", "-f",
             dest="list_field_names",
             action="store_const",
             const=conf.LIST_FIELD_NAMES_FULL,
             default=default_list_field_names,
-            help="lista lunga (mostra i tutti i campi: {}".format(','.join(conf.LIST_FIELD_NAMES_FULL)))
+            help="lista lunga (mostra i tutti i campi: {})".format(','.join(conf.LIST_FIELD_NAMES_FULL)))
     
         list_argument_group.add_argument("--fields", "-o",
             dest="list_field_names",
@@ -665,6 +666,29 @@ e validati.
             default=default_list_field_names,
             help="selezione manuale dei campi, ad esempio 'anno,codice_fiscale,città' [{}]".format('|'.join(all_field_names)))
 
+    for parser in stats_parser, :
+        stats_argument_group = parser.add_mutually_exclusive_group()
+        stats_argument_group.add_argument("--short", "-s",
+            dest="stats_mode",
+            action="store_const",
+            const=conf.STATS_MODE_SHORT,
+            default=default_stats_mode,
+            help="output breve")
+    
+        stats_argument_group.add_argument("--long", "-l",
+            dest="stats_mode",
+            action="store_const",
+            const=conf.STATS_MODE_LONG,
+            default=default_stats_mode,
+            help="output lungo")
+    
+        stats_argument_group.add_argument("--full", "-f",
+            dest="stats_mode",
+            action="store_const",
+            const=conf.STATS_MODE_FULL,
+            default=default_stats_mode,
+            help="output completo")
+    
     ### year filter option
     for parser in list_parser, dump_parser, legacy_parser, report_parser, stats_parser:
         parser.add_argument("--year", "-y",
