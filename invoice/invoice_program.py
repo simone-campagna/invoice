@@ -683,6 +683,11 @@ class InvoiceProgram(object):
                         scan_date_times_l.append(scan_date_times[invoice.doc_filename])
                 db.update('scan_date_times', 'doc_filename', scan_date_times_l, connection=connection)
             for invoice in removed_invoices:
+                self.logger.warning("fattura {f}: il documento è stato rimosso; tutte le fatture dell'anno {y} con numero >= {n} saranno rimosse".format(
+                    f=invoice.doc_filename,
+                    y=invoice.year,
+                    n=invoice.number,
+                ))
                 where = ['year == {}'.format(invoice.year), 'number >= {}'.format(invoice.number)]
                 db.delete('invoices', where=where, connection=connection)
             for invoice in validation_result.failing_invoices().values():
