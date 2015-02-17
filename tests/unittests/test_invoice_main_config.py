@@ -45,6 +45,7 @@ configuration:
   + total                = True
   + stats_group          = 'month'
   + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + show_scan_report     = False
 """
     CONFIG_SHOW_WERROR_ERAISE = """\
 configuration:
@@ -56,6 +57,7 @@ configuration:
   + total                = True
   + stats_group          = 'month'
   + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + show_scan_report     = False
 """
     CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
 configuration:
@@ -67,6 +69,7 @@ configuration:
   + total                = True
   + stats_group          = 'month'
   + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + show_scan_report     = False
 """
     CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
 configuration:
@@ -78,6 +81,7 @@ configuration:
   + total                = True
   + stats_group          = 'month'
   + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + show_scan_report     = False
 """
     CONFIG_SHOW_MIX = """\
 configuration:
@@ -89,6 +93,7 @@ configuration:
   + total                = True
   + stats_group          = 'week'
   + list_field_names     = ('tax_code', 'city', 'number', 'income')
+  + show_scan_report     = True
 """
 
     PATTERNS_CLEAR = """\
@@ -253,7 +258,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,incasso'],
+                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_MIX)
 
@@ -263,7 +268,10 @@ versione del database:  {}
                 logger=self.logger,
                 args=['-d', db_filename.name, 'scan'],
             )
-            self.assertEqual(p.string(), '')
+            self.assertEqual(p.string(), """\
+codice_fiscale   città      numero incasso
+KNTCRK01G01H663X Smallville      5  152.50
+""")
 
             p.reset()
             invoice_main(

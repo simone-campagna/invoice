@@ -42,7 +42,8 @@ class InvoiceDb(Db):
         ('warning_mode', 'error_mode',
          'partial_update', 'remove_orphaned',
          'header', 'total',
-         'stats_group', 'list_field_names'))
+         'stats_group', 'list_field_names',
+         'show_scan_report'))
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
     DEFAULT_CONFIGURATION = Configuration(
         warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
@@ -52,7 +53,8 @@ class InvoiceDb(Db):
         header=True,
         total=True,
         stats_group=conf.DEFAULT_STATS_GROUP,
-        list_field_names=conf.DEFAULT_LIST_FIELD_NAMES)
+        list_field_names=conf.DEFAULT_LIST_FIELD_NAMES,
+        show_scan_report=False)
     
     TABLES = {
         'version': DbTable(
@@ -73,6 +75,7 @@ class InvoiceDb(Db):
                 ('total', Bool()),
                 ('stats_group', Str()),
                 ('list_field_names', StrTuple()),
+                ('show_scan_report', Bool()),
             ),
             dict_type=Configuration,
         ),

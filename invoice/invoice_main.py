@@ -126,6 +126,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_warning_mode = None
     default_error_mode = None
     default_partial_update = None
+    default_show_scan_report = None
     default_remove_orphaned = None
     default_header = None
     default_total = None
@@ -162,7 +163,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     common_parser.add_argument("--dry-run", "-D",
         metavar="on/off",
         type=type_onoff,
-        const=switch_onoff(default_dry_run),
+        const=switch_onoff(False),
         default=default_dry_run,
         nargs='?',
         help="abilita/disabilita la modalità 'dry run' (il database non viene modificato)")
@@ -175,7 +176,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     common_parser.add_argument("--trace", "-t",
         metavar="on/off",
         type=type_onoff,
-        const=switch_onoff(default_trace),
+        const=switch_onoff(False),
         default=default_trace,
         nargs='?',
         help="abilita/disabilita il traceback in caso di errori (per debug)")
@@ -328,7 +329,7 @@ include tutti i file 'docs/*.doc', poi fra questi scarta tutti i file
                             'warning_mode', 'error_mode',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
-                            'list_field_names', 'stats_group'),
+                            'list_field_names', 'stats_group', 'show_scan_report'),
     )
 
     ### version ###
@@ -392,7 +393,7 @@ supportati sono:
                             'warning_mode', 'error_mode',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
-                            'list_field_names', 'stats_group'),
+                            'list_field_names', 'stats_group', 'show_scan_report'),
     )
 
     ### patterns ###
@@ -464,7 +465,7 @@ Questa rimozione di fatture già scansionate può avvenire in due casi:
     )
     scan_parser.set_defaults(
         function_name="program_scan",
-        function_arguments=('warning_mode', 'error_mode', 'remove_orphaned', 'partial_update'),
+        function_arguments=('warning_mode', 'error_mode', 'remove_orphaned', 'partial_update', 'show_scan_report'),
     )
 
     ### clear_parser ###
@@ -650,7 +651,7 @@ e validati.
             dest="header",
             metavar="on/off",
             type=type_onoff,
-            const=switch_onoff(default_header),
+            const=switch_onoff(False),
             default=default_header,
             nargs='?',
             help="abilita/disabilita l'header")
@@ -770,7 +771,7 @@ e validati.
             dest="total",
             metavar="on/off",
             type=type_onoff,
-            const=switch_onoff(default_total),
+            const=switch_onoff(False),
             default=default_total,
             nargs='?',
             help="abilita/disabilita il totale per l'intero periodo")
@@ -813,7 +814,7 @@ e validati.
         parser.add_argument("--remove-orphaned", "-O",
             metavar="on/off",
             type=type_onoff,
-            const=switch_onoff(default_remove_orphaned),
+            const=switch_onoff(False),
             default=default_remove_orphaned,
             nargs='?',
             help="abilita/disabilita la rimozione dal database le fatture 'orphane', ovvero quelle il cui documento è stato rimosso dal disco")
@@ -821,10 +822,18 @@ e validati.
         parser.add_argument("--partial-update", "-U",
             metavar="on/off",
             type=type_onoff,
-            const=switch_onoff(default_partial_update),
+            const=switch_onoff(False),
             default=default_partial_update,
             nargs='?',
             help="abilita/disabilita l'update parziale del database (in caso di errori di validazione, l'update parziale fa in modo che le fatture corrette vengano comunque archiviate)")
+
+        parser.add_argument("--show-scan-report", "-b",
+            metavar="on/off",
+            type=type_onoff,
+            const=switch_onoff(False),
+            default=default_show_scan_report,
+            nargs='?',
+            help="abilita/disabilita la stampa dell'ultima fattura per ciascun anno")
 
     ### patterns option
     for parser in init_parser, legacy_parser:

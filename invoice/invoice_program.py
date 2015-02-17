@@ -108,6 +108,7 @@ class InvoiceProgram(object):
                                 total=True,
                                 list_field_names=None,
                                 stats_group=None,
+                                show_scan_report=None,
                                 reset=False):
         self.impl_config(
             warning_mode=warning_mode,
@@ -118,6 +119,7 @@ class InvoiceProgram(object):
             total=total,
             list_field_names=list_field_names,
             stats_group=stats_group,
+            show_scan_report=show_scan_report,
             reset=reset,
         )
         return 0
@@ -126,12 +128,13 @@ class InvoiceProgram(object):
         self.impl_patterns(reset=reset, patterns=patterns)
         return 0
 
-    def program_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=True):
+    def program_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=True, show_scan_report=True):
         validation_result, invoice_collection = self.impl_scan(
             warning_mode=warning_mode,
             error_mode=error_mode,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
+            show_scan_report=show_scan_report,
         )
         if validation_result.num_errors():
             failing_invoices = InvoiceCollection(validation_result.filter_failing_invoices(invoice_collection))
@@ -213,6 +216,7 @@ class InvoiceProgram(object):
                            total=True,
                            stats_group=None,
                            list_field_names=None,
+                           show_scan_report=None,
                            reset=False):
         if list_field_names is None:
             lsit_field_names = conf.DEFAULT_LIST_FIELD_NAMES
@@ -229,6 +233,7 @@ class InvoiceProgram(object):
             total=total,
             list_field_names=list_field_names,
             stats_group=stats_group,
+            show_scan_report=show_scan_report,
         )
         configuration = self.db.store_configuration(configuration)
         #self.show_configuration(configuration)
@@ -258,6 +263,7 @@ class InvoiceProgram(object):
                              total=True,
                              list_field_names=None,
                              stats_group=None,
+                             show_scan_report=None,
                              reset=False):
         self.db.check()
         if reset:
@@ -272,6 +278,7 @@ class InvoiceProgram(object):
             total=total,
             list_field_names=list_field_names,
             stats_group=stats_group,
+            show_scan_report=show_scan_report,
         )
         configuration = self.db.store_configuration(configuration)
         self.show_configuration(configuration)
@@ -318,7 +325,6 @@ class InvoiceProgram(object):
 
     def impl_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None, order_field_names=None):
         self.db.check()
-        list_field_names = self.db.get_config_option('list_field_names', list_field_names)
         if filters is None:
             filters = ()
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters, date_from=date_from, date_to=date_to)
@@ -586,8 +592,9 @@ class InvoiceProgram(object):
                 traceback.print_exc()
             self.logger.error("{}: {}\n".format(type(err).__name__, err))
 
-    def impl_scan(self, warning_mode=None, error_mode=None, partial_update=None, remove_orphaned=None):
+    def impl_scan(self, warning_mode=None, error_mode=None, partial_update=None, remove_orphaned=None, show_scan_report=None):
         self.db.check()
+        show_scan_report = self.db.get_config_option('show_scan_report', show_scan_report)
         found_doc_filenames = set()
         db = self.db
         file_date_times = FileDateTimes()
@@ -694,6 +701,13 @@ class InvoiceProgram(object):
                 where = ['year == {}'.format(invoice.year), 'number == {}'.format(invoice.number)]
                 db.delete('invoices', where=where, connection=connection)
                     
+            if show_scan_report:
+                invoice_collection = self.db.load_invoice_collection()
+                invoice_collection.sort()
+                last_invoice_of_the_year = collections.OrderedDict()
+                for invoice in invoice_collection:
+                    last_invoice_of_the_year[invoice.year] = invoice
+                self.list_invoice_collection(InvoiceCollection(last_invoice_of_the_year.values()), list_field_names=None, header=None, order_field_names=None)
         return validation_result, updated_invoice_collection
 
     ## functions
@@ -779,7 +793,8 @@ class InvoiceProgram(object):
             validation_result.num_warnings()))
         return validation_result
 
-    def list_invoice_collection(self, invoice_collection, list_field_names, header=None, order_field_names=None):
+    def list_invoice_collection(self, invoice_collection, list_field_names=None, header=None, order_field_names=None):
+        list_field_names = self.db.get_config_option('list_field_names', list_field_names)
         header = self.db.get_config_option('header', header)
         invoice_collection.sort()
         invoices = list(invoice_collection)
@@ -911,6 +926,7 @@ anno                       {year}
                               total=True,
                               stats_group=None,
                               list_field_names=None,
+                              show_scan_report=None,
                               reset=False):
         self.impl_init(
             patterns=patterns,
@@ -922,6 +938,7 @@ anno                       {year}
             total=total,
             list_field_names=list_field_names,
             stats_group=stats_group,
+            show_scan_report=show_scan_report,
             reset=reset,
         )
         return 0

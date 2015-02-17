@@ -26,7 +26,7 @@ import abc
 import collections
 import inspect
 
-from .database.db_types import Int, Path, Bool
+from .database.db_types import Int, Path, Bool, Str, StrTuple
 from .database.db_table import DbTable
 
 from .version import Version, VERSION
@@ -145,6 +145,79 @@ class Upgrader_Major_Minor(Upgrader):
         else:
             return None
 
+class Upgrader_v2_1_x__v_2_2_0(Upgrader_Major_Minor):
+    VERSION_FROM_MAJOR_MINOR = Version(2, 1, None)
+    VERSION_TO_MAJOR_MINOR = Version(2, 2, 0)
+    Configuration_v2_1_x = collections.namedtuple(
+        'Configuration',
+        ('warning_mode', 'error_mode',
+         'partial_update', 'remove_orphaned',
+         'header', 'total',
+         'stats_group', 'list_field_names'))
+    CONFIGURATION_TABLE_v2_1_x = DbTable(
+        fields=(
+            ('warning_mode', Str()),
+            ('error_mode', Str()),
+            ('remove_orphaned', Bool()),
+            ('partial_update', Bool()),
+            ('header', Bool()),
+            ('total', Bool()),
+            ('stats_group', Str()),
+            ('list_field_names', StrTuple()),
+        ),
+        dict_type=Configuration_v2_1_x,
+    )
+    Configuration_v2_2_0 = collections.namedtuple(
+        'Configuration',
+        ('warning_mode', 'error_mode',
+         'partial_update', 'remove_orphaned',
+         'header', 'total',
+         'stats_group', 'list_field_names',
+         'show_scan_report'))
+    CONFIGURATION_TABLE_v2_2_0 = DbTable(
+        fields=(
+            ('warning_mode', Str()),
+            ('error_mode', Str()),
+            ('remove_orphaned', Bool()),
+            ('partial_update', Bool()),
+            ('header', Bool()),
+            ('total', Bool()),
+            ('stats_group', Str()),
+            ('list_field_names', StrTuple()),
+            ('show_scan_report', Bool()),
+        ),
+        dict_type=Configuration_v2_1_x,
+    )
+    def impl_downgrade(self, db, version_from, version_to, connection=None):
+        with db.connect(connection) as connection:
+            cursor = connection.cursor()
+            sql = """SELECT * FROM configuration;"""
+            v_list = list(db.execute(cursor, sql))
+            db.drop('configuration', connection=connection)
+            db.create_table('configuration', self.CONFIGURATION_TABLE_v2_1_x.fields, connection=connection)
+            field_names = self.Configuration_v2_1_x._fields
+            sql = """INSERT INTO configuration ({field_names}) VALUES ({placeholders});""".format(
+                field_names=', '.join(field_names),
+                placeholders=', '.join('?' for field in field_names),
+            )
+            for v in v_list:
+                db.execute(cursor, sql, v[:-1])
+        
+    def impl_upgrade(self, db, version_from, version_to, connection=None):
+        with db.connect(connection) as connection:
+            cursor = connection.cursor()
+            sql = """SELECT * FROM configuration;"""
+            values = list(db.execute(cursor, sql))[-1]
+            db.drop('configuration', connection=connection)
+            db.create_table('configuration', self.CONFIGURATION_TABLE_v2_2_0.fields, connection=connection)
+            values +=  (False, )
+            field_names = self.Configuration_v2_2_0._fields
+            sql = """INSERT INTO configuration ({field_names}) VALUES ({placeholders});""".format(
+                field_names=', '.join(field_names),
+                placeholders=', '.join('?' for field in field_names),
+            )
+            db.execute(cursor, sql, values)
+
 class Upgrader_v2_0_x__v_2_1_0(Upgrader_Major_Minor):
     VERSION_FROM_MAJOR_MINOR = Version(2, 0, None)
     VERSION_TO_MAJOR_MINOR = Version(2, 1, 0)
@@ -173,18 +246,17 @@ class Upgrader_v2_0_x__v_2_1_0(Upgrader_Major_Minor):
                 p_list.append((Path.db_from(pattern), Bool.db_from(skip)))
             db.drop('patterns', connection=connection)
             db.create_table('patterns', self.PATTERNS_TABLE_v2_0_x.fields, connection=connection)
-            values = []
+            sql = """INSERT INTO patterns (pattern) VALUES (?);"""
             for pattern, skip in p_list:
                 if not skip:
-                    values.append((Path.db_to(pattern), ))
-            sql = """INSERT INTO patterns (pattern) VALUES (?);"""
-            db.execute(cursor, sql, *values)
+                    values = (Path.db_to(pattern), )
+                    db.execute(cursor, sql, values)
         
     def impl_upgrade(self, db, version_from, version_to, connection=None):
         with db.connect(connection) as connection:
+            cursor = connection.cursor()
             sql = """SELECT pattern FROM patterns;"""
             p_list = []
-            cursor = connection.cursor()
             for pattern, in db.execute(cursor, sql):
                 p_list.append(Path.db_from(pattern))
             db.drop('patterns', connection=connection)
@@ -194,6 +266,7 @@ class Upgrader_v2_0_x__v_2_1_0(Upgrader_Major_Minor):
                 values.append((Path.db_to(p), Bool.db_to(False)))
             sql = """INSERT INTO patterns (pattern, skip) VALUES (?, ?);"""
             db.execute(cursor, sql, *values)
+
 
 class Upgrader_Patch(Upgrader):
     def upgrade_accepts(self, version_from, version_to):
