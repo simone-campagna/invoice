@@ -32,8 +32,8 @@ from .invoice_collection import InvoiceCollection
 from .database.db import Db, DbError
 from .database.db_table import DbTable
 from .database.db_types import Str, Int, Float, Date, DateTime, Path, Bool, StrTuple
+from .database.upgrade.upgrader import Upgrader
 from .validation_result import ValidationResult
-from .upgrade import Upgrader
 
 class InvoiceDb(Db):
     Pattern = collections.namedtuple('Pattern', ('pattern', 'skip'))

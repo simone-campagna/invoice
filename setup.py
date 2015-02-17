@@ -46,6 +46,7 @@ setup(
     packages = [
         'invoice',
         'invoice.database',
+        'invoice.database.upgrade',
         'invoice.ee',
     ],
     scripts = scripts,

@@ -36,7 +36,8 @@ from invoice.invoice_program import InvoiceProgram
 from invoice.database.db_types import Path
 from invoice.string_printer import StringPrinter
 from invoice.version import Version, VERSION
-from invoice.upgrade import Upgrader
+from invoice.database.upgrade import *
+from invoice.database.upgrade.upgrader import Upgrader
 
 class TestInvoiceProgramUpgrade(unittest.TestCase):
     def setUp(self):
