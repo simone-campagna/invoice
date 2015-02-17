@@ -103,7 +103,7 @@ class InvoiceProgram(object):
     def program_config(self, *, warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                                 error_mode=ValidationResult.ERROR_MODE_DEFAULT,
                                 partial_update=True,
-                                remove_orphaned=False,
+                                remove_orphaned=True,
                                 header=True,
                                 total=True,
                                 list_field_names=None,
@@ -126,7 +126,7 @@ class InvoiceProgram(object):
         self.impl_patterns(reset=reset, patterns=patterns)
         return 0
 
-    def program_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=False):
+    def program_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=True):
         validation_result, invoice_collection = self.impl_scan(
             warning_mode=warning_mode,
             error_mode=error_mode,
@@ -208,7 +208,7 @@ class InvoiceProgram(object):
                            warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                            error_mode=ValidationResult.ERROR_MODE_DEFAULT,
                            partial_update=True,
-                           remove_orphaned=False,
+                           remove_orphaned=True,
                            header=True,
                            total=True,
                            stats_group=None,
@@ -253,7 +253,7 @@ class InvoiceProgram(object):
     def impl_config(self, *, warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                              error_mode=ValidationResult.ERROR_MODE_DEFAULT,
                              partial_update=True,
-                             remove_orphaned=False,
+                             remove_orphaned=True,
                              header=True,
                              total=True,
                              list_field_names=None,
@@ -277,7 +277,7 @@ class InvoiceProgram(object):
         self.show_configuration(configuration)
 
 
-    def impl_patterns(self, *, reset, patterns, partial_update=True, remove_orphaned=False):
+    def impl_patterns(self, *, reset, patterns, partial_update=True, remove_orphaned=True):
         self.db.check()
         if reset:
             self.db.clear('patterns')
@@ -592,7 +592,8 @@ class InvoiceProgram(object):
         db = self.db
         file_date_times = FileDateTimes()
         updated_invoice_collection = InvoiceCollection()
-        removed_doc_filenames = []
+        removed_invoices = []
+        validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
         with db.connect() as connection:
             configuration = db.load_configuration(connection)
             if remove_orphaned is None:
@@ -629,7 +630,7 @@ class InvoiceProgram(object):
                 else:
                     to_update = False
                 if to_remove:
-                    removed_doc_filenames.append(invoice.doc_filename)
+                    removed_invoices.append(invoice)
                 else:
                     if to_update:
                         result.append((True, invoice.doc_filename))
@@ -640,7 +641,6 @@ class InvoiceProgram(object):
             for doc_filename in found_doc_filenames.difference(scanned_doc_filenames):
                 result.append((False, doc_filename))
 
-            validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
             if result:
                 invoice_reader = InvoiceReader(logger=self.logger)
                 new_invoices = []
@@ -670,7 +670,7 @@ class InvoiceProgram(object):
                         #self.validate_invoice_collection(partial_validation_result, partially_updated_invoice_collection)
                         #if partial_validation_result.num_errors():
                         #    raise InvoicePartialUpdateError("validation of partial invoice collection failed")
-                        if old_invoices or new_invoices or removed_doc_filenames:
+                        if old_invoices or new_invoices or removed_invoices:
                             self.logger.warning(message + ' - update parziale')
                 scan_date_times_l = []
                 if old_invoices:
@@ -682,9 +682,13 @@ class InvoiceProgram(object):
                     for invoice in new_invoices:
                         scan_date_times_l.append(scan_date_times[invoice.doc_filename])
                 db.update('scan_date_times', 'doc_filename', scan_date_times_l, connection=connection)
-            if removed_doc_filenames:
-                for doc_filename in removed_doc_filenames:
-                    db.delete('invoices', '''doc_filename == {!r}'''.format(doc_filename), connection=connection)
+            for invoice in removed_invoices:
+                where = ['year == {}'.format(invoice.year), 'number >= {}'.format(invoice.number)]
+                db.delete('invoices', where=where, connection=connection)
+            for invoice in validation_result.failing_invoices().values():
+                where = ['year == {}'.format(invoice.year), 'number == {}'.format(invoice.number)]
+                db.delete('invoices', where=where, connection=connection)
+                    
         return validation_result, updated_invoice_collection
 
     ## functions
@@ -764,7 +768,7 @@ class InvoiceProgram(object):
                     prev_doc, prev_date = invoice.doc_filename, invoice.date
 
         
-        self.logger.debug("validation of {} invoices completed with {} errors and {} warnings".format(
+        self.logger.debug("validazione di {} fattura completata con {} errori e {} warning".format(
             len(invoice_collection),
             validation_result.num_errors(),
             validation_result.num_warnings()))

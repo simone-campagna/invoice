@@ -37,7 +37,7 @@ class ValidationResult(object):
 
     Entry = collections.namedtuple('Entry', ('exc_type', 'message'))
     def __init__(self, logger, warning_mode=WARNING_MODE_DEFAULT, error_mode=ERROR_MODE_DEFAULT):
-        self._failing_invoices = set()
+        self._failing_invoices = dict()
         self.logger = logger
         self._errors = collections.OrderedDict()
         self._warnings = collections.OrderedDict()
@@ -90,13 +90,13 @@ class ValidationResult(object):
 
     def impl_add_critical(self, invoice, exc_type, message):
         self._errors.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
-        self._failing_invoices.add(invoice.doc_filename)
+        self._failing_invoices[invoice.doc_filename] = invoice
         self.logger.critical(message)
         raise exc_type(message)
 
     def impl_add_error(self, invoice, exc_type, message):
         self._errors.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
-        self._failing_invoices.add(invoice.doc_filename)
+        self._failing_invoices[invoice.doc_filename] = invoice
         self.logger.error(message)
 
     def impl_add_warning(self, invoice, exc_type, message):

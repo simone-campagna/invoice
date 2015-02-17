@@ -370,8 +370,6 @@ supportati sono:
    comunque nel database le fatture che non contengono errori;
  * remove_orphaned[={ro}]: se il documento relativo ad una fattura è
    stato cancellato da disco, viene eliminato il dato dal database
-   (questo parametro non è modificabile in quanto la funzionalità non è
-   completamente implementata)
  * header[={hd}]: mostra un header per i comandi 'list' e 'stats'
  * total[={tt}]: mostra la riga del TOTALE per il comando 'stats'
  * stats_group[={sg}]: raggruppamento preferito per il comando 'stats'
@@ -442,6 +440,26 @@ Le fatture lette vengono validate per riconoscere tipici errori, come:
 Se la validazione ha successo, le fatture vengono archiviate nel
 database; alle successive scansioni non saranno lette, a meno che
 il relativo DOC file non sia stato modificato.
+
+Durante la validazione è possibile che vengano rimosse alcune fatture
+già scansionate dal database: infatti %(prog)s tenta di mantenere il
+database in sync con i documenti registrati sul disco.
+Questa rimozione di fatture già scansionate può avvenire in due casi:
+1) un documento già scansionato è stato modificato, ed il nuovo
+   documento genera errori: in tal caso, tutte le fatture che a seguito
+   della modifica non sono più validate vengono rimosse dal database.
+   Ad esempio:
+   - il codice fiscale è stato modificato, ed il nuovo codice fiscale
+     non è accettabile: la fattura viene scartata, e, come conseguenza
+     del buco creatosi nella numerazione progressiva, tutte le
+     successive fatture dello stesso anno vengono scartate;
+   - la data viene modificata con una data successiva a quella della
+     fattura seguente: in tal caso la fattura stessa viene aggiornata,
+     ma tutte le fatture seguenti dello stesso anno vengono rimosse;
+2) un documento già scansionato viene rimosso dal disco, e l'opzione
+   'remove_orphaned' è abilitata: in tal caso, la fattura stessa e tutte
+   le successive fatture per lo stesso anno vengono rimosse dal
+   database.
 """,
     )
     scan_parser.set_defaults(
@@ -792,14 +810,13 @@ e validati.
 
     ### partial_update option
     for parser in init_parser, config_parser, scan_parser:
-        #parser.add_argument("--remove-orphaned", "-O",
-        #    metavar="on/off",
-        #    type=type_onoff,
-        #    const=switch_onoff(default_remove_orphaned),
-        #    default=default_remove_orphaned,
-        #    nargs='?',
-        #    help="abilita/disabilita la rimozione dal database le fatture 'orphane', ovvero quelle il cui documento è stato rimosso dal disco")
-        parser.set_defaults(remove_orphaned=False)
+        parser.add_argument("--remove-orphaned", "-O",
+            metavar="on/off",
+            type=type_onoff,
+            const=switch_onoff(default_remove_orphaned),
+            default=default_remove_orphaned,
+            nargs='?',
+            help="abilita/disabilita la rimozione dal database le fatture 'orphane', ovvero quelle il cui documento è stato rimosso dal disco")
 
         parser.add_argument("--partial-update", "-U",
             metavar="on/off",

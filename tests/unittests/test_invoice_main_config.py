@@ -40,7 +40,7 @@ configuration:
   + warning_mode         = 'ignore'
   + error_mode           = 'ignore'
   + partial_update       = True
-  + remove_orphaned      = False
+  + remove_orphaned      = True
   + header               = True
   + total                = True
   + stats_group          = 'month'
@@ -51,7 +51,7 @@ configuration:
   + warning_mode         = 'error'
   + error_mode           = 'raise'
   + partial_update       = True
-  + remove_orphaned      = False
+  + remove_orphaned      = True
   + header               = True
   + total                = True
   + stats_group          = 'month'
@@ -62,7 +62,7 @@ configuration:
   + warning_mode         = 'log'
   + error_mode           = 'log'
   + partial_update       = True
-  + remove_orphaned      = False
+  + remove_orphaned      = True
   + header               = True
   + total                = True
   + stats_group          = 'month'
@@ -73,7 +73,7 @@ configuration:
   + warning_mode         = 'log'
   + error_mode           = 'log'
   + partial_update       = False
-  + remove_orphaned      = False
+  + remove_orphaned      = True
   + header               = True
   + total                = True
   + stats_group          = 'month'
@@ -84,7 +84,7 @@ configuration:
   + warning_mode         = 'log'
   + error_mode           = 'log'
   + partial_update       = True
-  + remove_orphaned      = False
+  + remove_orphaned      = True
   + header               = True
   + total                = True
   + stats_group          = 'week'
@@ -396,7 +396,6 @@ KNTCRK01G01H663X Smallville         5  152.50
                 logger=self.logger,
                 args=['-d', db_filename.name, 'patterns', '--clear'],
             )
-
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_CLEAR)
 
     def test_invoice_main_patterns_warning(self):
@@ -417,6 +416,5 @@ KNTCRK01G01H663X Smallville         5  152.50
                 logger=self.logger,
                 args=['-d', db_filename.name, 'patterns', '--clear'],
             )
-
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_CLEAR)
 

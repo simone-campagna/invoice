@@ -47,7 +47,7 @@ class InvoiceDb(Db):
     DEFAULT_CONFIGURATION = Configuration(
         warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
         error_mode=ValidationResult.ERROR_MODE_DEFAULT,
-        remove_orphaned=False,
+        remove_orphaned=True,
         partial_update=True,
         header=True,
         total=True,
@@ -205,7 +205,6 @@ END"""
                     value = getattr(default_configuration, field)
                 data[field] = value
             configuration = self.Configuration(**data)
-            self.warn_remove_orphaned(configuration.remove_orphaned)
             self.write('configuration', [configuration], connection=connection)
         return configuration
 
@@ -224,7 +223,6 @@ END"""
                 configuration = self.DEFAULT_CONFIGURATION
             else:
                 configuration = configurations[-1]
-        self.warn_remove_orphaned(configuration.remove_orphaned)
         return configuration
 
     def store_invoice_collection(self, invoice_collection, connection=None): # pragma: no cover
@@ -252,10 +250,6 @@ END"""
                 invoice_collection.add(invoice)
         return invoice_collection
                 
-    def warn_remove_orphaned(self, remove_orphaned):
-        if remove_orphaned:
-            self.logger.warning("l'opzione remove_orphaned è pericolosa, in quanto può compromettere la validazione del database!")
-
     def get_config_option(self, option, value, connection=None):
         if value is None:
             if self._configuration is None:

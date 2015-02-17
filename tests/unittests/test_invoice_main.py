@@ -339,69 +339,6 @@ WNYBRC01G01H663S 2014      4
 WNYBRC01G01H663S 2014      1
 """)
 
-    def test_invoice_main_err(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
-            p = StringPrinter()
-
-            p.reset()
-            invoice_main(
-                printer=p,
-                logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
-            )
-            self.assertEqual(p.string(), '')
-
-            p.reset()
-            invoice_main(
-                printer=p,
-                logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
-            )
-            self.assertEqual(p.string(), '')
-
-            p.reset()
-            invoice_main(
-                printer=p,
-                logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number'],
-            )
-            self.assertEqual(p.string(), """\
-codice_fiscale   anno numero
-WNYBRC01G01H663S 2014      1
-PRKPRT01G01H663M 2014      2
-BNNBRC01G01H663S 2014      3
-WNYBRC01G01H663S 2014      4
-KNTCRK01G01H663X 2014      5
-""")
-
-    def test_invoice_main_err_partial_update_off(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
-            p = StringPrinter()
-
-            p.reset()
-            invoice_main(
-                printer=p,
-                logger=self.logger,
-                args=['-d', db_filename.name, 'init', '--partial-update=off', os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
-            )
-            self.assertEqual(p.string(), '')
-
-            p.reset()
-            invoice_main(
-                printer=p,
-                logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
-            )
-            self.assertEqual(p.string(), '')
-
-            p.reset()
-            invoice_main(
-                printer=p,
-                logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--header=off'],
-            )
-            self.assertEqual(p.string(), '')
-
     def test_invoice_main_dry_run(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = StringPrinter()
