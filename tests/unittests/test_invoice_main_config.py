@@ -269,6 +269,8 @@ versione del database:  {}
                 args=['-d', db_filename.name, 'scan'],
             )
             self.assertEqual(p.string(), """\
+ultima fattura inserita per ciascun anno:
+-----------------------------------------
 codice_fiscale   città      numero incasso
 KNTCRK01G01H663X Smallville      5  152.50
 """)

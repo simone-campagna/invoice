@@ -136,18 +136,6 @@ class InvoiceProgram(object):
             remove_orphaned=remove_orphaned,
             show_scan_report=show_scan_report,
         )
-        if validation_result.num_errors():
-            failing_invoices = InvoiceCollection(validation_result.filter_failing_invoices(invoice_collection))
-            max_errors = min(5, len(failing_invoices))
-            self.logger.error("le prime {} fatture contenenti errori sono:".format(max_errors))
-            failing_invoices.sort()
-            for c, invoice in enumerate(failing_invoices):
-                self.logger.error(" {:2d}) {!r}".format(c, invoice.doc_filename))
-                errors = validation_result.errors().get(invoice.doc_filename, [])
-                for error in errors:
-                    self.logger.error(" {:2s}  {}".format('', error.message))
-                if (c + 1) >= max_errors:
-                    break
         return validation_result.num_errors()
 
     def program_clear(self):
@@ -701,13 +689,37 @@ class InvoiceProgram(object):
                 where = ['year == {}'.format(invoice.year), 'number == {}'.format(invoice.number)]
                 db.delete('invoices', where=where, connection=connection)
                     
+            if validation_result.num_errors():
+                failing_invoices = InvoiceCollection(validation_result.failing_invoices().values())
+                failing_invoices.sort()
+                max_errors = min(5, len(failing_invoices))
+                self.logger.error("=" * 72)
+                if max_errors > 0:
+                    if max_errors == 1:
+                        self.logger.error("la prima {} fattura contenente errori è:".format(max_errors))
+                    else:
+                        self.logger.error("le prime {} fatture contenenti errori sono:".format(max_errors))
+                    failing_invoices.sort()
+                    for c, invoice in enumerate(failing_invoices):
+                        self.logger.error(" {:2d}) {!r}".format(c, invoice.doc_filename))
+                        errors = validation_result.errors().get(invoice.doc_filename, [])
+                        for error in errors:
+                            self.logger.error(" {:2s}  {}".format('', error.message))
+                        if (c + 1) >= max_errors:
+                            break
+
             if show_scan_report:
                 invoice_collection = self.db.load_invoice_collection()
                 invoice_collection.sort()
                 last_invoice_of_the_year = collections.OrderedDict()
                 for invoice in invoice_collection:
                     last_invoice_of_the_year[invoice.year] = invoice
+                if validation_result.num_errors():
+                    self.printer("")
+                self.printer("ultima fattura inserita per ciascun anno:")
+                self.printer("-----------------------------------------")
                 self.list_invoice_collection(InvoiceCollection(last_invoice_of_the_year.values()), list_field_names=None, header=None, order_field_names=None)
+
         return validation_result, updated_invoice_collection
 
     ## functions
