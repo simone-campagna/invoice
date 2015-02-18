@@ -153,44 +153,44 @@ anno                       2012
 """
 
     STATS_OUTPUT_YEAR = """\
-anno        da:         a: #clienti #fatture incasso %incasso
-2014 2014-01-01 2014-12-31        4        5  433.00  100.00%
+anno        da:         a: clienti fatture incasso %incasso
+2014 2014-01-01 2014-12-31       4       5  433.00  100.00%
 """
 
     STATS_OUTPUT_YEAR_TOTAL = """\
-anno          da:         a: #clienti #fatture incasso %incasso
-2014   2014-01-01 2014-12-31        4        5  433.00  100.00%
-TOTALE                              4        5  433.00  100.00%
+anno          da:         a: clienti fatture incasso %incasso
+2014   2014-01-01 2014-12-31       4       5  433.00  100.00%
+TOTALE                             4       5  433.00  100.00%
 """
     STATS_OUTPUT_MONTH = """\
-mese           da:         a: #clienti #fatture incasso %incasso
-2014-01 2014-01-01 2014-01-31        4        5  433.00  100.00%
+mese           da:         a: clienti fatture incasso %incasso
+2014-01 2014-01-01 2014-01-31       4       5  433.00  100.00%
 """
 
     STATS_OUTPUT_MONTH_TOTAL = STATS_OUTPUT_MONTH + """\
-TOTALE                               4        5  433.00  100.00%
+TOTALE                              4       5  433.00  100.00%
 """
 
     STATS_OUTPUT_WEEK = """\
-settimana        da:         a: #clienti #fatture incasso %incasso
-2014:01   2014-01-01 2014-01-05        2        2  127.50   29.45%
-2014:04   2014-01-20 2014-01-26        2        2  153.00   35.33%
-2014:05   2014-01-27 2014-02-02        1        1  152.50   35.22%
+settimana        da:         a: clienti fatture incasso %incasso
+2014:01   2014-01-01 2014-01-05       2       2  127.50   29.45%
+2014:04   2014-01-20 2014-01-26       2       2  153.00   35.33%
+2014:05   2014-01-27 2014-02-02       1       1  152.50   35.22%
 """
 
     STATS_OUTPUT_WEEK_TOTAL = STATS_OUTPUT_WEEK + """\
-TOTALE                                 4        5  433.00  100.00%
+TOTALE                                4       5  433.00  100.00%
 """
 
     STATS_OUTPUT_DAY = """\
-giorno            da:         a: #clienti #fatture incasso %incasso
-2014-01-03 2014-01-03 2014-01-03        2        2  127.50   29.45%
-2014-01-22 2014-01-22 2014-01-22        1        1  102.00   23.56%
-2014-01-25 2014-01-25 2014-01-25        1        1   51.00   11.78%
-2014-01-29 2014-01-29 2014-01-29        1        1  152.50   35.22%
+giorno            da:         a: clienti fatture incasso %incasso
+2014-01-03 2014-01-03 2014-01-03       2       2  127.50   29.45%
+2014-01-22 2014-01-22 2014-01-22       1       1  102.00   23.56%
+2014-01-25 2014-01-25 2014-01-25       1       1   51.00   11.78%
+2014-01-29 2014-01-29 2014-01-29       1       1  152.50   35.22%
 """
     STATS_OUTPUT_DAY_TOTAL = STATS_OUTPUT_DAY + """\
-TOTALE                                  4        5  433.00  100.00%
+TOTALE                                 4       5  433.00  100.00%
 """
 
     def setUp(self):

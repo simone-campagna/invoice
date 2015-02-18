@@ -448,15 +448,15 @@ class InvoiceProgram(object):
                 cc_total = '--'
             else:
                 cc_field_name = 'client_count'
-                cc_header = '#clienti'
+                cc_header = 'clienti'
                 cc_total = 0
             header_d = {
                 cc_field_name: cc_header,
-                'invoice_count':		'#fatture',
+                'invoice_count':		'fatture',
                 'income':			'incasso',
                 'income_percentage':		'%incasso',
-                'income_bar':			'h_incasso:',
-                'invoice_count_bar':		'h_fatture:',
+                'income_bar':			'h(incasso)',
+                'invoice_count_bar':		'h(fatture)',
             }
             field_names = (cc_field_name, 'invoice_count', 'invoice_count_bar', 'income', 'income_percentage', 'income_bar')
             if stats_mode == conf.STATS_MODE_SHORT:

@@ -34,149 +34,149 @@ from invoice.string_printer import StringPrinter
 
 class Test_invoice_main_stats(unittest.TestCase):
     STATS_YEAR_NO_TOTAL_LONG = """\
-anno        da:         a: #clienti #fatture incasso %incasso
-2014 2014-01-10 2014-01-27        2        2  153.00  100.00%
+anno        da:         a: clienti fatture incasso %incasso
+2014 2014-01-10 2014-01-27       2       2  153.00  100.00%
 """
     STATS_YEAR_TOTAL_LONG = """\
-anno          da:         a: #clienti #fatture incasso %incasso
-2014   2014-01-10 2014-01-27        2        2  153.00  100.00%
-TOTALE                              2        2  153.00  100.00%
+anno          da:         a: clienti fatture incasso %incasso
+2014   2014-01-10 2014-01-27       2       2  153.00  100.00%
+TOTALE                             2       2  153.00  100.00%
 """
     STATS_YEAR_TOTAL_SHORT = """\
-anno   #clienti #fatture incasso %incasso
-2014          2        2  153.00  100.00%
-TOTALE        2        2  153.00  100.00%
+anno   clienti fatture incasso %incasso
+2014         2       2  153.00  100.00%
+TOTALE       2       2  153.00  100.00%
 """
     STATS_YEAR_TOTAL_FULL = """\
-anno          da:         a: #clienti #fatture h_fatture: incasso %incasso h_incasso:
-2014   2014-01-10 2014-01-27        2        2 ##########  153.00  100.00% ##########
-TOTALE                              2        2 --          153.00  100.00% --        
+anno          da:         a: clienti fatture h(fatture) incasso %incasso h(incasso)
+2014   2014-01-10 2014-01-27       2       2 ##########  153.00  100.00% ##########
+TOTALE                             2       2 --          153.00  100.00% --        
 """
     STATS_YEAR_DEFAULT = STATS_YEAR_TOTAL_LONG
 
     STATS_MONTH_NO_TOTAL_LONG = """\
-mese           da:         a: #clienti #fatture incasso %incasso
-2014-01 2014-01-10 2014-01-27        2        2  153.00  100.00%
+mese           da:         a: clienti fatture incasso %incasso
+2014-01 2014-01-10 2014-01-27       2       2  153.00  100.00%
 """
     STATS_MONTH_TOTAL_LONG = STATS_MONTH_NO_TOTAL_LONG + """\
-TOTALE                               2        2  153.00  100.00%
+TOTALE                              2       2  153.00  100.00%
 """
     STATS_MONTH_TOTAL_SHORT = """\
-mese    #clienti #fatture incasso %incasso
-2014-01        2        2  153.00  100.00%
-TOTALE         2        2  153.00  100.00%
+mese    clienti fatture incasso %incasso
+2014-01       2       2  153.00  100.00%
+TOTALE        2       2  153.00  100.00%
 """
     STATS_MONTH_TOTAL_FULL = """\
-mese           da:         a: #clienti #fatture h_fatture: incasso %incasso h_incasso:
-2014-01 2014-01-10 2014-01-27        2        2 ##########  153.00  100.00% ##########
-TOTALE                               2        2 --          153.00  100.00% --        
+mese           da:         a: clienti fatture h(fatture) incasso %incasso h(incasso)
+2014-01 2014-01-10 2014-01-27       2       2 ##########  153.00  100.00% ##########
+TOTALE                              2       2 --          153.00  100.00% --        
 """
     STATS_MONTH_DEFAULT = STATS_MONTH_TOTAL_LONG
 
     STATS_WEEK_NO_TOTAL_LONG = """\
-settimana        da:         a: #clienti #fatture incasso %incasso
-2014:04   2014-01-20 2014-01-26        2        2  153.00  100.00%
+settimana        da:         a: clienti fatture incasso %incasso
+2014:04   2014-01-20 2014-01-26       2       2  153.00  100.00%
 """
     STATS_WEEK_TOTAL_LONG = STATS_WEEK_NO_TOTAL_LONG + """\
-TOTALE                                 2        2  153.00  100.00%
+TOTALE                                2       2  153.00  100.00%
 """
     STATS_WEEK_TOTAL_SHORT = """\
-settimana #clienti #fatture incasso %incasso
-2014:04          2        2  153.00  100.00%
-TOTALE           2        2  153.00  100.00%
+settimana clienti fatture incasso %incasso
+2014:04         2       2  153.00  100.00%
+TOTALE          2       2  153.00  100.00%
 """
     STATS_WEEK_TOTAL_FULL = """\
-settimana        da:         a: #clienti #fatture h_fatture: incasso %incasso h_incasso:
-2014:04   2014-01-20 2014-01-26        2        2 ##########  153.00  100.00% ##########
-TOTALE                                 2        2 --          153.00  100.00% --        
+settimana        da:         a: clienti fatture h(fatture) incasso %incasso h(incasso)
+2014:04   2014-01-20 2014-01-26       2       2 ##########  153.00  100.00% ##########
+TOTALE                                2       2 --          153.00  100.00% --        
 """
     STATS_WEEK_DEFAULT = STATS_WEEK_TOTAL_LONG
 
     STATS_WEEKDAY_NO_TOTAL_LONG = """\
-giorno           da:         a: #clienti #fatture incasso %incasso
-Mercoledì 2014-01-22 2014-01-22        1        1  102.00   66.67%
-Sabato    2014-01-25 2014-01-25        1        1   51.00   33.33%
+giorno           da:         a: clienti fatture incasso %incasso
+Mercoledì 2014-01-22 2014-01-22       1       1  102.00   66.67%
+Sabato    2014-01-25 2014-01-25       1       1   51.00   33.33%
 """
     STATS_WEEKDAY_TOTAL_LONG = STATS_WEEKDAY_NO_TOTAL_LONG + """\
-TOTALE                                 2        2  153.00  100.00%
+TOTALE                                2       2  153.00  100.00%
 """
     STATS_WEEKDAY_TOTAL_SHORT = """\
-giorno    #clienti #fatture incasso %incasso
-Mercoledì        1        1  102.00   66.67%
-Sabato           1        1   51.00   33.33%
-TOTALE           2        2  153.00  100.00%
+giorno    clienti fatture incasso %incasso
+Mercoledì       1       1  102.00   66.67%
+Sabato          1       1   51.00   33.33%
+TOTALE          2       2  153.00  100.00%
 """
     STATS_WEEKDAY_TOTAL_FULL = """\
-giorno           da:         a: #clienti #fatture h_fatture: incasso %incasso h_incasso:
-Mercoledì 2014-01-22 2014-01-22        1        1 ##########  102.00   66.67% ##########
-Sabato    2014-01-25 2014-01-25        1        1 ##########   51.00   33.33% #####     
-TOTALE                                 2        2 --          153.00  100.00% --        
+giorno           da:         a: clienti fatture h(fatture) incasso %incasso h(incasso)
+Mercoledì 2014-01-22 2014-01-22       1       1 ##########  102.00   66.67% ##########
+Sabato    2014-01-25 2014-01-25       1       1 ##########   51.00   33.33% #####     
+TOTALE                                2       2 --          153.00  100.00% --        
 """
     STATS_WEEKDAY_DEFAULT = STATS_WEEKDAY_TOTAL_LONG
 
     STATS_DAY_NO_TOTAL_LONG = """\
-giorno            da:         a: #clienti #fatture incasso %incasso
-2014-01-22 2014-01-22 2014-01-22        1        1  102.00   66.67%
-2014-01-25 2014-01-25 2014-01-25        1        1   51.00   33.33%
+giorno            da:         a: clienti fatture incasso %incasso
+2014-01-22 2014-01-22 2014-01-22       1       1  102.00   66.67%
+2014-01-25 2014-01-25 2014-01-25       1       1   51.00   33.33%
 """
     STATS_DAY_TOTAL_LONG = STATS_DAY_NO_TOTAL_LONG + """\
-TOTALE                                  2        2  153.00  100.00%
+TOTALE                                 2       2  153.00  100.00%
 """
     STATS_DAY_TOTAL_SHORT = """\
-giorno     #clienti #fatture incasso %incasso
-2014-01-22        1        1  102.00   66.67%
-2014-01-25        1        1   51.00   33.33%
-TOTALE            2        2  153.00  100.00%
+giorno     clienti fatture incasso %incasso
+2014-01-22       1       1  102.00   66.67%
+2014-01-25       1       1   51.00   33.33%
+TOTALE           2       2  153.00  100.00%
 """
     STATS_DAY_TOTAL_FULL = """\
-giorno            da:         a: #clienti #fatture h_fatture: incasso %incasso h_incasso:
-2014-01-22 2014-01-22 2014-01-22        1        1 ##########  102.00   66.67% ##########
-2014-01-25 2014-01-25 2014-01-25        1        1 ##########   51.00   33.33% #####     
-TOTALE                                  2        2 --          153.00  100.00% --        
+giorno            da:         a: clienti fatture h(fatture) incasso %incasso h(incasso)
+2014-01-22 2014-01-22 2014-01-22       1       1 ##########  102.00   66.67% ##########
+2014-01-25 2014-01-25 2014-01-25       1       1 ##########   51.00   33.33% #####     
+TOTALE                                 2       2 --          153.00  100.00% --        
 """
     STATS_DAY_DEFAULT = STATS_DAY_TOTAL_LONG
 
     STATS_CLIENT_NO_TOTAL_LONG = """\
-codice_fiscale          da:         a: nome                #fatture incasso %incasso
-BNNBRC01G01H663S 2014-01-22 2014-01-22 Robert Bruce Banner        1  102.00   66.67%
-WNYBRC01G01H663S 2014-01-25 2014-01-25 Bruce Wayne                1   51.00   33.33%
+codice_fiscale          da:         a: nome                fatture incasso %incasso
+BNNBRC01G01H663S 2014-01-22 2014-01-22 Robert Bruce Banner       1  102.00   66.67%
+WNYBRC01G01H663S 2014-01-25 2014-01-25 Bruce Wayne               1   51.00   33.33%
 """
     STATS_CLIENT_TOTAL_LONG = STATS_CLIENT_NO_TOTAL_LONG + """\
-TOTALE                                 --                         2  153.00  100.00%
+TOTALE                                 --                        2  153.00  100.00%
 """
     STATS_CLIENT_TOTAL_SHORT = """\
-codice_fiscale   nome                #fatture incasso %incasso
-BNNBRC01G01H663S Robert Bruce Banner        1  102.00   66.67%
-WNYBRC01G01H663S Bruce Wayne                1   51.00   33.33%
-TOTALE           --                         2  153.00  100.00%
+codice_fiscale   nome                fatture incasso %incasso
+BNNBRC01G01H663S Robert Bruce Banner       1  102.00   66.67%
+WNYBRC01G01H663S Bruce Wayne               1   51.00   33.33%
+TOTALE           --                        2  153.00  100.00%
 """
     STATS_CLIENT_TOTAL_FULL = """\
-codice_fiscale          da:         a: nome                #fatture h_fatture: incasso %incasso h_incasso:
-BNNBRC01G01H663S 2014-01-22 2014-01-22 Robert Bruce Banner        1 ##########  102.00   66.67% ##########
-WNYBRC01G01H663S 2014-01-25 2014-01-25 Bruce Wayne                1 ##########   51.00   33.33% #####     
-TOTALE                                 --                         2 --          153.00  100.00% --        
+codice_fiscale          da:         a: nome                fatture h(fatture) incasso %incasso h(incasso)
+BNNBRC01G01H663S 2014-01-22 2014-01-22 Robert Bruce Banner       1 ##########  102.00   66.67% ##########
+WNYBRC01G01H663S 2014-01-25 2014-01-25 Bruce Wayne               1 ##########   51.00   33.33% #####     
+TOTALE                                 --                        2 --          153.00  100.00% --        
 """
     STATS_CLIENT_DEFAULT = STATS_CLIENT_TOTAL_LONG
 
     STATS_CITY_NO_TOTAL_LONG = """\
-città              da:         a: #clienti #fatture incasso %incasso
-Gotham City 2014-01-25 2014-01-25        1        1   51.00   33.33%
-Greenville  2014-01-22 2014-01-22        1        1  102.00   66.67%
+città              da:         a: clienti fatture incasso %incasso
+Gotham City 2014-01-25 2014-01-25       1       1   51.00   33.33%
+Greenville  2014-01-22 2014-01-22       1       1  102.00   66.67%
 """
     STATS_CITY_TOTAL_LONG = STATS_CITY_NO_TOTAL_LONG + """\
-TOTALE                                   2        2  153.00  100.00%
+TOTALE                                  2       2  153.00  100.00%
 """
     STATS_CITY_TOTAL_SHORT = """\
-città       #clienti #fatture incasso %incasso
-Gotham City        1        1   51.00   33.33%
-Greenville         1        1  102.00   66.67%
-TOTALE             2        2  153.00  100.00%
+città       clienti fatture incasso %incasso
+Gotham City       1       1   51.00   33.33%
+Greenville        1       1  102.00   66.67%
+TOTALE            2       2  153.00  100.00%
 """
     STATS_CITY_TOTAL_FULL = """\
-città              da:         a: #clienti #fatture h_fatture: incasso %incasso h_incasso:
-Gotham City 2014-01-25 2014-01-25        1        1 ##########   51.00   33.33% #####     
-Greenville  2014-01-22 2014-01-22        1        1 ##########  102.00   66.67% ##########
-TOTALE                                   2        2 --          153.00  100.00% --        
+città              da:         a: clienti fatture h(fatture) incasso %incasso h(incasso)
+Gotham City 2014-01-25 2014-01-25       1       1 ##########   51.00   33.33% #####     
+Greenville  2014-01-22 2014-01-22       1       1 ##########  102.00   66.67% ##########
+TOTALE                                  2       2 --          153.00  100.00% --        
 """
     STATS_CITY_DEFAULT = STATS_CITY_TOTAL_LONG
 
