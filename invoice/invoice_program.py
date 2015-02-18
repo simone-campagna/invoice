@@ -606,11 +606,11 @@ class InvoiceProgram(object):
             for scan_date_time in db.read('scan_date_times', connection=connection):
                 doc_filename_d[scan_date_time.doc_filename] = scan_date_time.scan_date_time
 
-            result = []
+            existing_doc_filenames = collections.OrderedDict()
             scanned_doc_filenames = set()
 
             # update scanned invoices
-            invoice_collection = db.load_invoice_collection()
+            invoice_collection = db.load_invoice_collection(connection=connection)
             for invoice in invoice_collection:
                 scanned_doc_filenames.add(invoice.doc_filename)
                 to_remove = False
@@ -628,20 +628,47 @@ class InvoiceProgram(object):
                     removed_invoices.append(invoice)
                 else:
                     if to_update:
-                        result.append((True, invoice.doc_filename))
+                        existing_doc_filenames[invoice.doc_filename] = True
                     else:
                         updated_invoice_collection.add(invoice)
           
+            if removed_invoices:
+                discarded_doc_filenames = set()
+                year_min_numbers = {}
+                for invoice in removed_invoices:
+                    self.logger.warning("fattura {f}: il documento {y}/{n} è stato rimosso".format(
+                        f=invoice.doc_filename,
+                        y=invoice.year,
+                        n=invoice.number,
+                    ))
+                    year_min_numbers.setdefault(invoice.year, []).append(invoice.number)
+                year_min_number = {year: min(min_numbers) for year, min_numbers in year_min_numbers.items()}
+                for year, min_number in year_min_number.items():
+                    self.logger.debug("tutte le fatture dell'anno {y} con numero >= {n} verranno rimosse dal database)".format(
+                        y=year,
+                        n=min_number,
+                    ))
+                    where = ['year == {}'.format(year), 'number >= {}'.format(min_number)]
+                    for invoice in db.read('invoices', where=where, connection=connection):
+                        discarded_doc_filenames.add(invoice.doc_filename)
+                    db.delete('invoices', where=where, connection=connection)
+                # force rescan
+                for doc_filename in discarded_doc_filenames:
+                    existing_doc_filenames[doc_filename] = False
+
             # unscanned invoices
             for doc_filename in found_doc_filenames.difference(scanned_doc_filenames):
-                result.append((False, doc_filename))
+                existing_doc_filenames[doc_filename] = False
 
-            if result:
+            for invoice in removed_invoices:
+                existing_doc_filenames.pop(invoice.doc_filename)
+
+            if existing_doc_filenames:
                 invoice_reader = InvoiceReader(logger=self.logger)
                 new_invoices = []
                 old_invoices = []
                 scan_date_times = collections.OrderedDict()
-                for existing, doc_filename in result:
+                for doc_filename, existing in existing_doc_filenames.items():
                     invoice = invoice_reader(validation_result, doc_filename)
                     updated_invoice_collection.add(invoice)
                     if existing:
@@ -665,7 +692,7 @@ class InvoiceProgram(object):
                         #self.validate_invoice_collection(partial_validation_result, partially_updated_invoice_collection)
                         #if partial_validation_result.num_errors():
                         #    raise InvoicePartialUpdateError("validation of partial invoice collection failed")
-                        if old_invoices or new_invoices or removed_invoices:
+                        if old_invoices or new_invoices:
                             self.logger.warning(message + ' - update parziale')
                 scan_date_times_l = []
                 if old_invoices:
@@ -677,14 +704,6 @@ class InvoiceProgram(object):
                     for invoice in new_invoices:
                         scan_date_times_l.append(scan_date_times[invoice.doc_filename])
                 db.update('scan_date_times', 'doc_filename', scan_date_times_l, connection=connection)
-            for invoice in removed_invoices:
-                self.logger.warning("fattura {f}: il documento è stato rimosso; tutte le fatture dell'anno {y} con numero >= {n} saranno rimosse".format(
-                    f=invoice.doc_filename,
-                    y=invoice.year,
-                    n=invoice.number,
-                ))
-                where = ['year == {}'.format(invoice.year), 'number >= {}'.format(invoice.number)]
-                db.delete('invoices', where=where, connection=connection)
             for invoice in validation_result.failing_invoices().values():
                 where = ['year == {}'.format(invoice.year), 'number == {}'.format(invoice.number)]
                 db.delete('invoices', where=where, connection=connection)
@@ -799,7 +818,7 @@ class InvoiceProgram(object):
                     prev_doc, prev_date = invoice.doc_filename, invoice.date
 
         
-        self.logger.debug("validazione di {} fattura completata con {} errori e {} warning".format(
+        self.logger.debug("validazione di {} fatture completata con {} errori e {} warning".format(
             len(invoice_collection),
             validation_result.num_errors(),
             validation_result.num_warnings()))

@@ -22,10 +22,11 @@ __all__ = [
 
 import collections
 import datetime
+import os
 import re
 import subprocess
 
-from .error import InvoiceDuplicatedLineError
+from .error import InvoiceDuplicatedLineError, InvoiceMissingDocFileError
 from .invoice import Invoice
 from .log import get_default_logger
 from .scanner import Scanner, load_scanner
@@ -53,31 +54,34 @@ class InvoiceReader(object):
         
     def __call__(self, validation_result, doc_filename):
         data = {field: None for field in Invoice._fields}
-        data['doc_filename'] = doc_filename
-        converters = {
-            'year': int,
-            'number': int,
-            'name': self.convert_name,
-            'tax_code': self.convert_tax_code,
-            'city': str,
-            'date': self.convert_date,
-            'income': self.convert_income,
-            'currency': str,
-        }
-        scanner = get_scanner()
-        lines_dict, values_dict = scanner.scan(self.read_text(doc_filename))
         postponed_errors = []
-        for label, lines in lines_dict.items():
-            if len(lines) > 1:
-                message = "fattura {}: linee {!r} duplicate".format(doc_filename, label)
-                postponed_errors.append((
-                    InvoiceDuplicatedLineError,
-                    message))
-                self.logger.error(message + ':')
-                for line in lines:
-                    self.logger.error("  {}: {!r}".format(label, line.strip()))
-            data.update({key: converters[key](val) for key, val in values_dict.items()})
-
+        if os.path.exists(doc_filename):
+            data['doc_filename'] = doc_filename
+            converters = {
+                'year': int,
+                'number': int,
+                'name': self.convert_name,
+                'tax_code': self.convert_tax_code,
+                'city': str,
+                'date': self.convert_date,
+                'income': self.convert_income,
+                'currency': str,
+            }
+            scanner = get_scanner()
+            lines_dict, values_dict = scanner.scan(self.read_text(doc_filename))
+            for label, lines in lines_dict.items():
+                if len(lines) > 1:
+                    message = "fattura {}: linee {!r} duplicate".format(doc_filename, label)
+                    postponed_errors.append((
+                        InvoiceDuplicatedLineError,
+                        message))
+                    self.logger.error(message + ':')
+                    for line in lines:
+                        self.logger.error("  {}: {!r}".format(label, line.strip()))
+                data.update({key: converters[key](val) for key, val in values_dict.items()})
+    
+        else:
+            postponed_errors.append((InvoiceMissingDocFileError, "fattura {}: doc file mancante".format(doc_filename)))
         invoice = Invoice(**data)
         for exc_type, message in postponed_errors:
             validation_result.add_error(invoice, exc_type, message)

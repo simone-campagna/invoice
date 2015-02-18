@@ -28,6 +28,7 @@ from invoice.log import get_null_logger
 from invoice.invoice import Invoice
 from invoice.invoice_reader import InvoiceReader
 from invoice.validation_result import ValidationResult
+from invoice.error import InvoiceMissingDocFileError
 
 class TestInvoiceReader(unittest.TestCase):
     def setUp(self):
@@ -54,3 +55,10 @@ class TestInvoiceReader(unittest.TestCase):
         self.assertEqual(invoice.name, "Bruce Wayne")
         self.assertEqual(invoice.income, 51.0)
         self.assertEqual(invoice.currency, "euro")
+
+    def test_InvoiceReader_missing(self):
+        doc_filename = os.path.normpath(os.path.abspath(os.path.join(self.dirname, '2014_001_bruce_wayne.missing.doc')))
+        invoice_reader = InvoiceReader(logger=self.logger)
+        validation_result = ValidationResult(logger=self.logger, error_mode=ValidationResult.ERROR_MODE_RAISE)
+        with self.assertRaises(InvoiceMissingDocFileError) as cm:
+            invoice = invoice_reader(validation_result, doc_filename)
