@@ -37,6 +37,7 @@ from .validation_result import ValidationResult
 
 class InvoiceDb(Db):
     Pattern = collections.namedtuple('Pattern', ('pattern', 'skip'))
+    Validator = collections.namedtuple('Validator', ('filter_function', 'check_function', 'message'))
     Configuration = collections.namedtuple(
         'Configuration',
         ('warning_mode', 'error_mode',
@@ -107,6 +108,14 @@ class InvoiceDb(Db):
             ),
             dict_type=Invoice,
         ),
+        'validators': DbTable(
+            fields=(
+                ('filter_function', Str()),
+                ('check_function', Str()),
+                ('message', Str()),
+            ),
+            dict_type=Validator,
+        ),
         'scan_date_times': DbTable(
             fields=(
                 ('doc_filename', Str('UNIQUE')),
@@ -155,6 +164,10 @@ DELETE FROM scan_date_times WHERE doc_filename == old.doc_filename;
 END"""
             self.execute(cursor, sql)
             self.write('version', [VERSION], connection=connection)
+
+    @classmethod
+    def make_validator(cls, filter_function, check_function, message):
+        return cls.Validator(filter_function=filter_function, check_function=check_function, message=message)
 
     @classmethod
     def make_pattern(cls, pattern):
@@ -260,5 +273,18 @@ END"""
             value = getattr(self._configuration, option)
         return value
 
+    def load_validators(self, connection=None):
+        validators = []
+        with self.connect(connection) as connection:
+            table_names = self.get_table_names(connection=connection)
+            if 'validators' in table_names:
+                for validator in self.read('validators', connection=connection):
+                    validators.append(validator)
+        return validators
+
+    def store_validators(self, validators, connection=None):
+        with self.connect(connection) as connection:
+            self.write('validators', validators)
+ 
     def upgrade(self):
         Upgrader.full_upgrade(db=self)

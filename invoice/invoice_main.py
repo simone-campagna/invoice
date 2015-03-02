@@ -413,6 +413,22 @@ modifica.
         function_arguments=('patterns', 'reset'),
     )
 
+    ### validators ###
+    validators_parser = add_subparser(subparsers,
+        "validators",
+        parents=(common_parser, ),
+        add_help=False,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""\
+Permette di modificare e visualizzare i validatori utilizzati per
+verificare le fatture.
+""",
+    )
+    validators_parser.set_defaults(
+        function_name="program_validators",
+        function_arguments=('validators', 'reset'),
+    )
+
     ### scan_parser ###
     scan_parser = add_subparser(subparsers,
         "scan",
@@ -803,11 +819,12 @@ e validati.
         action="store_true",
         help='ripristina la configuratione di default')
 
-    patterns_parser.add_argument("--clear", "-c",
-        dest="reset",
-        default=False,
-        action="store_true",
-        help='rimuove tutti i pattern')
+    for parser in patterns_parser, validators_parser:
+        parser.add_argument("--clear", "-c",
+            dest="reset",
+            default=False,
+            action="store_true",
+            help='rimuove tutti i pattern')
 
     ### partial_update option
     for parser in init_parser, config_parser, scan_parser:
@@ -842,7 +859,7 @@ e validati.
             type=type_pattern,
             help='pattern per la ricerca dei DOC delle fatture')
 
-    patterns_parser.add_argument("--add-pattern", "-p",
+    patterns_parser.add_argument("--add-pattern", "-a",
         metavar="P",
         dest="patterns",
         default=[],
@@ -857,6 +874,15 @@ e validati.
         action="append",
         type=lambda x: ('-', type_pattern(x)),
         help='rimuove un pattern per la ricerca dei DOC delle fatture')
+
+    validators_parser.add_argument("--add-validator", "-a",
+        metavar="V",
+        dest="validators",
+        nargs=3,
+        default=[],
+        action="append",
+        type=str,
+        help="aggiunge una funzione di validazione per le fatture (ad esempio --add 'Date(\"2014-01-01\") <= date <= Date(\"2014-12-31\")' 'not date.weekday() in {Weekday[\"Saturday\"], Weekday[\"Sunday\"]}' 'invalid weekday for year 2014')")
 
     ### legacy options
     legacy_parser.add_argument("--disable-validation", "-V",

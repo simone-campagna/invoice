@@ -367,7 +367,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '-p', '!example/*.Doc', '-p', 'example/*.DOC'],
+                args=['-d', db_filename.name, 'patterns', '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
 
@@ -384,7 +384,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '-p', 'example/*.doc'],
+                args=['-d', db_filename.name, 'patterns', '-a', 'example/*.doc'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_DEFAULT)
 

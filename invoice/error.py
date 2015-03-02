@@ -23,6 +23,7 @@ __all__ = [
     'InvoiceDuplicatedLineError',
     'InvoiceMissingDocFileError',
     'InvoiceValidationError',
+    'InvoiceUserValidatorError',
     'InvoiceMultipleNamesError',
     'InvoiceUndefinedFieldError',
     'InvoiceYearError',
@@ -85,4 +86,7 @@ class InvoiceMalformedTaxCodeError(InvoiceTaxCodeError):
     pass
 
 class InvoicePartialUpdateError(InvoiceValidationError):
+    pass
+
+class InvoiceUserValidatorError(InvoiceValidationError):
     pass

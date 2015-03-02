@@ -92,6 +92,8 @@ class Invoice(InvoiceNamedTuple):
             raise InvoiceSyntaxError("funzione filtro {!r} non valida".format(function_source), "funzione filter non valida", function_source, err)
         def filter(invoice):
             d = invoice._asdict()
+            d['Date'] = lambda x: datetime.datetime.strptime(x, '%Y-%m-%d').date()
+            d['Weekday'] = conf.WEEKDAY_NUMBER
             for field_name, name in conf.FIELD_TRANSLATION.items():
                 if field_name != name:
                     d[name] = d[field_name]

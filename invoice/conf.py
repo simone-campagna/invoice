@@ -53,6 +53,7 @@ __all__ = [
     'WEEKDAY',
     'WEEKDAY_TRANSLATION',
     'WEEKDAY_TRANSLATION_DICT',
+    'WEEKDAY_NUMBER',
     'setup',
     'get_rc_dir',
     'get_db_file',
@@ -87,6 +88,11 @@ WEEKDAY_TRANSLATION_DICT = collections.OrderedDict((
 
 WEEKDAY = tuple(WEEKDAY_TRANSLATION_DICT.keys())
 WEEKDAY_TRANSLATION = tuple(WEEKDAY_TRANSLATION_DICT.values())
+WEEKDAY_NUMBER = {}
+for c, (weekday, weekday_translation) in enumerate(WEEKDAY_TRANSLATION_DICT.items()):
+    WEEKDAY_NUMBER[weekday] = c
+    WEEKDAY_NUMBER[weekday_translation] = c
+
 FIELD_NAMES = tuple(FIELD_TRANSLATION.keys())
 REV_FIELD_TRANSLATION = dict(
     (FIELD_TRANSLATION.get(field_name, field_name), field_name) for field_name in FIELD_NAMES
@@ -116,7 +122,7 @@ DEFAULT_STATS_GROUP = STATS_GROUP_MONTH
 
 
 VERSION_MAJOR = 2
-VERSION_MINOR = 2
+VERSION_MINOR = 3
 VERSION_PATCH = 0
 
 VERSION = '{}.{}.{}'.format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)

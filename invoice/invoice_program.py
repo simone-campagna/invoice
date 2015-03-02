@@ -37,7 +37,8 @@ from .error import InvoiceSyntaxError, \
                    InvoiceDuplicatedNumberError, \
                    InvoiceMalformedTaxCodeError, \
                    InvoiceValidationError, \
-                   InvoicePartialUpdateError
+                   InvoicePartialUpdateError, \
+                   InvoiceUserValidatorError
 
 from .invoice_collection import InvoiceCollection
 from .invoice_collection_reader import InvoiceCollectionReader
@@ -100,6 +101,32 @@ class InvoiceProgram(object):
         self.impl_version(upgrade=upgrade)
         return 0
 
+    def program_init(self, *, patterns,
+                              warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                              error_mode=ValidationResult.ERROR_MODE_DEFAULT,
+                              partial_update=True,
+                              remove_orphaned=False,
+                              header=True,
+                              total=True,
+                              stats_group=None,
+                              list_field_names=None,
+                              show_scan_report=None,
+                              reset=False):
+        self.impl_init(
+            patterns=patterns,
+            warning_mode=warning_mode,
+            error_mode=error_mode,
+            partial_update=partial_update,
+            remove_orphaned=remove_orphaned,
+            header=header,
+            total=total,
+            list_field_names=list_field_names,
+            stats_group=stats_group,
+            show_scan_report=show_scan_report,
+            reset=reset,
+        )
+        return 0
+
     def program_config(self, *, warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
                                 error_mode=ValidationResult.ERROR_MODE_DEFAULT,
                                 partial_update=True,
@@ -124,8 +151,12 @@ class InvoiceProgram(object):
         )
         return 0
 
-    def program_patterns(self, *, patterns=False, reset=False):
+    def program_patterns(self, *, patterns, reset=False):
         self.impl_patterns(reset=reset, patterns=patterns)
+        return 0
+
+    def program_validators(self, *, validators, reset=False):
+        self.impl_validators(reset=reset, validators=validators)
         return 0
 
     def program_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=True, show_scan_report=True):
@@ -188,6 +219,13 @@ class InvoiceProgram(object):
         self.printer("patterns:")
         for pattern in self.db.load_patterns():
             self.printer("  + {!r}".format(pattern))
+
+    def show_validators(self):
+        self.printer("validators:")
+        for validator in self.db.load_validators():
+            self.printer("  + filter:  {!r}".format(validator.filter_function))
+            self.printer("    check:   {!r}".format(validator.check_function))
+            self.printer("    message: {!r}".format(validator.message))
 
     def check_patterns(self, patterns):
         non_patterns = self.db.non_patterns(patterns)
@@ -272,7 +310,7 @@ class InvoiceProgram(object):
         self.show_configuration(configuration)
 
 
-    def impl_patterns(self, *, reset, patterns, partial_update=True, remove_orphaned=True):
+    def impl_patterns(self, *, reset, patterns):
         self.db.check()
         if reset:
             self.db.clear('patterns')
@@ -299,6 +337,16 @@ class InvoiceProgram(object):
             for pattern in del_patterns:
                 self.db.delete('patterns', "pattern == {!r}".format(pattern.pattern))
         self.show_patterns(patterns)
+
+    def impl_validators(self, *, reset, validators):
+        self.db.check()
+        if reset:
+            self.db.clear('validators')
+        vlist = []
+        for filter_function, check_function, message in validators:
+            vlist.append(self.db.make_validator(filter_function=filter_function, check_function=check_function, message=message))
+        self.db.write('validators', vlist)
+        self.show_validators()
 
     def impl_clear(self):
         self.db.check()
@@ -560,7 +608,7 @@ class InvoiceProgram(object):
         try:
             if validate:
                 self.logger.debug("validazione di {} fatture...".format(len(invoice_collection)))
-                validation_result = self.validate_invoice_collection(validation_result, invoice_collection)
+                validation_result = self.validate_invoice_collection(validation_result, invoice_collection, user_validators=False)
                 if validation_result.num_errors():
                     self.logger.error("trovati #{} errori!".format(validation_result.num_errors()))
                     return 1
@@ -678,7 +726,7 @@ class InvoiceProgram(object):
                     scan_date_times[invoice.doc_filename] = db.ScanDateTime(
                         doc_filename=invoice.doc_filename,
                         scan_date_time=file_date_times[invoice.doc_filename])
-                self.validate_invoice_collection(validation_result, updated_invoice_collection)
+                self.validate_invoice_collection(validation_result, updated_invoice_collection, user_validators=True)
                 if validation_result.num_errors():
                     message = "validazione fallita - {} errori".format(validation_result.num_errors())
                     if not partial_update:
@@ -758,9 +806,18 @@ class InvoiceProgram(object):
                 invoice_collection = invoice_collection.filter(filter_source)
         return invoice_collection
 
-    def validate_invoice_collection(self, validation_result, invoice_collection):
+    def validate_invoice_collection(self, validation_result, invoice_collection, user_validators=True):
         self.logger.debug("validation of {} invoices...".format(len(invoice_collection)))
         invoice_collection.sort()
+
+        # validators
+        validators = []
+        if user_validators:
+            for validator in self.db.load_validators():
+                validators.append((validator, self.db.Validator(
+                    Invoice.compile_filter_function(validator.filter_function),
+                    Invoice.compile_filter_function(validator.check_function),
+                    validator.message)))
 
         # verify fields definition:
         for invoice in invoice_collection:
@@ -812,12 +869,19 @@ class InvoiceProgram(object):
                     if invoice.date is not None and invoice.date < prev_date:
                         validation_result.add_error(invoice, InvoiceDateError, "fattura {}: la data {} precede quella della precedente fattura {} ({})".format(invoice.doc_filename, invoice.date, prev_doc, prev_date))
                         failed = True
+                for validator, compiled_validator in validators:
+                    if compiled_validator.filter_function(invoice):
+                        if not compiled_validator.check_function(invoice):
+                            validation_result.add_error(invoice, InvoiceUserValidatorError, "fattura {}: {}".format(invoice.doc_filename, validator.message))
+                            failed = True
+                            
+                      
                 if not failed:
                     expected_number += 1
                     numbers.setdefault(invoice.number, []).append(invoice)
                     prev_doc, prev_date = invoice.doc_filename, invoice.date
+                
 
-        
         self.logger.debug("validazione di {} fatture completata con {} errori e {} warning".format(
             len(invoice_collection),
             validation_result.num_errors(),
@@ -947,32 +1011,6 @@ anno                       {year}
                     week_income_percentage=week_income_percentage,
                 ))
         
-
-    def program_init(self, *, patterns,
-                              warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
-                              error_mode=ValidationResult.ERROR_MODE_DEFAULT,
-                              partial_update=True,
-                              remove_orphaned=False,
-                              header=True,
-                              total=True,
-                              stats_group=None,
-                              list_field_names=None,
-                              show_scan_report=None,
-                              reset=False):
-        self.impl_init(
-            patterns=patterns,
-            warning_mode=warning_mode,
-            error_mode=error_mode,
-            partial_update=partial_update,
-            remove_orphaned=remove_orphaned,
-            header=header,
-            total=total,
-            list_field_names=list_field_names,
-            stats_group=stats_group,
-            show_scan_report=show_scan_report,
-            reset=reset,
-        )
-        return 0
 
     def impl_help(self, *, parser_dict, command):
         if not command in parser_dict:
