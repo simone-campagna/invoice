@@ -421,7 +421,22 @@ modifica.
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Permette di modificare e visualizzare i validatori utilizzati per
-verificare le fatture.
+verificare le fatture. Un validatore è composto da tre entità:
+* filtro: una funzione che, applicata ad una fattura, determina
+  se la fattura deve essere validata;
+* check: una funzione che, applicata alle fatture filtrate, deve
+  restituire True; in caso contrario si ha un errore di validazione;
+* message: un messaggio di errore associato al fallimento della
+  validazione.
+
+Ad esempio:
+* filtro: 'Date("2014-01-01") <= invoice.date <= Date("2014-12-31")'
+  -> il validatore sarà applicato a tutte le fatture dell'anno 2014
+* check: 'invoice.date.weekday() < 5'
+  -> se la fattura è stata emessa di sabato (weekday 5) o domenica
+     (weekday 6) si ha un errore
+* messaggio: 'giorno della settimana non valido per il 2014'
+  -> se il check fallisce, viene mostrato questo messaggio
 """,
     )
     validators_parser.set_defaults(
@@ -876,13 +891,13 @@ e validati.
         help='rimuove un pattern per la ricerca dei DOC delle fatture')
 
     validators_parser.add_argument("--add-validator", "-a",
-        metavar="V",
+        metavar="F C M",
         dest="validators",
         nargs=3,
         default=[],
         action="append",
         type=str,
-        help="aggiunge una funzione di validazione per le fatture (ad esempio --add 'Date(\"2014-01-01\") <= date <= Date(\"2014-12-31\")' 'not date.weekday() in {Weekday[\"Saturday\"], Weekday[\"Sunday\"]}' 'invalid weekday for year 2014')")
+        help="aggiunge un validatore per le fatture, composto da una funzione filtro F, una funzione check C ed un messaggio di errore M (ad esempio --add 'Date(\"2014-01-01\") <= date <= Date(\"2014-12-31\")' 'not date.weekday() < 5' 'invalid weekday for year 2014')")
 
     ### legacy options
     legacy_parser.add_argument("--disable-validation", "-V",

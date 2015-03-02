@@ -282,9 +282,5 @@ END"""
                     validators.append(validator)
         return validators
 
-    def store_validators(self, validators, connection=None):
-        with self.connect(connection) as connection:
-            self.write('validators', validators)
- 
     def upgrade(self):
         Upgrader.full_upgrade(db=self)
