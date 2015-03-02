@@ -44,12 +44,23 @@ validators:
     check:   'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}'
     message: 'invalid weekday for year 2014'
 """
+
+    LIST_SHORT = """\
+anno numero città         data       codice_fiscale   nome                incasso valuta
+2014      1 Gotham City   2014-01-03 WNYBRC01G01H663S Bruce Wayne           51.00 euro  
+2014      2 New York City 2014-01-03 PRKPRT01G01H663M Peter B. Parker       76.50 euro  
+2014      3 Greenville    2014-01-22 BNNBRC01G01H663S Robert Bruce Banner  102.00 euro  
+"""
+    LIST_FULL = LIST_SHORT + """\
+2014      4 Gotham City   2014-01-25 WNYBRC01G01H663S Bruce Wayne           51.00 euro  
+2014      5 Smallville    2014-01-29 KNTCRK01G01H663X Clark Kent           152.50 euro  
+"""
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
         self.logger = get_null_logger()
         self.maxDiff = None
 
-    def test_invoice_main_validators(self):
+    def test_invoice_main_validators_scan(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = StringPrinter()
 
@@ -98,9 +109,92 @@ validators:
                 logger=self.logger,
                 args=['-d', db_filename.name, 'list']
             )
-            self.assertEqual(p.string(), """\
-anno numero città         data       codice_fiscale   nome                incasso valuta
-2014      1 Gotham City   2014-01-03 WNYBRC01G01H663S Bruce Wayne           51.00 euro  
-2014      2 New York City 2014-01-03 PRKPRT01G01H663M Peter B. Parker       76.50 euro  
-2014      3 Greenville    2014-01-22 BNNBRC01G01H663S Robert Bruce Banner  102.00 euro  
-""")
+            self.assertEqual(p.string(), self.LIST_SHORT)
+
+    def test_invoice_main_validators_validate(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'scan'],
+            )
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list'],
+            )
+            self.assertEqual(p.string(), self.LIST_FULL)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'validators', '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
+            )
+            self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'validate'],
+            )
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list'],
+            )
+            self.assertEqual(p.string(), self.LIST_SHORT)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'scan'],
+            )
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list'],
+            )
+            self.assertEqual(p.string(), self.LIST_SHORT)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'validators', '--clear'],
+            )
+            self.assertEqual(p.string(), self.VALIDATORS_SHOW_EMPTY)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'scan'],
+            )
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'list'],
+            )
+            self.assertEqual(p.string(), self.LIST_FULL)

@@ -356,7 +356,10 @@ class InvoiceProgram(object):
         self.db.check()
         invoice_collection = self.db.load_invoice_collection()
         validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
-        self.validate_invoice_collection(validation_result, invoice_collection)
+        with self.db.connect() as connection:
+            user_validators = self.compile_user_validators(connection)
+            self.validate_invoice_collection(validation_result, invoice_collection, user_validators=user_validators)
+            self.delete_failing_invoices(validation_result, connection=connection)
         return validation_result.num_errors()
 
     def impl_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None, order_field_names=None):
@@ -608,7 +611,7 @@ class InvoiceProgram(object):
         try:
             if validate:
                 self.logger.debug("validazione di {} fatture...".format(len(invoice_collection)))
-                validation_result = self.validate_invoice_collection(validation_result, invoice_collection, user_validators=False)
+                validation_result = self.validate_invoice_collection(validation_result, invoice_collection)
                 if validation_result.num_errors():
                     self.logger.error("trovati #{} errori!".format(validation_result.num_errors()))
                     return 1
@@ -628,6 +631,17 @@ class InvoiceProgram(object):
                 traceback.print_exc()
             self.logger.error("{}: {}\n".format(type(err).__name__, err))
 
+    def compile_user_validators(self, connection=None):
+        user_validators = []
+        with self.db.connect() as connection:
+            # validators
+            for validator in self.db.load_validators(connection=connection):
+                user_validators.append((validator, self.db.Validator(
+                    Invoice.compile_filter_function(validator.filter_function),
+                    Invoice.compile_filter_function(validator.check_function),
+                    validator.message)))
+        return user_validators
+    
     def impl_scan(self, warning_mode=None, error_mode=None, partial_update=None, remove_orphaned=None, show_scan_report=None):
         self.db.check()
         show_scan_report = self.db.get_config_option('show_scan_report', show_scan_report)
@@ -639,6 +653,7 @@ class InvoiceProgram(object):
         validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
         with db.connect() as connection:
             configuration = db.load_configuration(connection)
+            user_validators = self.compile_user_validators(connection)
             if remove_orphaned is None:
                 remove_orphaned = configuration.remove_orphaned
             if partial_update is None:
@@ -726,7 +741,7 @@ class InvoiceProgram(object):
                     scan_date_times[invoice.doc_filename] = db.ScanDateTime(
                         doc_filename=invoice.doc_filename,
                         scan_date_time=file_date_times[invoice.doc_filename])
-                self.validate_invoice_collection(validation_result, updated_invoice_collection, user_validators=True)
+                self.validate_invoice_collection(validation_result, updated_invoice_collection, user_validators=user_validators)
                 if validation_result.num_errors():
                     message = "validazione fallita - {} errori".format(validation_result.num_errors())
                     if not partial_update:
@@ -752,9 +767,7 @@ class InvoiceProgram(object):
                     for invoice in new_invoices:
                         scan_date_times_l.append(scan_date_times[invoice.doc_filename])
                 db.update('scan_date_times', 'doc_filename', scan_date_times_l, connection=connection)
-            for invoice in validation_result.failing_invoices().values():
-                where = ['year == {}'.format(invoice.year), 'number == {}'.format(invoice.number)]
-                db.delete('invoices', where=where, connection=connection)
+            self.delete_failing_invoices(validation_result, connection=connection)
                     
             if validation_result.num_errors():
                 failing_invoices = InvoiceCollection(validation_result.failing_invoices().values())
@@ -789,6 +802,16 @@ class InvoiceProgram(object):
 
         return validation_result, updated_invoice_collection
 
+    def delete_failing_invoices(self, validation_result, connection=None):
+        db = self.db
+        with db.connect(connection) as connection:
+            year_numbers = {}
+            for invoice in validation_result.failing_invoices().values():
+                year_numbers.setdefault(invoice.year, []).append(invoice.number)
+            for year, numbers in year_numbers.items():
+                where = ['year == {}'.format(invoice.year), 'number in ({})'.format(', '.join(str(number) for number in numbers))]
+                db.delete('invoices', where=where, connection=connection)
+                    
     ## functions
     def filter_invoice_collection(self, invoice_collection, filters, date_from=None, date_to=None):
         if filters is None:
@@ -806,18 +829,9 @@ class InvoiceProgram(object):
                 invoice_collection = invoice_collection.filter(filter_source)
         return invoice_collection
 
-    def validate_invoice_collection(self, validation_result, invoice_collection, user_validators=True):
+    def validate_invoice_collection(self, validation_result, invoice_collection, user_validators=()):
         self.logger.debug("validation of {} invoices...".format(len(invoice_collection)))
         invoice_collection.sort()
-
-        # validators
-        validators = []
-        if user_validators:
-            for validator in self.db.load_validators():
-                validators.append((validator, self.db.Validator(
-                    Invoice.compile_filter_function(validator.filter_function),
-                    Invoice.compile_filter_function(validator.check_function),
-                    validator.message)))
 
         # verify fields definition:
         for invoice in invoice_collection:
@@ -869,7 +883,7 @@ class InvoiceProgram(object):
                     if invoice.date is not None and invoice.date < prev_date:
                         validation_result.add_error(invoice, InvoiceDateError, "fattura {}: la data {} precede quella della precedente fattura {} ({})".format(invoice.doc_filename, invoice.date, prev_doc, prev_date))
                         failed = True
-                for validator, compiled_validator in validators:
+                for validator, compiled_validator in user_validators:
                     if compiled_validator.filter_function(invoice):
                         if not compiled_validator.check_function(invoice):
                             validation_result.add_error(invoice, InvoiceUserValidatorError, "fattura {}: {}".format(invoice.doc_filename, validator.message))
