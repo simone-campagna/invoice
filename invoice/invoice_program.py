@@ -250,7 +250,7 @@ class InvoiceProgram(object):
                 self.logger.warning("pattern {!r}: non contiene wildcard: probabilmente hai dimenticato gli apici".format(pattern.pattern))
 
     def edit(self, filename, editor=None):
-        if editor is None:
+        if editor is None: # pragma: no cover
             editor = conf.DEFAULT_EDITOR
         cmdline = "{} {}".format(editor, filename)
         with subprocess.Popen([cmdline], shell=True) as p:
@@ -410,7 +410,7 @@ class InvoiceProgram(object):
 
     def impl_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None, order_field_names=None):
         self.db.check()
-        if filters is None:
+        if filters is None: # pragma: no cover
             filters = ()
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters, date_from=date_from, date_to=date_to)
         self.list_invoice_collection(invoice_collection, header=header, list_field_names=list_field_names, order_field_names=order_field_names)
@@ -504,7 +504,7 @@ class InvoiceProgram(object):
     def impl_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None):
         total = self.db.get_config_option('total', total)
         self.db.check()
-        if filters is None:
+        if filters is None: # pragma: no cover
             filters = ()
 
         if stats_group is None:

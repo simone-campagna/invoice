@@ -733,6 +733,52 @@ KNTCRK01G01H663X 2014      5
             self.maxDiff = None
             self.assertEqual(p.string(), self.REPORT_OUTPUT_2012)
 
+    def test_InvoiceProgram_rescan(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_filename = os.path.join(tmpdir, "test.db")
+            example_dirname = os.path.join(tmpdir, "example")
+            staged_doc_filenames = []
+            os.makedirs(example_dirname)
+            for doc_filename in glob.glob(os.path.join(self.dirname, "*.doc")):
+                staged_doc_filename = os.path.join(example_dirname, os.path.basename(doc_filename))
+                staged_doc_filenames.append(staged_doc_filename)
+                shutil.copy(doc_filename, staged_doc_filename)
+
+            p = StringPrinter()
+            invoice_program = InvoiceProgram(
+                db_filename=db_filename,
+                logger=self.logger,
+                trace=False,
+                printer=p,
+            )
+    
+            invoice_program.impl_init(
+                patterns=[os.path.join(example_dirname, '*.doc')],
+                reset=True,
+                partial_update=True,
+            )
+
+            validation_result, invoice_collection = invoice_program.impl_scan(
+                warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                error_mode=None,
+                partial_update=None,
+            )
+            self.assertEqual(validation_result.num_warnings(), 0)
+            self.assertEqual(validation_result.num_errors(), 0)
+
+            for doc_filename in glob.glob(os.path.join(self.dirname, "*002*.doc")):
+                staged_doc_filename = os.path.join(example_dirname, os.path.basename(doc_filename))
+                staged_doc_filenames.append(staged_doc_filename)
+                shutil.copy(doc_filename, staged_doc_filename)
+
+            validation_result, invoice_collection = invoice_program.impl_scan(
+                warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
+                error_mode=None,
+                partial_update=None,
+            )
+            self.assertEqual(validation_result.num_warnings(), 0)
+            self.assertEqual(validation_result.num_errors(), 0)
+
     def _test_InvoiceProgram_remove_orphaned(self, remove_orphaned):
         with tempfile.TemporaryDirectory() as tmpdir:
             db_filename = os.path.join(tmpdir, "test.db")
