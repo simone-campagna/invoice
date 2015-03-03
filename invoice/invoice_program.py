@@ -672,7 +672,7 @@ class InvoiceProgram(object):
                 self.logger.debug("report di {} fatture...".format(len(invoice_collection)))
                 self.report_invoice_collection(invoice_collection)
     
-        except Exception as err:
+        except Exception as err: # pragma: no cover
             if self.trace:
                 traceback.print_exc()
             self.logger.error("{}: {}\n".format(type(err).__name__, err))
