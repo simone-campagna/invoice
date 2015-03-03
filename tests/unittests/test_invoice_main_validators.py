@@ -251,3 +251,40 @@ anno numero città         data       codice_fiscale   nome                incas
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
+    def test_invoice_main_validators_edit(self):
+        with tempfile.NamedTemporaryFile() as db_filename, tempfile.NamedTemporaryFile() as v_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'validators', '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
+            )
+            self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'validators'],
+            )
+            self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'validators', '--edit', '--editor', 'sed "s/2014/2028/g" -i'],
+            )
+            self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE.replace('2014', '2028'))
+
+

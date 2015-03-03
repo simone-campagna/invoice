@@ -286,8 +286,8 @@ END"""
     def upgrade(self):
         Upgrader.full_upgrade(db=self)
 
-    def export_table(self, table_name, filename):
-        records = self.read(table_name)
+    def export_table(self, table_name, filename, connection=None):
+        records = self.read(table_name, connection=connection)
         config = configparser.ConfigParser()
         table_info = self.TABLES[table_name]
         fields = table_info.fields
@@ -300,7 +300,7 @@ END"""
         with open(filename, "w") as f_out:
             config.write(f_out)
 
-    def import_table(self, table_name, filename):
+    def import_table(self, table_name, filename, connection=None):
         config = configparser.ConfigParser()
         config.read(filename)
         table_info = self.TABLES[table_name]
@@ -314,4 +314,4 @@ END"""
                 d[field_name] = fields[field_name].db_from(section[field_name])
             record = dict_type(**d)
             records.append(record)
-        self.write(table_name, records)
+        self.write(table_name, records, connection=connection)

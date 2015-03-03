@@ -410,7 +410,7 @@ modifica.
     )
     patterns_parser.set_defaults(
         function_name="program_patterns",
-        function_arguments=('patterns', 'reset', 'import_filename', 'export_filename'),
+        function_arguments=('patterns', 'reset', 'import_filename', 'export_filename', 'editor', 'edit'),
     )
 
     ### validators ###
@@ -437,11 +437,12 @@ Ad esempio:
      (weekday 6) si ha un errore
 * messaggio: 'giorno della settimana non valido per il 2014'
   -> se il check fallisce, viene mostrato questo messaggio
+
 """,
     )
     validators_parser.set_defaults(
         function_name="program_validators",
-        function_arguments=('validators', 'reset', 'import_filename', 'export_filename'),
+        function_arguments=('validators', 'reset', 'import_filename', 'export_filename', 'editor', 'edit'),
     )
 
     ### scan_parser ###
@@ -911,6 +912,18 @@ e validati.
             type=str,
             default=None,
             help="esporta i {} sul file specificato".format(what))
+
+        parser.add_argument("--edit", "-E",
+            dest="edit",
+            action="store_true",
+            default=False,
+            help="esegue l'editing dei {}".format(what))
+
+        parser.add_argument("--editor",
+            dest="editor",
+            type=str,
+            default=None,
+            help="editor da utilizzare per l'editing dei {}".format(what))
 
     ### legacy options
     legacy_parser.add_argument("--disable-validation", "-V",

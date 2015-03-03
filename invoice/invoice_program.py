@@ -27,6 +27,8 @@ import fnmatch
 import glob
 import math
 import os
+import subprocess
+import tempfile
 import time
 import traceback
 
@@ -151,12 +153,26 @@ class InvoiceProgram(object):
         )
         return 0
 
-    def program_patterns(self, *, patterns, reset=False, import_filename=None, export_filename=None):
-        self.impl_patterns(reset=reset, patterns=patterns, import_filename=import_filename, export_filename=export_filename)
+    def program_patterns(self, *, patterns, reset=False, import_filename=None, export_filename=None, edit=False, editor=None):
+        self.impl_patterns(
+            reset=reset,
+            patterns=patterns,
+            import_filename=import_filename,
+            export_filename=export_filename,
+            edit=edit,
+            editor=editor,
+        )
         return 0
 
-    def program_validators(self, *, validators, reset=False, import_filename=None, export_filename=None):
-        self.impl_validators(reset=reset, validators=validators, import_filename=import_filename, export_filename=export_filename)
+    def program_validators(self, *, validators, reset=False, import_filename=None, export_filename=None, edit=False, editor=None):
+        self.impl_validators(
+            reset=reset,
+            validators=validators,
+            import_filename=import_filename,
+            export_filename=export_filename,
+            edit=edit,
+            editor=editor,
+        )
         return 0
 
     def program_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=True, show_scan_report=True):
@@ -232,6 +248,23 @@ class InvoiceProgram(object):
         if non_patterns:
             for pattern in non_patterns:
                 self.logger.warning("pattern {!r}: non contiene wildcard: probabilmente hai dimenticato gli apici".format(pattern.pattern))
+
+    def edit(self, filename, editor=None):
+        if editor is None:
+            editor = conf.DEFAULT_EDITOR
+        cmdline = "{} {}".format(editor, filename)
+        with subprocess.Popen([cmdline], shell=True) as p:
+            pass
+
+    def edit_table(self, table_name, editor=None, connection=None):
+        with self.db.connect(connection) as connection, tempfile.NamedTemporaryFile() as t_file:
+            t_filename = t_file.name
+            self.db.export_table(table_name, t_filename, connection=connection)
+            t_file.flush()
+            self.edit(filename=t_filename, editor=editor)
+            t_file.flush()
+            self.db.clear(table_name, connection=connection)
+            self.db.import_table(table_name, t_filename, connection=connection)
 
     def impl_init(self, *, patterns,
                            warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
@@ -310,7 +343,7 @@ class InvoiceProgram(object):
         self.show_configuration(configuration)
 
 
-    def impl_patterns(self, *, reset, patterns, import_filename=None, export_filename=None):
+    def impl_patterns(self, *, reset, patterns, import_filename=None, export_filename=None, edit=False, editor=None):
         self.db.check()
         if reset:
             self.db.clear('patterns')
@@ -338,11 +371,14 @@ class InvoiceProgram(object):
             self.check_patterns(del_patterns)
             for pattern in del_patterns:
                 self.db.delete('patterns', "pattern == {!r}".format(pattern.pattern))
+        if edit:
+            self.edit_table(table_name='patterns', editor=editor)
+            patterns = self.db.load_patterns()
         self.show_patterns(patterns)
         if export_filename:
             self.db.export_table('patterns', export_filename)
 
-    def impl_validators(self, *, reset, validators, import_filename=None, export_filename=None):
+    def impl_validators(self, *, reset, validators, import_filename=None, export_filename=None, edit=False, editor=None):
         self.db.check()
         if reset:
             self.db.clear('validators')
@@ -352,6 +388,8 @@ class InvoiceProgram(object):
         for filter_function, check_function, message in validators:
             vlist.append(self.db.make_validator(filter_function=filter_function, check_function=check_function, message=message))
         self.db.write('validators', vlist)
+        if edit:
+            self.edit_table(table_name='validators', editor=editor)
         self.show_validators()
         if export_filename:
             self.db.export_table('validators', export_filename)

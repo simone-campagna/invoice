@@ -480,3 +480,32 @@ KNTCRK01G01H663X Smallville         5  152.50
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
 
+    def test_invoice_main_patterns_edit(self):
+        with tempfile.NamedTemporaryFile() as db_filename, tempfile.NamedTemporaryFile() as p_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )   
+            self.assertEqual(p.string(), '') 
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'patterns', '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
+            )   
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'patterns', '--edit', '--editor', 'sed "s/DOC/docx/g" -i'],
+            )   
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE.replace('DOC', 'docx'))
+
+

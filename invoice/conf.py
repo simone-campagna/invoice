@@ -58,6 +58,7 @@ __all__ = [
     'get_rc_dir',
     'get_db_file',
     'get_scanner_config_file',
+    'DEFAULT_EDITOR',
 ]
 
 import collections
@@ -169,3 +170,4 @@ def get_scanner_config_file():
 
 setup()
 
+DEFAULT_EDITOR = os.environ.get("INVOICE_EDITOR", os.environ.get("EDITOR", "vim"))
