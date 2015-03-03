@@ -151,12 +151,12 @@ class InvoiceProgram(object):
         )
         return 0
 
-    def program_patterns(self, *, patterns, reset=False):
-        self.impl_patterns(reset=reset, patterns=patterns)
+    def program_patterns(self, *, patterns, reset=False, import_filename=None, export_filename=None):
+        self.impl_patterns(reset=reset, patterns=patterns, import_filename=import_filename, export_filename=export_filename)
         return 0
 
-    def program_validators(self, *, validators, reset=False):
-        self.impl_validators(reset=reset, validators=validators)
+    def program_validators(self, *, validators, reset=False, import_filename=None, export_filename=None):
+        self.impl_validators(reset=reset, validators=validators, import_filename=import_filename, export_filename=export_filename)
         return 0
 
     def program_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=True, show_scan_report=True):
@@ -310,10 +310,12 @@ class InvoiceProgram(object):
         self.show_configuration(configuration)
 
 
-    def impl_patterns(self, *, reset, patterns):
+    def impl_patterns(self, *, reset, patterns, import_filename=None, export_filename=None):
         self.db.check()
         if reset:
             self.db.clear('patterns')
+        if import_filename:
+            self.db.import_table('patterns', import_filename)
         new_patterns = []
         del_patterns = []
         old_patterns = self.db.load_patterns()
@@ -337,16 +339,22 @@ class InvoiceProgram(object):
             for pattern in del_patterns:
                 self.db.delete('patterns', "pattern == {!r}".format(pattern.pattern))
         self.show_patterns(patterns)
+        if export_filename:
+            self.db.export_table('patterns', export_filename)
 
-    def impl_validators(self, *, reset, validators):
+    def impl_validators(self, *, reset, validators, import_filename=None, export_filename=None):
         self.db.check()
         if reset:
             self.db.clear('validators')
+        if import_filename:
+            self.db.import_table('validators', import_filename)
         vlist = []
         for filter_function, check_function, message in validators:
             vlist.append(self.db.make_validator(filter_function=filter_function, check_function=check_function, message=message))
         self.db.write('validators', vlist)
         self.show_validators()
+        if export_filename:
+            self.db.export_table('validators', export_filename)
 
     def impl_clear(self):
         self.db.check()

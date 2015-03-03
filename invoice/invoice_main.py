@@ -410,7 +410,7 @@ modifica.
     )
     patterns_parser.set_defaults(
         function_name="program_patterns",
-        function_arguments=('patterns', 'reset'),
+        function_arguments=('patterns', 'reset', 'import_filename', 'export_filename'),
     )
 
     ### validators ###
@@ -441,7 +441,7 @@ Ad esempio:
     )
     validators_parser.set_defaults(
         function_name="program_validators",
-        function_arguments=('validators', 'reset'),
+        function_arguments=('validators', 'reset', 'import_filename', 'export_filename'),
     )
 
     ### scan_parser ###
@@ -898,6 +898,19 @@ e validati.
         action="append",
         type=str,
         help="aggiunge un validatore per le fatture, composto da una funzione filtro F, una funzione check C ed un messaggio di errore M (ad esempio --add 'Date(\"2014-01-01\") <= date <= Date(\"2014-12-31\")' 'not date.weekday() < 5' 'invalid weekday for year 2014')")
+
+    for what, parser in ('pattern', patterns_parser), ('validatori', validators_parser):
+        parser.add_argument("--import", "-i",
+            dest="import_filename",
+            type=str,
+            default=None,
+            help="importa i {} dal file specificato".format(what))
+
+        parser.add_argument("--export", "-e",
+            dest="export_filename",
+            type=str,
+            default=None,
+            help="esporta i {} sul file specificato".format(what))
 
     ### legacy options
     legacy_parser.add_argument("--disable-validation", "-V",

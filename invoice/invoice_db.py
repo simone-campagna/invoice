@@ -21,6 +21,7 @@ __all__ = [
 ]
 
 import collections
+import configparser
 import datetime
 import sqlite3
 
@@ -284,3 +285,33 @@ END"""
 
     def upgrade(self):
         Upgrader.full_upgrade(db=self)
+
+    def export_table(self, table_name, filename):
+        records = self.read(table_name)
+        config = configparser.ConfigParser()
+        table_info = self.TABLES[table_name]
+        fields = table_info.fields
+        for c, record in enumerate(records):
+            section_name = str(c)
+            config.add_section(section_name)
+            section = config[section_name]
+            for field_name in table_info.field_names:
+                section[field_name] = str(fields[field_name].db_to(getattr(record, field_name)))
+        with open(filename, "w") as f_out:
+            config.write(f_out)
+
+    def import_table(self, table_name, filename):
+        config = configparser.ConfigParser()
+        config.read(filename)
+        table_info = self.TABLES[table_name]
+        fields = table_info.fields
+        dict_type = table_info.dict_type
+        records = []
+        for section_name in config.sections():
+            section = config[section_name]
+            d = {}
+            for field_name in table_info.field_names:
+                d[field_name] = fields[field_name].db_from(section[field_name])
+            record = dict_type(**d)
+            records.append(record)
+        self.write(table_name, records)

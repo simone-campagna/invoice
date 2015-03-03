@@ -428,3 +428,55 @@ KNTCRK01G01H663X Smallville         5  152.50
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_CLEAR)
 
+    def test_invoice_main_patterns_import_export(self):
+        with tempfile.NamedTemporaryFile() as db_filename, tempfile.NamedTemporaryFile() as p_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )   
+            self.assertEqual(p.string(), '') 
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'patterns', '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
+            )   
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'patterns'],
+            )   
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'patterns', '--export', p_filename.name],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'patterns', '--clear'],
+            )
+            self.assertEqual(p.string(), self.PATTERNS_CLEAR)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'patterns', '--import', p_filename.name],
+            )
+            self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
+

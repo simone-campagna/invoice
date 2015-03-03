@@ -198,3 +198,56 @@ anno numero città         data       codice_fiscale   nome                incas
                 args=['-d', db_filename.name, 'list'],
             )
             self.assertEqual(p.string(), self.LIST_FULL)
+
+    def test_invoice_main_validators_import_export(self):
+        with tempfile.NamedTemporaryFile() as db_filename, tempfile.NamedTemporaryFile() as v_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'validators', '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
+            )
+            self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'validators'],
+            )
+            self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'validators', '--export', v_filename.name],
+            )
+            self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'validators', '--clear'],
+            )
+            self.assertEqual(p.string(), self.VALIDATORS_SHOW_EMPTY)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['-d', db_filename.name, 'validators', '--import', v_filename.name],
+            )
+            self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
+
