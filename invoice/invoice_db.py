@@ -66,6 +66,7 @@ class InvoiceDb(Db):
                 ('patch', Int()),
             ),
             dict_type=Version,
+            singleton=True,
         ),
         'configuration': DbTable(
             fields=(
@@ -80,6 +81,7 @@ class InvoiceDb(Db):
                 ('show_scan_report', Bool()),
             ),
             dict_type=Configuration,
+            singleton=True,
         ),
         'patterns': DbTable(
             fields=(
@@ -87,12 +89,14 @@ class InvoiceDb(Db):
                 ('skip', Bool()),
             ),
             dict_type=Pattern,
+            singleton=False,
         ),
         'skip_patterns': DbTable(
             fields=(
                 ('pattern', Path('UNIQUE')),
             ),
             dict_type=Pattern,
+            singleton=False,
         ),
         'invoices': DbTable(
             fields=(
@@ -108,6 +112,7 @@ class InvoiceDb(Db):
                 ('currency', Str()),
             ),
             dict_type=Invoice,
+            singleton=False,
         ),
         'validators': DbTable(
             fields=(
@@ -116,6 +121,7 @@ class InvoiceDb(Db):
                 ('message', Str()),
             ),
             dict_type=Validator,
+            singleton=False,
         ),
         'scan_date_times': DbTable(
             fields=(
@@ -123,6 +129,7 @@ class InvoiceDb(Db):
                 ('scan_date_time', DateTime()),
             ),
             dict_type=ScanDateTime,
+            singleton=False,
         ),
     }
     def __init__(self, *p_args, **n_args):
@@ -292,7 +299,7 @@ END"""
         table_info = self.TABLES[table_name]
         fields = table_info.fields
         for c, record in enumerate(records):
-            section_name = str(c)
+            section_name = "{}_{}".format(table_name, c)
             config.add_section(section_name)
             section = config[section_name]
             for field_name in table_info.field_names:

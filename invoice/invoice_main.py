@@ -393,7 +393,9 @@ supportati sono:
                             'warning_mode', 'error_mode',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
-                            'list_field_names', 'stats_group', 'show_scan_report'),
+                            'list_field_names', 'stats_group', 'show_scan_report',
+                            'import_filename', 'export_filename',
+                            'edit', 'editor'),
     )
 
     ### patterns ###
@@ -900,30 +902,30 @@ e validati.
         type=str,
         help="aggiunge un validatore per le fatture, composto da una funzione filtro F, una funzione check C ed un messaggio di errore M (ad esempio --add 'Date(\"2014-01-01\") <= date <= Date(\"2014-12-31\")' 'not date.weekday() < 5' 'invalid weekday for year 2014')")
 
-    for what, parser in ('pattern', patterns_parser), ('validatori', validators_parser):
-        parser.add_argument("--import", "-i",
+    for what, parser in ('la configurazione', config_parser), ('i pattern', patterns_parser), ('i validatori', validators_parser):
+        parser.add_argument("--import",
             dest="import_filename",
             type=str,
             default=None,
-            help="importa i {} dal file specificato".format(what))
+            help="importa {} dal file specificato".format(what))
 
-        parser.add_argument("--export", "-e",
+        parser.add_argument("--export",
             dest="export_filename",
             type=str,
             default=None,
-            help="esporta i {} sul file specificato".format(what))
+            help="esporta {} sul file specificato".format(what))
 
         parser.add_argument("--edit", "-E",
             dest="edit",
             action="store_true",
             default=False,
-            help="esegue l'editing dei {}".format(what))
+            help="edita {}".format(what))
 
         parser.add_argument("--editor",
             dest="editor",
             type=str,
             default=None,
-            help="editor da utilizzare per l'editing dei {}".format(what))
+            help="editor da utilizzare per {}".format(what))
 
     ### legacy options
     legacy_parser.add_argument("--disable-validation", "-V",

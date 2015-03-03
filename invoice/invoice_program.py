@@ -138,7 +138,11 @@ class InvoiceProgram(object):
                                 list_field_names=None,
                                 stats_group=None,
                                 show_scan_report=None,
-                                reset=False):
+                                reset=False,
+                                import_filename=None,
+                                export_filename=None,
+                                edit=False,
+                                editor=None):
         self.impl_config(
             warning_mode=warning_mode,
             error_mode=error_mode,
@@ -150,6 +154,10 @@ class InvoiceProgram(object):
             stats_group=stats_group,
             show_scan_report=show_scan_report,
             reset=reset,
+            import_filename=import_filename,
+            export_filename=export_filename,
+            edit=edit,
+            editor=editor,
         )
         return 0
 
@@ -323,10 +331,16 @@ class InvoiceProgram(object):
                              list_field_names=None,
                              stats_group=None,
                              show_scan_report=None,
-                             reset=False):
+                             reset=False,
+                             import_filename=None,
+                             export_filename=None,
+                             edit=False,
+                             editor=None):
         self.db.check()
         if reset:
             self.db.clear('configuration')
+        if import_filename:
+            self.db.import_table('configuration', import_filename)
         list_field_names = self.db.get_config_option('list_field_names', list_field_names)
         configuration = self.db.Configuration(
             warning_mode=warning_mode,
@@ -340,7 +354,12 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
         )
         configuration = self.db.store_configuration(configuration)
+        if edit:
+            self.edit_table(table_name='configuration', editor=editor)
+            configuration = self.db.load_configuration()
         self.show_configuration(configuration)
+        if export_filename:
+            self.db.export_table('configuration', export_filename)
 
 
     def impl_patterns(self, *, reset, patterns, import_filename=None, export_filename=None, edit=False, editor=None):

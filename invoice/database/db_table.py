@@ -23,11 +23,12 @@ __all__ = [
 import collections
 
 class DbTable(object):
-    def __init__(self, fields, dict_type=collections.OrderedDict):
+    def __init__(self, fields, dict_type=collections.OrderedDict, singleton=False):
         self.dict_type = dict_type
         self.fields = collections.OrderedDict(fields)
         if hasattr(self.dict_type, '_fields'):
              self.field_names = self.dict_type._fields
         else:
              self.field_names = tuple(self.fields.keys())
+        self.singleton = singleton
 

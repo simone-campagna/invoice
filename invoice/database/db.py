@@ -97,10 +97,15 @@ class Db(object):
         table = self.TABLES[table_name]
         field_names = table.field_names
         fields = table.fields
-        sql = """SELECT {field_names} FROM {table_name}{where};""".format(
+        if table.singleton:
+            limit = " ORDER BY rowid DESC LIMIT 1";
+        else:
+            limit = ""
+        sql = """SELECT {field_names} FROM {table_name}{where}{limit};""".format(
             field_names=', '.join(field_names),
             table_name=table_name,
             where=where,
+            limit=limit,
         )
         records = []
         dict_type = table.dict_type
@@ -157,6 +162,8 @@ class Db(object):
         table = self.TABLES[table_name]
         field_names = table.field_names
         fields = table.fields
+        if table.singleton:
+            records = records[-1:]
         sql = """INSERT INTO {table_name} ({field_names}) VALUES ({placeholders});""".format(
             table_name=table_name,
             field_names=', '.join(field_names),
