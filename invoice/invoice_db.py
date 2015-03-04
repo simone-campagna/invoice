@@ -32,9 +32,26 @@ from .invoice import Invoice
 from .invoice_collection import InvoiceCollection
 from .database.db import Db, DbError
 from .database.db_table import DbTable
-from .database.db_types import Str, Int, Float, Date, DateTime, Path, Bool, StrTuple
+from .database.db_types import Str, Int, Float, Date, DateTime, Path, Bool, StrTuple, \
+                               BaseSequence, OptionType
 from .database.upgrade.upgrader import Upgrader
 from .validation_result import ValidationResult
+
+class WarningModeOption(OptionType):
+    OPTIONS = ValidationResult.WARNING_MODES
+
+class ErrorModeOption(OptionType):
+    OPTIONS = ValidationResult.ERROR_MODES
+
+class StatsGroupOption(OptionType):
+    OPTIONS = conf.STATS_GROUPS
+
+class FieldNameOption(OptionType):
+    OPTIONS = conf.LIST_FIELD_NAMES
+
+class FieldNameOptionTuple(BaseSequence):
+    SCALAR_TYPE = FieldNameOption
+    SEQUENCE_TYPE = tuple
 
 class InvoiceDb(Db):
     Pattern = collections.namedtuple('Pattern', ('pattern', 'skip'))
@@ -70,14 +87,14 @@ class InvoiceDb(Db):
         ),
         'configuration': DbTable(
             fields=(
-                ('warning_mode', Str()),
-                ('error_mode', Str()),
+                ('warning_mode', WarningModeOption()),
+                ('error_mode', ErrorModeOption()),
                 ('remove_orphaned', Bool()),
                 ('partial_update', Bool()),
                 ('header', Bool()),
                 ('total', Bool()),
-                ('stats_group', Str()),
-                ('list_field_names', StrTuple()),
+                ('stats_group', StatsGroupOption()),
+                ('list_field_names', FieldNameOptionTuple()),
                 ('show_scan_report', Bool()),
             ),
             dict_type=Configuration,

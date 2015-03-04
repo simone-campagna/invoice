@@ -30,7 +30,8 @@ from invoice.database.db_types import Str, StrList, StrTuple, \
                                       Date, DateList, DateTuple, \
                                       DateTime, DateTimeList, DateTimeTuple, \
                                       Path, PathList, PathTuple, \
-                                      Bool, BoolList, BoolTuple
+                                      Bool, BoolList, BoolTuple, \
+                                      OptionType, BaseSequence
 
 
 class TestStr(unittest.TestCase):
@@ -242,4 +243,37 @@ class TestBoolTuple(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             BoolTuple.db_to("True,alpha")
+
+class MyOption(OptionType):
+    OPTIONS = ("alpha", "beta", "gamma")
+
+class MyOptionTuple(BaseSequence):
+    SCALAR_TYPE = MyOption
+    SEQUENCE_TYPE = tuple
+
+class TestMyOption(unittest.TestCase):
+    def test_db_from(self):
+        self.assertIs(MyOption.db_from(None), None)
+        self.assertEqual(MyOption.db_from("alpha"), "alpha")
+        with self.assertRaises(ValueError) as cm:
+            self.assertEqual(MyOption.db_from("x"), "x")
+
+    def test_db_to(self):
+        self.assertIs(MyOption.db_to(None), None)
+        self.assertEqual(MyOption.db_to("alpha"), "alpha")
+        with self.assertRaises(ValueError) as cm:
+            self.assertEqual(MyOption.db_to("x"), "x")
+
+class TestMyOptionTuple(unittest.TestCase):
+    def test_db_from(self):
+        self.assertIs(MyOptionTuple.db_from(None), None)
+        self.assertEqual(MyOptionTuple.db_from("alpha, beta, gamma "), ("alpha", "beta", "gamma"))
+        with self.assertRaises(ValueError) as cm:
+            self.assertEqual(MyOptionTuple.db_from("alpha, x, gamma "), ("alpha", "x", "gamma"))
+
+    def test_db_to(self):
+        self.assertIs(MyOptionTuple.db_to(None), None)
+        self.assertEqual(MyOptionTuple.db_to(("alpha", "beta", "gamma")), "alpha,beta,gamma")
+        with self.assertRaises(ValueError) as cm:
+            self.assertEqual(MyOptionTuple.db_to(("alpha", "x", "gamma")), "alpha,x,gamma")
 

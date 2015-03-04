@@ -47,7 +47,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
         field_names = []
         for field_name in s.split(','):
             field_name = field_name.strip()
-            if not field_name in conf.ALL_FIELDS:
+            if not field_name in conf.LIST_FIELD_NAMES:
                 raise ValueError("campo {!r} non valido".format(field_name))
             field_names.append(field_name)
         return tuple(Invoice.get_field_name_from_translation(field_name) for field_name in field_names)
@@ -61,7 +61,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
             else:
                 reverse = False
             field_name = field_name.strip()
-            if not field_name in conf.ALL_FIELDS:
+            if not field_name in conf.LIST_FIELD_NAMES:
                 raise ValueError("campo {!r} non valido".format(field_name))
             order_field_names.append((reverse, Invoice.get_field_name_from_translation(field_name)))
         return tuple(order_field_names)

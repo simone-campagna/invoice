@@ -25,6 +25,7 @@ __all__ = [
     'DateTime',
     'Path',
     'Bool',
+    'OptionType',
     'BaseSequence',
     'StrList',
     'IntList',
@@ -155,6 +156,24 @@ class Bool(BaseType):
             return cls.fromstr(value)
         else:
             return bool(value)
+
+class OptionType(Str):
+    OPTIONS = ()
+
+    @classmethod
+    def check_option(cls, value):
+        if not value in cls.OPTIONS:
+            raise ValueError("invalid value {!r} for option {} (supported values are {})".format(value, cls.__name__, ', '.join(cls.OPTIONS)))
+    @classmethod
+    def impl_db_from(cls, s):
+        value = super().impl_db_from(s)
+        cls.check_option(value)
+        return value
+            
+    @classmethod
+    def impl_db_to(cls, value):
+        cls.check_option(value)
+        return super().impl_db_to(value)
 
 class BaseSequence(BaseType):
     SEPARATOR = ','

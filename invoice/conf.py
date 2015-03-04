@@ -24,10 +24,10 @@ __all__ = [
     'FIELD_NAMES',
     'FIELD_TRANSLATION',
     'REV_FIELD_TRANSLATION',
-    'ALL_FIELDS',
     'LIST_FIELD_NAMES_SHORT',
     'LIST_FIELD_NAMES_LONG',
     'LIST_FIELD_NAMES_FULL',
+    'LIST_FIELD_NAMES',
     'DEFAULT_LIST_FIELD_NAMES',
     'STATS_GROUP_YEAR',
     'STATS_GROUP_MONTH',
@@ -98,11 +98,12 @@ FIELD_NAMES = tuple(FIELD_TRANSLATION.keys())
 REV_FIELD_TRANSLATION = dict(
     (FIELD_TRANSLATION.get(field_name, field_name), field_name) for field_name in FIELD_NAMES
 )
-ALL_FIELDS = FIELD_NAMES + tuple(REV_FIELD_TRANSLATION.keys())
+LIST_FIELD_NAMES = FIELD_NAMES + tuple(REV_FIELD_TRANSLATION.keys())
 
 LIST_FIELD_NAMES_SHORT = ('year', 'number', 'date', 'tax_code', 'income', 'currency')
 LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
 LIST_FIELD_NAMES_FULL = FIELD_NAMES
+
 DEFAULT_LIST_FIELD_NAMES = LIST_FIELD_NAMES_LONG
 
 STATS_MODE_SHORT = 'short'
