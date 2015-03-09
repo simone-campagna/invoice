@@ -837,13 +837,6 @@ e validati.
         action="store_true",
         help='ripristina la configuratione di default')
 
-    for parser in patterns_parser, validators_parser:
-        parser.add_argument("--clear", "-c",
-            dest="reset",
-            default=False,
-            action="store_true",
-            help='rimuove tutti i pattern')
-
     ### partial_update option
     for parser in init_parser, config_parser, scan_parser:
         parser.add_argument("--remove-orphaned", "-O",
@@ -894,13 +887,20 @@ e validati.
         help='rimuove un pattern per la ricerca dei DOC delle fatture')
 
     validators_parser.add_argument("--add-validator", "-a",
-        metavar="F C M",
+        metavar=("Filter", "Check", "Message"),
         dest="validators",
         nargs=3,
         default=[],
         action="append",
         type=str,
         help="aggiunge un validatore per le fatture, composto da una funzione filtro F, una funzione check C ed un messaggio di errore M (ad esempio --add 'Date(\"2014-01-01\") <= date <= Date(\"2014-12-31\")' 'not date.weekday() < 5' 'invalid weekday for year 2014')")
+
+    for what, parser in ('i pattern', patterns_parser), ('i validatori', validators_parser):
+        parser.add_argument("--clear", "-c",
+            dest="reset",
+            default=False,
+            action="store_true",
+            help='rimuove tutti {}'.format(what))
 
     for what, parser in ('la configurazione', config_parser), ('i pattern', patterns_parser), ('i validatori', validators_parser):
         parser.add_argument("--import",
