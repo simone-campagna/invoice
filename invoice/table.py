@@ -20,11 +20,25 @@ __all__ = [
     'Table'
 ]
 
+from . import conf
+
 class Table(object):
     ITEM_GETTER = lambda row, field_name: row.get(field_name)
     ATTR_GETTER = lambda row, field_name: getattr(row, field_name)
-    def __init__(self, field_names, convert=None, align=None, header=None, getter=None):
+    def __init__(self, field_names, mode=conf.TABLE_MODE_TEXT, justify=None, field_separator=None, convert=None, align=None, header=None, getter=None):
+        if mode == conf.TABLE_MODE_CSV:
+            default_justify = False
+            default_field_separator = ','
+        else: # conf.TABLE_MODE_TEXT
+            default_justify = True
+            default_field_separator = ' '
+        if justify is None:
+            justify = default_justify
+        if field_separator is None:
+            field_separator = default_field_separator
         self.field_names = field_names
+        self.justify = justify
+        self.field_separator = field_separator
         if convert is None:
             convert = {}
         self.convert = convert
@@ -49,10 +63,14 @@ class Table(object):
         for entry in data:
             rows.append(tuple(self.convert.get(field_name, str)(self.getter(entry, field_name)) for field_name in self.field_names))
         if data:
-            lengths = [max(len(entry[c]) for entry in rows) for c, f in enumerate(self.field_names)]
-            fmt = " ".join("{{row[{i}]:{align}{{lengths[{i}]}}s}}".format(i=i, align=self.align.get(f, '<')) for i, f in enumerate(self.field_names))
+            if self.justify:
+                lengths = [max(len(entry[c]) for entry in rows) for c, f in enumerate(self.field_names)]
+            else:
+                lengths = ['' for f in self.field_names]
+            fmt = self.field_separator.join("{{row[{i}]:{align}{{lengths[{i}]}}s}}".format(i=i, align=self.align.get(f, '<')) for i, f in enumerate(self.field_names))
             for row in rows:
                 yield fmt.format(row=row, lengths=lengths)
 
     def render(self, data):
         return '\n'.join(self.getlines(data))
+

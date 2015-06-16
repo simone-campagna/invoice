@@ -46,6 +46,7 @@ configuration:
   + stats_group          = 'month'
   + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
   + show_scan_report     = False
+  + table_mode           = 'text'
 """
     CONFIG_SHOW_WERROR_ERAISE = """\
 configuration:
@@ -58,6 +59,7 @@ configuration:
   + stats_group          = 'month'
   + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
   + show_scan_report     = False
+  + table_mode           = 'text'
 """
     CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
 configuration:
@@ -70,6 +72,7 @@ configuration:
   + stats_group          = 'month'
   + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
   + show_scan_report     = False
+  + table_mode           = 'text'
 """
     CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
 configuration:
@@ -82,6 +85,7 @@ configuration:
   + stats_group          = 'month'
   + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
   + show_scan_report     = False
+  + table_mode           = 'text'
 """
     CONFIG_SHOW_MIX = """\
 configuration:
@@ -94,6 +98,7 @@ configuration:
   + stats_group          = 'week'
   + list_field_names     = ('tax_code', 'city', 'number', 'income')
   + show_scan_report     = True
+  + table_mode           = 'text'
 """
 
     VERSION_OUTPUT = """\

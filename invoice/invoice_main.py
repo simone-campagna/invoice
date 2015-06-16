@@ -329,7 +329,7 @@ include tutti i file 'docs/*.doc', poi fra questi scarta tutti i file
                             'warning_mode', 'error_mode',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
-                            'list_field_names', 'stats_group', 'show_scan_report'),
+                            'list_field_names', 'stats_group', 'show_scan_report', 'table_mode'),
     )
 
     ### version ###
@@ -394,6 +394,7 @@ supportati sono:
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
                             'list_field_names', 'stats_group', 'show_scan_report',
+                            'table_mode',
                             'import_filename', 'export_filename',
                             'edit', 'editor'),
     )
@@ -499,7 +500,7 @@ Questa rimozione di fatture già scansionate può avvenire in due casi:
     )
     scan_parser.set_defaults(
         function_name="program_scan",
-        function_arguments=('warning_mode', 'error_mode', 'remove_orphaned', 'partial_update', 'show_scan_report'),
+        function_arguments=('warning_mode', 'error_mode', 'remove_orphaned', 'partial_update', 'show_scan_report', 'table_mode'),
     )
 
     ### clear_parser ###
@@ -546,7 +547,7 @@ selezionare i campi da mostrare.
     )
     list_parser.set_defaults(
         function_name="program_list",
-        function_arguments=('filters', 'date_from', 'date_to', 'list_field_names', 'header', 'order_field_names'),
+        function_arguments=('filters', 'date_from', 'date_to', 'list_field_names', 'header', 'order_field_names', 'table_mode'),
     )
 
     ### dump_parser ###
@@ -718,6 +719,13 @@ e validati.
             type=type_fields,
             default=default_list_field_names,
             help="selezione manuale dei campi, ad esempio 'anno,codice_fiscale,città' [{}]".format('|'.join(all_field_names)))
+
+    for parser in init_parser, config_parser, list_parser, scan_parser:
+        parser.add_argument("--table-mode", "-m",
+            dest="table_mode",
+            choices=conf.TABLE_MODES,
+            default=conf.DEFAULT_TABLE_MODE,
+            help="modalità di stampa delle tabelle: {} -> testo, {} -> comma-separated-value".format(conf.TABLE_MODE_TEXT, conf.TABLE_MODE_CSV))
 
     for parser in stats_parser, :
         stats_argument_group = parser.add_mutually_exclusive_group()

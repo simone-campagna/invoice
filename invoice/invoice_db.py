@@ -49,6 +49,9 @@ class StatsGroupOption(OptionType):
 class FieldNameOption(OptionType):
     OPTIONS = conf.LIST_FIELD_NAMES
 
+class TableModeOption(OptionType):
+    OPTIONS = conf.TABLE_MODES
+
 class FieldNameOptionTuple(BaseSequence):
     SCALAR_TYPE = FieldNameOption
     SEQUENCE_TYPE = tuple
@@ -62,7 +65,7 @@ class InvoiceDb(Db):
          'partial_update', 'remove_orphaned',
          'header', 'total',
          'stats_group', 'list_field_names',
-         'show_scan_report'))
+         'show_scan_report', 'table_mode'))
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
     DEFAULT_CONFIGURATION = Configuration(
         warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
@@ -73,7 +76,8 @@ class InvoiceDb(Db):
         total=True,
         stats_group=conf.DEFAULT_STATS_GROUP,
         list_field_names=conf.DEFAULT_LIST_FIELD_NAMES,
-        show_scan_report=False)
+        show_scan_report=False,
+        table_mode=None)
     
     TABLES = {
         'version': DbTable(
@@ -96,6 +100,7 @@ class InvoiceDb(Db):
                 ('stats_group', StatsGroupOption()),
                 ('list_field_names', FieldNameOptionTuple()),
                 ('show_scan_report', Bool()),
+                ('table_mode', TableModeOption()),
             ),
             dict_type=Configuration,
             singleton=True,

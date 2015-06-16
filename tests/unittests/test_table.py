@@ -24,6 +24,7 @@ import collections
 import unittest
 
 from invoice.table import Table
+from invoice import conf
 
 
 _Invoice = collections.namedtuple("_Invoice", ("name", "income", "tax_code"))
@@ -36,12 +37,15 @@ class TestTable(unittest.TestCase):
             _Invoice(name="Clark Kent", income=423.122, tax_code="KNTCKR01A01B001C"),
         ]
 
-    def _test_render(self, convert, align, header, output):
+    def _test_render(self, convert, align, header, output, mode=conf.DEFAULT_TABLE_MODE, field_separator=None, justify=None):
         t = Table(
             field_names=_Invoice._fields,
             convert=convert,
             align=align,
             header=header,
+            mode=mode,
+            field_separator=field_separator,
+            justify=justify,
         )
         rendering = t.render(self.invoices)
         self.assertEqual(rendering + '\n', output)
@@ -69,5 +73,32 @@ nome e cognome incasso codice fiscale
 Peter Parker    400.00 PRKPRT01A01B001C
 Peter Parker    450.00 PRKPRT01A01B001C
 Clark Kent      423.12 KNTCKR01A01B001C
+""")
+
+    def test_render_2(self):
+        self._test_render(
+            justify=False,
+            field_separator='|',
+            convert={'income': lambda value: '{:.2f}'.format(value)},
+            align={'income': '>'},
+            header=('nome e cognome', 'incasso', 'codice fiscale'),
+            output="""\
+nome e cognome|incasso|codice fiscale
+Peter Parker|400.00|PRKPRT01A01B001C
+Peter Parker|450.00|PRKPRT01A01B001C
+Clark Kent|423.12|KNTCKR01A01B001C
+""")
+
+    def test_render_3(self):
+        self._test_render(
+            mode=conf.TABLE_MODE_CSV,
+            convert={'income': lambda value: '{:.2f}'.format(value)},
+            align={'income': '>'},
+            header=('nome e cognome', 'incasso', 'codice fiscale'),
+            output="""\
+nome e cognome,incasso,codice fiscale
+Peter Parker,400.00,PRKPRT01A01B001C
+Peter Parker,450.00,PRKPRT01A01B001C
+Clark Kent,423.12,KNTCKR01A01B001C
 """)
 
