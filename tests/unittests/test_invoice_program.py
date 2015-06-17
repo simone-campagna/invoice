@@ -933,7 +933,7 @@ KNTCRK01G01H663X 2014      5
             expected_output=self.STATS_OUTPUT_DAY_TOTAL,
             total=True)
 
-    def test_InvoiceProgram_xlsx_mode(self):
+    def test_InvoiceProgram_xlsx_mode_raises(self):
         p = StringPrinter()
         with tempfile.NamedTemporaryFile() as db_file:
             invoice_program = InvoiceProgram(

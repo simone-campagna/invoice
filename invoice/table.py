@@ -83,7 +83,7 @@ class Table(object):
 
     def write(self, data, to):
         if isinstance(to, str):
-            filename = to
+            filename = to.format(mode=self.mode)
             if self.mode == conf.TABLE_MODE_XLSX:
                 self.write_xlsx(data, filename)
             else:
@@ -105,7 +105,6 @@ class Table(object):
             raise ImportError("modulo 'xlsxwriter' non trovato - prova ad installare python3-xlsxwriter")
         workbook = Workbook(filename.format(mode=self.mode))
         worksheet = workbook.add_worksheet()
-        reader = csv.reader(f)
         for r, row in enumerate(self.transform(data)):
             for c, col in enumerate(row):
                 worksheet.write(r, c, col)
