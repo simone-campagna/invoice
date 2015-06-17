@@ -21,19 +21,22 @@ __all__ = [
 ]
 
 from . import conf
+from .log import get_default_logger
 
 class Table(object):
     ITEM_GETTER = lambda row, field_name: row.get(field_name)
     ATTR_GETTER = lambda row, field_name: getattr(row, field_name)
-    def __init__(self, field_names, mode=conf.TABLE_MODE_TEXT, justify=None, field_separator=None, convert=None, align=None, header=None, getter=None):
+    def __init__(self, field_names, mode=conf.TABLE_MODE_TEXT, justify=None, field_separator=None, convert=None, align=None, header=None, getter=None, logger=None):
         if mode == conf.TABLE_MODE_CSV:
             default_justify = False
             default_field_separator = ','
         else: # conf.TABLE_MODE_TEXT
-            mode = conf.TABLE_MODE_TEXT
             default_justify = True
             default_field_separator = ' '
         self.mode = mode
+        if logger is None:
+            logger = get_default_logger()
+        self.logger = logger
         if justify is None:
             justify = default_justify
         if field_separator is None:
@@ -77,4 +80,33 @@ class Table(object):
 
     def render(self, data):
         return '\n'.join(self.getlines(data))
+
+    def write(self, data, to):
+        if isinstance(to, str):
+            filename = to
+            if self.mode == conf.TABLE_MODE_XLSX:
+                self.write_xlsx(data, filename)
+            else:
+                with open(filename, "w") as f_out:
+                    for line in self.getlines(data):
+                        f_out.write(line + '\n')
+        else:
+            printer = to
+            if self.mode == conf.TABLE_MODE_XLSX:
+                self.logger.warning("non è possibile produrre su terminale una tabella in modalità {}; utilizzare l'opzione --output/-o".format(self.mode))
+            else:
+                for line in self.getlines(data):
+                    printer(line)
+
+    def write_xlsx(self, data, filename):
+        try:
+            from xlsxwriter.workbook import Workbook
+        except ImportError as err:
+            raise ImportError("modulo 'xlsxwriter' non trovato - prova ad installare python3-xlsxwriter")
+        workbook = Workbook(filename.format(mode=self.mode))
+        worksheet = workbook.add_worksheet()
+        reader = csv.reader(f)
+        for r, row in enumerate(self.transform(data)):
+            for c, col in enumerate(row):
+                worksheet.write(r, c, col)
 

@@ -27,6 +27,7 @@ import sys
 import tempfile
 import unittest
 
+from invoice import conf
 from invoice.log import get_null_logger
 from invoice.invoice_collection import InvoiceCollection
 from invoice.invoice_main import invoice_main
@@ -338,6 +339,45 @@ PRKPRT01G01H663M 2014      2
 WNYBRC01G01H663S 2014      4
 WNYBRC01G01H663S 2014      1
 """)
+
+            with tempfile.NamedTemporaryFile() as o_file:
+                p.reset()
+                invoice_main(
+                    printer=p,
+                    logger=self.logger,
+                    args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--order', 'tax_code,!date', '--output', o_file.name],
+                )
+                self.assertEqual(p.string(), "")
+                o_file.flush()
+                with open(o_file.name, 'r') as f_in:
+                    o_content = f_in.read()
+                self.assertEqual(o_content, """\
+codice_fiscale   anno numero
+BNNBRC01G01H663S 2014      3
+KNTCRK01G01H663X 2014      5
+PRKPRT01G01H663M 2014      2
+WNYBRC01G01H663S 2014      4
+WNYBRC01G01H663S 2014      1
+""")
+
+                idx = 0
+                while True:
+                    o_filename_template = o_file.name + '.' + str(idx) + '.{mode}'
+                    o_filename = o_filename_template.format(mode=conf.TABLE_MODE_XLSX)
+                    if not os.path.exists(o_filename):
+                        break
+
+                p.reset()
+                invoice_main(
+                    printer=p,
+                    logger=self.logger,
+                    args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--order', 'tax_code,!date', '--output', o_filename_template, '--table-mode', conf.TABLE_MODE_XLSX],
+                )
+                try:
+                    self.assertEqual(p.string(), "")
+                    self.assertTrue(os.path.exists(o_filename))
+                finally:
+                    os.remove(o_filename)
 
     def test_invoice_main_dry_run(self):
         with tempfile.NamedTemporaryFile() as db_filename:

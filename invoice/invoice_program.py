@@ -40,7 +40,8 @@ from .error import InvoiceSyntaxError, \
                    InvoiceMalformedTaxCodeError, \
                    InvoiceValidationError, \
                    InvoicePartialUpdateError, \
-                   InvoiceUserValidatorError
+                   InvoiceUserValidatorError, \
+                   InvoiceArgumentError
 
 from .invoice_collection import InvoiceCollection
 from .invoice_collection_reader import InvoiceCollectionReader
@@ -187,7 +188,7 @@ class InvoiceProgram(object):
         )
         return 0
 
-    def program_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=True, show_scan_report=True, table_mode=None):
+    def program_scan(self, *, warning_mode, error_mode, partial_update=True, remove_orphaned=True, show_scan_report=True, table_mode=None, output_filename=None):
         validation_result, invoice_collection = self.impl_scan(
             warning_mode=warning_mode,
             error_mode=error_mode,
@@ -195,6 +196,7 @@ class InvoiceProgram(object):
             remove_orphaned=remove_orphaned,
             show_scan_report=show_scan_report,
             table_mode=table_mode,
+            output_filename=output_filename,
         )
         return validation_result.num_errors()
 
@@ -206,11 +208,12 @@ class InvoiceProgram(object):
         self.impl_validate(warning_mode=warning_mode, error_mode=error_mode)
         return 0
 
-    def program_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None, order_field_names=None, table_mode=None):
+    def program_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None, order_field_names=None, table_mode=None, output_filename=None):
         self.impl_list(list_field_names=list_field_names, header=header,
             filters=filters, date_from=date_from, date_to=date_to,
             order_field_names=order_field_names,
-            table_mode=table_mode)
+            table_mode=table_mode,
+            output_filename=output_filename)
         return 0
 
     def program_dump(self, *, filters=None, date_from=None, date_to=None):
@@ -221,8 +224,9 @@ class InvoiceProgram(object):
         self.impl_report(filters=filters)
         return 0
 
-    def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, table_mode=None):
-        self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group, total=total, stats_mode=stats_mode, table_mode=table_mode)
+    def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, table_mode=None, output_filename=None):
+        self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group, total=total, stats_mode=stats_mode, table_mode=table_mode,
+            output_filename=output_filename)
         return 0
 
     def legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode):
@@ -437,12 +441,13 @@ class InvoiceProgram(object):
             self.delete_failing_invoices(validation_result, connection=connection)
         return validation_result.num_errors()
 
-    def impl_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None, order_field_names=None, table_mode=None):
+    def impl_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None, order_field_names=None, table_mode=None, output_filename=None):
         self.db.check()
         if filters is None: # pragma: no cover
             filters = ()
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters, date_from=date_from, date_to=date_to)
-        self.list_invoice_collection(invoice_collection, header=header, list_field_names=list_field_names, order_field_names=order_field_names, table_mode=table_mode)
+        self.list_invoice_collection(invoice_collection, header=header, list_field_names=list_field_names, order_field_names=order_field_names, table_mode=table_mode,
+            output_filename=output_filename)
 
     def impl_dump(self, *, filters=None, date_from=None, date_to=None):
         self.db.check()
@@ -530,7 +535,7 @@ class InvoiceProgram(object):
         if group:
             yield group_value_function(group, *group_value), group
    
-    def impl_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, table_mode=None):
+    def impl_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, table_mode=None, output_filename=None):
         total = self.db.get_config_option('total', total)
         table_mode = self.db.get_config_option('table_mode', table_mode)
         self.db.check()
@@ -670,9 +675,9 @@ class InvoiceProgram(object):
                 align=align,
                 convert=convert,
                 getter=Table.ITEM_GETTER,
+                logger=self.logger,
             )
-            for line in table.getlines(rows):
-                self.printer(line)
+            self.write_table(table=table, data=rows, output_filename=output_filename)
 
 
     def impl_legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode):
@@ -719,7 +724,7 @@ class InvoiceProgram(object):
                     validator.message)))
         return user_validators
     
-    def impl_scan(self, warning_mode=None, error_mode=None, partial_update=None, remove_orphaned=None, show_scan_report=None, table_mode=None):
+    def impl_scan(self, warning_mode=None, error_mode=None, partial_update=None, remove_orphaned=None, show_scan_report=None, table_mode=None, output_filename=None):
         self.db.check()
         show_scan_report = self.db.get_config_option('show_scan_report', show_scan_report)
         found_doc_filenames = set()
@@ -875,7 +880,8 @@ class InvoiceProgram(object):
                     self.printer("")
                 self.printer("ultima fattura inserita per ciascun anno:")
                 self.printer("-----------------------------------------")
-                self.list_invoice_collection(InvoiceCollection(last_invoice_of_the_year.values()), list_field_names=None, header=None, order_field_names=None, table_mode=table_mode)
+                self.list_invoice_collection(InvoiceCollection(last_invoice_of_the_year.values()), list_field_names=None, header=None, order_field_names=None,
+                    table_mode=table_mode, output_filename=output_filename)
 
         return validation_result, updated_invoice_collection
 
@@ -979,7 +985,15 @@ class InvoiceProgram(object):
             validation_result.num_warnings()))
         return validation_result
 
-    def list_invoice_collection(self, invoice_collection, list_field_names=None, header=None, order_field_names=None, table_mode=None):
+    def write_table(self, table, data, output_filename=None):
+        if output_filename is not None:
+            table.write(data=data, to=output_filename)
+        else:
+            if table.mode == conf.TABLE_MODE_XLSX:
+                raise InvoiceArgumentError("non è possibile produrre una tabella in formato {} su terminale; utilizzare --output/-o".format(table.mode))
+            table.write(data=data, to=self.printer)
+
+    def list_invoice_collection(self, invoice_collection, list_field_names=None, header=None, order_field_names=None, table_mode=None, output_filename=None):
         list_field_names = self.db.get_config_option('list_field_names', list_field_names)
         header = self.db.get_config_option('header', header)
         table_mode = self.db.get_config_option('table_mode', table_mode)
@@ -1005,9 +1019,9 @@ class InvoiceProgram(object):
                 'number': '>',
                 'income': '>',
             },
+            logger=self.logger,
         )
-        for line in table.getlines(invoices):
-            self.printer(line)
+        self.write_table(table=table, data=invoices, output_filename=output_filename)
 
     def dump_invoice_collection(self, invoice_collection):
         invoice_collection.sort()

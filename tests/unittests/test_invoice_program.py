@@ -36,7 +36,8 @@ from invoice.error import InvoiceDuplicatedNumberError, \
                           InvoiceUndefinedFieldError, \
                           InvoiceMultipleNamesError, \
                           InvoiceMalformedTaxCodeError, \
-                          InvoiceVersionError
+                          InvoiceVersionError, \
+                          InvoiceArgumentError
 
 from invoice.invoice_program import InvoiceProgram
 from invoice.invoice_collection import InvoiceCollection
@@ -931,4 +932,23 @@ KNTCRK01G01H663X 2014      5
             stats_group=conf.STATS_GROUP_DAY,
             expected_output=self.STATS_OUTPUT_DAY_TOTAL,
             total=True)
+
+    def test_InvoiceProgram_xlsx_mode(self):
+        p = StringPrinter()
+        with tempfile.NamedTemporaryFile() as db_file:
+            invoice_program = InvoiceProgram(
+                db_filename=db_file.name,
+                logger=self.logger,
+                trace=False,
+                printer=p,
+            )
+            p.reset()
+            invoice_program.impl_init(
+                patterns=[os.path.join(self.dirname, '*.doc')],
+                reset=True,
+                partial_update=True,
+                remove_orphaned=True,
+            )
+            with self.assertRaises(InvoiceArgumentError):
+                invoice_program.impl_list(table_mode=conf.TABLE_MODE_XLSX)
 

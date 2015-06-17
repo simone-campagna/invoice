@@ -501,7 +501,7 @@ Questa rimozione di fatture già scansionate può avvenire in due casi:
     )
     scan_parser.set_defaults(
         function_name="program_scan",
-        function_arguments=('warning_mode', 'error_mode', 'remove_orphaned', 'partial_update', 'show_scan_report', 'table_mode'),
+        function_arguments=('warning_mode', 'error_mode', 'remove_orphaned', 'partial_update', 'show_scan_report', 'table_mode', 'output_filename'),
     )
 
     ### clear_parser ###
@@ -548,7 +548,7 @@ selezionare i campi da mostrare.
     )
     list_parser.set_defaults(
         function_name="program_list",
-        function_arguments=('filters', 'date_from', 'date_to', 'list_field_names', 'header', 'order_field_names', 'table_mode'),
+        function_arguments=('filters', 'date_from', 'date_to', 'list_field_names', 'header', 'order_field_names', 'table_mode', 'output_filename'),
     )
 
     ### dump_parser ###
@@ -728,6 +728,13 @@ e validati.
             default=default_table_mode,
             help="modalità di stampa delle tabelle: {} -> testo, {} -> comma-separated-value".format(conf.TABLE_MODE_TEXT, conf.TABLE_MODE_CSV))
 
+    for parser in list_parser, scan_parser:
+        parser.add_argument("--output",
+            dest="output_filename",
+            type=str,
+            default=None,
+            help="nome del file di output")
+     
     for parser in stats_parser, :
         stats_argument_group = parser.add_mutually_exclusive_group()
         stats_argument_group.add_argument("--short", "-s",
