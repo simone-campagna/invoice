@@ -30,8 +30,10 @@ class Table(object):
             default_justify = False
             default_field_separator = ','
         else: # conf.TABLE_MODE_TEXT
+            mode = conf.TABLE_MODE_TEXT
             default_justify = True
             default_field_separator = ' '
+        self.mode = mode
         if justify is None:
             justify = default_justify
         if field_separator is None:
@@ -56,13 +58,15 @@ class Table(object):
             getter = self.__class__.ATTR_GETTER
         self.getter = getter
 
-    def getlines(self, data):
-        rows = []
-        if self.show_header:
-            rows.append(self.header)
+    def transform(self, data):
+        if self.show_header and data:
+            yield self.header
         for entry in data:
-            rows.append(tuple(self.convert.get(field_name, str)(self.getter(entry, field_name)) for field_name in self.field_names))
-        if data:
+            yield tuple(self.convert.get(field_name, str)(self.getter(entry, field_name)) for field_name in self.field_names)
+
+    def getlines(self, data):
+        rows = tuple(self.transform(data))
+        if rows:
             if self.justify:
                 lengths = [max(len(entry[c]) for entry in rows) for c, f in enumerate(self.field_names)]
             else:

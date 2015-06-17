@@ -133,6 +133,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_stats_group = None
     default_list_field_names = None
     default_stats_mode = None
+    default_table_mode = None
 
     common_parser = argparse.ArgumentParser(
         add_help=False,
@@ -724,7 +725,7 @@ e validati.
         parser.add_argument("--table-mode", "-m",
             dest="table_mode",
             choices=conf.TABLE_MODES,
-            default=conf.DEFAULT_TABLE_MODE,
+            default=default_table_mode,
             help="modalità di stampa delle tabelle: {} -> testo, {} -> comma-separated-value".format(conf.TABLE_MODE_TEXT, conf.TABLE_MODE_CSV))
 
     for parser in stats_parser, :

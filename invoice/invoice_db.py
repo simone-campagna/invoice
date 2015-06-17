@@ -77,7 +77,7 @@ class InvoiceDb(Db):
         stats_group=conf.DEFAULT_STATS_GROUP,
         list_field_names=conf.DEFAULT_LIST_FIELD_NAMES,
         show_scan_report=False,
-        table_mode=None)
+        table_mode=conf.DEFAULT_TABLE_MODE)
     
     TABLES = {
         'version': DbTable(

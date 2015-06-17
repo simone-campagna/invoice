@@ -221,8 +221,8 @@ class InvoiceProgram(object):
         self.impl_report(filters=filters)
         return 0
 
-    def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None):
-        self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group, total=total, stats_mode=stats_mode)
+    def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, table_mode=None):
+        self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group, total=total, stats_mode=stats_mode, table_mode=table_mode)
         return 0
 
     def legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode):
@@ -530,8 +530,9 @@ class InvoiceProgram(object):
         if group:
             yield group_value_function(group, *group_value), group
    
-    def impl_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None):
+    def impl_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, table_mode=None):
         total = self.db.get_config_option('total', total)
+        table_mode = self.db.get_config_option('table_mode', table_mode)
         self.db.check()
         if filters is None: # pragma: no cover
             filters = ()
@@ -664,6 +665,7 @@ class InvoiceProgram(object):
                 rows.append(total_row)
             table = Table(
                 field_names=all_field_names,
+                mode=table_mode,
                 header=all_header,
                 align=align,
                 convert=convert,
@@ -980,6 +982,7 @@ class InvoiceProgram(object):
     def list_invoice_collection(self, invoice_collection, list_field_names=None, header=None, order_field_names=None, table_mode=None):
         list_field_names = self.db.get_config_option('list_field_names', list_field_names)
         header = self.db.get_config_option('header', header)
+        table_mode = self.db.get_config_option('table_mode', table_mode)
         invoice_collection.sort()
         invoices = list(invoice_collection)
         if order_field_names:
