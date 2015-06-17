@@ -101,7 +101,7 @@ class Table(object):
     def write_xlsx(self, data, filename):
         try:
             from xlsxwriter.workbook import Workbook
-        except ImportError as err:
+        except ImportError as err: # pragma: no cover
             raise ImportError("modulo 'xlsxwriter' non trovato - prova ad installare python3-xlsxwriter")
         workbook = Workbook(filename.format(mode=self.mode))
         worksheet = workbook.add_worksheet()
