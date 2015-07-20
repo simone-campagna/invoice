@@ -135,8 +135,10 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_stats_mode = None
     default_table_mode = None
 
+    prog = os.path.basename(sys.argv[0])
     common_parser = argparse.ArgumentParser(
         add_help=False,
+        prog=prog,
     )
 
     common_parser.add_argument("--help", "-h",
@@ -259,7 +261,7 @@ fattura:                   '/home/simone/Programs/Programming/invoice/example/20
     top_level_parser.set_defaults(parser_dict=parser_dict)
 
     def add_subparser(subparsers, name, *n_args, **p_args):
-        parser = subparsers.add_parser(name, *n_args, **p_args)
+        parser = subparsers.add_parser(name, prog=prog, *n_args, **p_args)
         parser_dict[name] = parser
         return parser
 

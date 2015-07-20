@@ -35,6 +35,7 @@ import traceback
 from .error import InvoiceSyntaxError, \
                    InvoiceDateError, \
                    InvoiceMultipleNamesError, \
+                   InvoiceMultipleTaxCodesError, \
                    InvoiceWrongNumberError, \
                    InvoiceDuplicatedNumberError, \
                    InvoiceMalformedTaxCodeError, \
@@ -921,21 +922,35 @@ class InvoiceProgram(object):
             invoice.validate(validation_result=validation_result)
 
         # verify first/last name exchange:
-        nd = {}
+        tnd = {}
+        ntd = {}
         for invoice in invoice_collection:
-            if invoice.tax_code in nd:
-                i_name, i_doc_filenames = nd[invoice.tax_code]
-                if i_name != invoice.name:
-                    message = "fattura {f}: il codice_fiscale {t!r} è associato al nome {n!r}, mentre è stato associato ad un altro nome {pn!r} in #{c} fatture".format(
-                        f=invoice.doc_filename,
-                        t=invoice.tax_code,
-                        n=invoice.name,
-                        pn=i_name,
-                        c=len(i_doc_filenames),
-                    )
-                    validation_result.add_warning(invoice, InvoiceMultipleNamesError, message)
-            else:
-                nd[invoice.tax_code] = (invoice.name, [invoice.doc_filename])
+            if invoice.tax_code in tnd:
+                nd = tnd[invoice.tax_code]
+                for i_name, i_doc_filenames in nd.items():
+                    if i_name != invoice.name:
+                        message = "fattura {f}: il codice_fiscale {t!r} è associato al nome {n!r}, mentre è stato associato ad un altro nome {pn!r} in #{c} fatture".format(
+                            f=invoice.doc_filename,
+                            t=invoice.tax_code,
+                            n=invoice.name,
+                            pn=i_name,
+                            c=len(i_doc_filenames),
+                        )
+                        validation_result.add_warning(invoice, InvoiceMultipleNamesError, message)
+            tnd.setdefault(invoice.tax_code, {}).setdefault(invoice.name, []).append(invoice.doc_filename)
+            if invoice.name in ntd:
+                td = ntd[invoice.name]
+                for i_tax_code, i_doc_filenames in td.items():
+                    if i_tax_code != invoice.tax_code:
+                        message = "fattura {f}: il nome {n!r} è associato al codice_fiscale {t!r}, mentre è stato associato ad un altro codice_fiscale {pt!r} in #{c} fatture".format(
+                            f=invoice.doc_filename,
+                            t=invoice.tax_code,
+                            n=invoice.name,
+                            pt=i_tax_code,
+                            c=len(i_doc_filenames),
+                        )
+                        validation_result.add_warning(invoice, InvoiceMultipleTaxCodesError, message)
+            ntd.setdefault(invoice.name, {}).setdefault(invoice.tax_code, []).append(invoice.doc_filename)
 
         # verify numbering and dates per year
         for year in invoice_collection.years():

@@ -35,6 +35,7 @@ from invoice.error import InvoiceDuplicatedNumberError, \
                           InvoiceWrongNumberError, \
                           InvoiceUndefinedFieldError, \
                           InvoiceMultipleNamesError, \
+                          InvoiceMultipleTaxCodesError, \
                           InvoiceMalformedTaxCodeError, \
                           InvoiceVersionError, \
                           InvoiceArgumentError
@@ -607,7 +608,63 @@ KNTCRK01G01H663X 2014      5
                 exc_type, message = errors[0]
                 self.assertIs(exc_type, InvoiceDuplicatedNumberError)
         
-    def _test_InvoiceProgram_undefined_field(self, warning_mode):
+    def _test_InvoiceProgram_uf_mt(self, warning_mode):
+        with tempfile.NamedTemporaryFile() as db_file:
+            p = StringPrinter()
+            invoice_program = InvoiceProgram(
+                db_filename=db_file.name,
+                logger=self.logger,
+                trace=False,
+                printer=p,
+            )
+    
+            invoice_a = Invoice(
+                doc_filename='2015_004_parker_peter.doc',
+                year=2015, number=4,
+                name='Peter B. Parker', tax_code='WNYBRC01G01H663S', 
+                city='New York', date=datetime.date(2015, 1, 4),
+                income=None, currency='euro')
+            invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
+        
+            validation_result = invoice_program.create_validation_result(warning_mode=warning_mode)
+            invoice_program.validate_invoice_collection(validation_result, invoice_collection)
+
+            expected_errors = []
+            expected_warnings = []
+            expected_errors.append(InvoiceUndefinedFieldError)
+            if warning_mode == ValidationResult.WARNING_MODE_DEFAULT:
+                expected_warnings.append(InvoiceMultipleTaxCodesError)
+            elif warning_mode == ValidationResult.WARNING_MODE_ERROR:
+                expected_errors.append(InvoiceMultipleTaxCodesError)
+            elif warning_mode == ValidationResult.WARNING_MODE_IGNORE:
+                pass
+
+            self.assertEqual(validation_result.num_errors(), len(expected_errors))
+            for doc_filename, errors in validation_result.errors().items():
+                self.assertEqual(doc_filename, invoice_a.doc_filename)
+                self.assertEqual(len(errors), len(expected_errors))
+                exc_types = [error[0] for error in errors]
+                for exc_type in exc_types:
+                    self.assertIn(exc_type, expected_errors)
+
+            self.assertEqual(validation_result.num_warnings(), len(expected_warnings))
+            for doc_filename, warnings in validation_result.warnings().items():
+                self.assertEqual(doc_filename, invoice_a.doc_filename)
+                self.assertEqual(len(warnings), len(expected_warnings))
+                exc_types = [warning[0] for warning in warnings]
+                for exc_type in exc_types:
+                    self.assertIn(exc_type, expected_warnings)
+           
+    def test_InvoiceProgram_uf_mt_default(self):
+        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.WARNING_MODE_DEFAULT)
+    
+    def test_InvoiceProgram_uf_mt_error(self):
+        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.WARNING_MODE_ERROR)
+
+    def test_InvoiceProgram_uf_mt_ignore(self):
+        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.WARNING_MODE_IGNORE)
+
+    def _test_InvoiceProgram_uf_mn(self, warning_mode):
         with tempfile.NamedTemporaryFile() as db_file:
             p = StringPrinter()
             invoice_program = InvoiceProgram(
@@ -654,14 +711,14 @@ KNTCRK01G01H663X 2014      5
                 for exc_type in exc_types:
                     self.assertIn(exc_type, expected_warnings)
            
-    def test_InvoiceProgram_undefined_field_default(self):
-        self._test_InvoiceProgram_undefined_field(warning_mode=ValidationResult.WARNING_MODE_DEFAULT)
+    def test_InvoiceProgram_uf_mn_default(self):
+        self._test_InvoiceProgram_uf_mn(warning_mode=ValidationResult.WARNING_MODE_DEFAULT)
     
-    def test_InvoiceProgram_undefined_field_error(self):
-        self._test_InvoiceProgram_undefined_field(warning_mode=ValidationResult.WARNING_MODE_ERROR)
+    def test_InvoiceProgram_uf_mn_error(self):
+        self._test_InvoiceProgram_uf_mn(warning_mode=ValidationResult.WARNING_MODE_ERROR)
 
-    def test_InvoiceProgram_undefined_field_ignore(self):
-        self._test_InvoiceProgram_undefined_field(warning_mode=ValidationResult.WARNING_MODE_IGNORE)
+    def test_InvoiceProgram_uf_mn_ignore(self):
+        self._test_InvoiceProgram_uf_mn(warning_mode=ValidationResult.WARNING_MODE_IGNORE)
 
     def test_InvoiceProgram_malformed_tax_code(self):
         with tempfile.NamedTemporaryFile() as db_file:
