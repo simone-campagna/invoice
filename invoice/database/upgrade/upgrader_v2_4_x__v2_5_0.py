@@ -101,7 +101,7 @@ class Upgrader_v2_4_x__v2_5_0(MajorMinorUpgrader):
             values = list(db.execute(cursor, sql))[-1]
             db.drop('configuration', connection=connection)
             db.create_table('configuration', self.CONFIGURATION_TABLE_v2_5_0.fields, connection=connection)
-            values +=  (conf.DEFAULT_TABLE_MODE, )
+            values +=  (conf.DEFAULT_MAX_INTERRUPTION_DAYS, )
             field_names = self.Configuration_v2_5_0._fields
             sql = """INSERT INTO configuration ({field_names}) VALUES ({placeholders});""".format(
                 field_names=', '.join(field_names),
