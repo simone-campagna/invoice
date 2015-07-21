@@ -57,7 +57,7 @@ class Upgrader_v2_4_x__v2_5_0(MajorMinorUpgrader):
     )
     Configuration_v2_5_0 = collections.namedtuple(
         'Configuration',
-        ('warning_mode', 'error_mode',
+        ('warning_mode', 'warning_suppression', 'error_mode', 'error_suppression',
          'partial_update', 'remove_orphaned',
          'header', 'total',
          'stats_group', 'list_field_names',
@@ -66,7 +66,9 @@ class Upgrader_v2_4_x__v2_5_0(MajorMinorUpgrader):
     CONFIGURATION_TABLE_v2_5_0 = DbTable(
         fields=(
             ('warning_mode', Str()),
+            ('warning_suppression', StrTuple()),
             ('error_mode', Str()),
+            ('error_suppression', StrTuple()),
             ('remove_orphaned', Bool()),
             ('partial_update', Bool()),
             ('header', Bool()),
@@ -79,32 +81,25 @@ class Upgrader_v2_4_x__v2_5_0(MajorMinorUpgrader):
         ),
         dict_type=Configuration_v2_5_0,
     )
+
     def impl_downgrade(self, db, version_from, version_to, connection=None):
-        with db.connect(connection) as connection:
-            cursor = connection.cursor()
-            sql = """SELECT * FROM configuration;"""
-            v_list = list(db.execute(cursor, sql))
-            db.drop('configuration', connection=connection)
-            db.create_table('configuration', self.CONFIGURATION_TABLE_v2_4_x.fields, connection=connection)
-            field_names = self.Configuration_v2_4_x._fields
-            sql = """INSERT INTO configuration ({field_names}) VALUES ({placeholders});""".format(
-                field_names=', '.join(field_names),
-                placeholders=', '.join('?' for field in field_names),
-            )
-            for v in v_list:
-                db.execute(cursor, sql, v[:-1])
-        
+        return self.do_downgrade(
+            old_table=self.CONFIGURATION_TABLE_v2_4_x,
+            new_table=self.CONFIGURATION_TABLE_v2_5_0,
+            db=db,
+            version_from=version_from,
+            version_to=version_to,
+            connection=connection
+        )
+
     def impl_upgrade(self, db, version_from, version_to, connection=None):
-        with db.connect(connection) as connection:
-            cursor = connection.cursor()
-            sql = """SELECT * FROM configuration;"""
-            values = list(db.execute(cursor, sql))[-1]
-            db.drop('configuration', connection=connection)
-            db.create_table('configuration', self.CONFIGURATION_TABLE_v2_5_0.fields, connection=connection)
-            values +=  (conf.DEFAULT_MAX_INTERRUPTION_DAYS, )
-            field_names = self.Configuration_v2_5_0._fields
-            sql = """INSERT INTO configuration ({field_names}) VALUES ({placeholders});""".format(
-                field_names=', '.join(field_names),
-                placeholders=', '.join('?' for field in field_names),
-            )
-            db.execute(cursor, sql, values)
+        return self.do_upgrade(
+            old_table=self.CONFIGURATION_TABLE_v2_4_x,
+            new_table=self.CONFIGURATION_TABLE_v2_5_0,
+            new_data={'max_interruption_days': conf.DEFAULT_MAX_INTERRUPTION_DAYS, 'warning_suppression': (), 'error_suppression': ()},
+            db=db,
+            version_from=version_from,
+            version_to=version_to,
+            connection=connection
+        )
+
