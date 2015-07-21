@@ -1118,3 +1118,24 @@ KNTCRK01G01H663X 2014      5
             with self.assertRaises(InvoiceArgumentError):
                 invoice_program.impl_list(table_mode=conf.TABLE_MODE_XLSX)
 
+    def test_InvoiceProgram_warning_raise(self):
+        with tempfile.NamedTemporaryFile() as db_file:
+            p = StringPrinter()
+            invoice_program = InvoiceProgram(
+                db_filename=db_file.name,
+                logger=self.logger,
+                trace=False,
+                printer=p,
+            )
+    
+            invoice_a = Invoice(
+                doc_filename='2015_004_parker_peter.doc',
+                year=2015, number=4,
+                name='Peter B. Parker', tax_code='WNYBRC01G01H663S', 
+                city='New York', date=datetime.date(2015, 1, 4),
+                income=100, currency='euro')
+            invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
+        
+            validation_result = invoice_program.create_validation_result(warning_mode=ValidationResult.WARNING_MODE_RAISE)
+            with self.assertRaises(InvoiceMultipleTaxCodesError):
+                invoice_program.validate_invoice_collection(validation_result, invoice_collection)

@@ -26,7 +26,8 @@ class ValidationResult(object):
     WARNING_MODE_LOG = 'log'
     WARNING_MODE_ERROR = 'error'
     WARNING_MODE_IGNORE = 'ignore'
-    WARNING_MODES = (WARNING_MODE_LOG, WARNING_MODE_ERROR, WARNING_MODE_IGNORE)
+    WARNING_MODE_RAISE = 'raise'
+    WARNING_MODES = (WARNING_MODE_LOG, WARNING_MODE_ERROR, WARNING_MODE_IGNORE, WARNING_MODE_RAISE)
     DEFAULT_WARNING_MODE = WARNING_MODE_LOG
 
     ERROR_MODE_LOG = 'log'
@@ -64,6 +65,8 @@ class ValidationResult(object):
             self._function_warning = self._function_error
         elif warning_mode == self.WARNING_MODE_IGNORE:
             self._function_warning = self.impl_ignore
+        elif warning_mode == self.WARNING_MODE_RAISE:
+            self._function_warning = self.impl_add_critical
         else: # pragma: no cover
             raise ValueError("warning_mode {!r} non valido (i valori leciti sono {})".format(warning_mode, '|'.join(self.WARNING_MODES)))
 
