@@ -33,13 +33,6 @@ from ... import conf
 class Upgrader_v2_3_x__v2_4_0(MajorMinorUpgrader):
     VERSION_FROM_MAJOR_MINOR = Version(2, 3, None)
     VERSION_TO_MAJOR_MINOR = Version(2, 4, 0)
-    Configuration_v2_3_x = collections.namedtuple(
-        'Configuration',
-        ('warning_mode', 'error_mode',
-         'partial_update', 'remove_orphaned',
-         'header', 'total',
-         'stats_group', 'list_field_names',
-         'show_scan_report'))
     CONFIGURATION_TABLE_v2_3_x = DbTable(
         fields=(
             ('warning_mode', Str()),
@@ -52,15 +45,7 @@ class Upgrader_v2_3_x__v2_4_0(MajorMinorUpgrader):
             ('list_field_names', StrTuple()),
             ('show_scan_report', Bool()),
         ),
-        dict_type=Configuration_v2_3_x,
     )
-    Configuration_v2_4_0 = collections.namedtuple(
-        'Configuration',
-        ('warning_mode', 'error_mode',
-         'partial_update', 'remove_orphaned',
-         'header', 'total',
-         'stats_group', 'list_field_names',
-         'show_scan_report', 'table_mode'))
     CONFIGURATION_TABLE_v2_4_0 = DbTable(
         fields=(
             ('warning_mode', Str()),
@@ -74,7 +59,6 @@ class Upgrader_v2_3_x__v2_4_0(MajorMinorUpgrader):
             ('show_scan_report', Bool()),
             ('table_mode', Str()),
         ),
-        dict_type=Configuration_v2_3_x,
     )
     def impl_downgrade(self, db, version_from, version_to, connection=None):
         return self.do_downgrade(

@@ -33,13 +33,6 @@ from ... import conf
 class Upgrader_v2_4_x__v2_5_0(MajorMinorUpgrader):
     VERSION_FROM_MAJOR_MINOR = Version(2, 4, None)
     VERSION_TO_MAJOR_MINOR = Version(2, 5, 0)
-    Configuration_v2_4_x = collections.namedtuple(
-        'Configuration',
-        ('warning_mode', 'error_mode',
-         'partial_update', 'remove_orphaned',
-         'header', 'total',
-         'stats_group', 'list_field_names',
-         'show_scan_report', 'table_mode'))
     CONFIGURATION_TABLE_v2_4_x = DbTable(
         fields=(
             ('warning_mode', Str()),
@@ -53,16 +46,7 @@ class Upgrader_v2_4_x__v2_5_0(MajorMinorUpgrader):
             ('show_scan_report', Bool()),
             ('table_mode', Str()),
         ),
-        dict_type=Configuration_v2_4_x,
     )
-    Configuration_v2_5_0 = collections.namedtuple(
-        'Configuration',
-        ('warning_mode', 'warning_suppression', 'error_mode', 'error_suppression',
-         'partial_update', 'remove_orphaned',
-         'header', 'total',
-         'stats_group', 'list_field_names',
-         'show_scan_report', 'table_mode',
-         'max_interruption_days'))
     CONFIGURATION_TABLE_v2_5_0 = DbTable(
         fields=(
             ('warning_mode', Str()),
@@ -79,7 +63,6 @@ class Upgrader_v2_4_x__v2_5_0(MajorMinorUpgrader):
             ('table_mode', Str()),
             ('max_interruption_days', Int()),
         ),
-        dict_type=Configuration_v2_5_0,
     )
 
     def impl_downgrade(self, db, version_from, version_to, connection=None):
