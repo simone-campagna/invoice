@@ -37,68 +37,73 @@ from invoice.version import VERSION
 class Test_invoice_main_config(unittest.TestCase):
     CONFIG_SHOW_WIGNORE_EIGNORE = """\
 configuration:
-  + warning_mode         = 'ignore'
-  + error_mode           = 'ignore'
-  + partial_update       = True
-  + remove_orphaned      = True
-  + header               = True
-  + total                = True
-  + stats_group          = 'month'
-  + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
-  + show_scan_report     = False
-  + table_mode           = 'text'
+  + warning_mode             = 'ignore'
+  + error_mode               = 'ignore'
+  + partial_update           = True
+  + remove_orphaned          = True
+  + header                   = True
+  + total                    = True
+  + stats_group              = 'month'
+  + list_field_names         = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + show_scan_report         = False
+  + table_mode               = 'text'
+  + max_interruption_days    = 365
 """
     CONFIG_SHOW_WERROR_ERAISE = """\
 configuration:
-  + warning_mode         = 'error'
-  + error_mode           = 'raise'
-  + partial_update       = True
-  + remove_orphaned      = True
-  + header               = True
-  + total                = True
-  + stats_group          = 'month'
-  + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
-  + show_scan_report     = False
-  + table_mode           = 'text'
+  + warning_mode             = 'error'
+  + error_mode               = 'raise'
+  + partial_update           = True
+  + remove_orphaned          = True
+  + header                   = True
+  + total                    = True
+  + stats_group              = 'month'
+  + list_field_names         = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + show_scan_report         = False
+  + table_mode               = 'text'
+  + max_interruption_days    = 365
 """
     CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
 configuration:
-  + warning_mode         = 'log'
-  + error_mode           = 'log'
-  + partial_update       = True
-  + remove_orphaned      = True
-  + header               = True
-  + total                = True
-  + stats_group          = 'month'
-  + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
-  + show_scan_report     = False
-  + table_mode           = 'text'
+  + warning_mode             = 'log'
+  + error_mode               = 'log'
+  + partial_update           = True
+  + remove_orphaned          = True
+  + header                   = True
+  + total                    = True
+  + stats_group              = 'month'
+  + list_field_names         = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + show_scan_report         = False
+  + table_mode               = 'text'
+  + max_interruption_days    = 365
 """
     CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
 configuration:
-  + warning_mode         = 'log'
-  + error_mode           = 'log'
-  + partial_update       = False
-  + remove_orphaned      = True
-  + header               = True
-  + total                = True
-  + stats_group          = 'month'
-  + list_field_names     = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
-  + show_scan_report     = False
-  + table_mode           = 'text'
+  + warning_mode             = 'log'
+  + error_mode               = 'log'
+  + partial_update           = False
+  + remove_orphaned          = True
+  + header                   = True
+  + total                    = True
+  + stats_group              = 'month'
+  + list_field_names         = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + show_scan_report         = False
+  + table_mode               = 'text'
+  + max_interruption_days    = 365
 """
     CONFIG_SHOW_MIX = """\
 configuration:
-  + warning_mode         = 'log'
-  + error_mode           = 'log'
-  + partial_update       = True
-  + remove_orphaned      = True
-  + header               = True
-  + total                = True
-  + stats_group          = 'week'
-  + list_field_names     = ('tax_code', 'city', 'number', 'income')
-  + show_scan_report     = True
-  + table_mode           = 'text'
+  + warning_mode             = 'log'
+  + error_mode               = 'log'
+  + partial_update           = True
+  + remove_orphaned          = True
+  + header                   = True
+  + total                    = True
+  + stats_group              = 'week'
+  + list_field_names         = ('tax_code', 'city', 'number', 'income')
+  + show_scan_report         = True
+  + table_mode               = 'text'
+  + max_interruption_days    = 361
 """
 
     VERSION_OUTPUT = """\
@@ -247,7 +252,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b'],
+                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b', '-I', '361'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_MIX)
 

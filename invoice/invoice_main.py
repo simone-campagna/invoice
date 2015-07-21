@@ -134,6 +134,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_list_field_names = None
     default_stats_mode = None
     default_table_mode = None
+    default_max_interruption_days = None
 
     prog = os.path.basename(sys.argv[0])
     common_parser = argparse.ArgumentParser(
@@ -332,7 +333,7 @@ include tutti i file 'docs/*.doc', poi fra questi scarta tutti i file
                             'warning_mode', 'error_mode',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
-                            'list_field_names', 'stats_group', 'show_scan_report', 'table_mode'),
+                            'list_field_names', 'stats_group', 'show_scan_report', 'table_mode', 'max_interruption_days'),
     )
 
     ### version ###
@@ -398,6 +399,7 @@ supportati sono:
                             'header', 'total',
                             'list_field_names', 'stats_group', 'show_scan_report',
                             'table_mode',
+                            'max_interruption_days',
                             'import_filename', 'export_filename',
                             'edit', 'editor'),
     )
@@ -651,7 +653,7 @@ Per il raggruppamento città vengono mostrati:
     )
     stats_parser.set_defaults(
         function_name="program_stats",
-        function_arguments=('filters', 'date_from', 'date_to', 'stats_group', 'total', 'stats_mode'),
+        function_arguments=('filters', 'date_from', 'date_to', 'stats_group', 'total', 'stats_mode', 'header'),
     )
 
     ### legacy_parser ###
@@ -684,7 +686,7 @@ e validati.
         help="esegue l'upgrade del database")
 
     ### list_mode option
-    for parser in init_parser, config_parser, list_parser:
+    for parser in init_parser, config_parser, list_parser, stats_parser:
         parser.add_argument("--header", "-H",
             dest="header",
             metavar="on/off",
@@ -729,6 +731,13 @@ e validati.
             choices=conf.TABLE_MODES,
             default=default_table_mode,
             help="modalità di stampa delle tabelle: {} -> testo, {} -> comma-separated-value".format(conf.TABLE_MODE_TEXT, conf.TABLE_MODE_CSV))
+
+    for parser in init_parser, config_parser:
+        parser.add_argument("--max-interruption-days", "-I",
+            dest="max_interruption_days",
+            type=int,
+            default=default_max_interruption_days,
+            help="numero di giorni massimo di interruzione di un incarico")
 
     for parser in list_parser, scan_parser:
         parser.add_argument("--output",

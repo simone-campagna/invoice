@@ -36,6 +36,7 @@ from invoice.error import InvoiceDuplicatedNumberError, \
                           InvoiceUndefinedFieldError, \
                           InvoiceMultipleNamesError, \
                           InvoiceMultipleTaxCodesError, \
+                          InvoiceMultipleInvoicesPerDayError, \
                           InvoiceMalformedTaxCodeError, \
                           InvoiceVersionError, \
                           InvoiceArgumentError
@@ -560,11 +561,15 @@ KNTCRK01G01H663X 2014      5
             validation_result = invoice_program.create_validation_result()
             invoice_program.validate_invoice_collection(validation_result, invoice_collection)
             self.assertEqual(validation_result.num_errors(), 1)
-            self.assertEqual(validation_result.num_warnings(), 0)
             for doc_filename, errors in validation_result.errors().items():
                 self.assertEqual(doc_filename, self._invoice_004_peter_parker_wrong_date.doc_filename)
                 for error in errors:
                     self.assertIs(error.exc_type, InvoiceDateError)
+            self.assertEqual(validation_result.num_warnings(), 2)
+            for doc_filename, warnings in validation_result.warnings().items():
+                self.assertTrue(doc_filename in [self._invoice_004_peter_parker_wrong_date.doc_filename, self._invoice_002_peter_parker.doc_filename])
+                for warning in warnings:
+                    self.assertIs(warning.exc_type, InvoiceMultipleInvoicesPerDayError)
     
     def test_InvoiceProgram_validate_error_wrong_number(self):
         with tempfile.NamedTemporaryFile() as db_file:
@@ -719,6 +724,69 @@ KNTCRK01G01H663X 2014      5
 
     def test_InvoiceProgram_uf_mn_ignore(self):
         self._test_InvoiceProgram_uf_mn(warning_mode=ValidationResult.WARNING_MODE_IGNORE)
+
+    def _test_InvoiceProgram_mi(self, warning_mode):
+        with tempfile.NamedTemporaryFile() as db_file:
+            p = StringPrinter()
+            invoice_program = InvoiceProgram(
+                db_filename=db_file.name,
+                logger=self.logger,
+                trace=False,
+                printer=p,
+            )
+    
+            invoice_a = Invoice(
+                doc_filename='2015_004_parker_peter.doc',
+                year=2015, number=4,
+                name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
+                city='New York', date=datetime.date(2015, 1, 4),
+                income=20.0, currency='euro')
+            invoice_b = Invoice(
+                doc_filename='2015_005_parker_peter.doc',
+                year=2015, number=5,
+                name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
+                city='New York', date=datetime.date(2015, 1, 4),
+                income=20.0, currency='euro')
+            invoice_collection = InvoiceCollection(self._invoices + [invoice_a, invoice_b], logger=self.logger)
+        
+            validation_result = invoice_program.create_validation_result(warning_mode=warning_mode)
+            invoice_program.validate_invoice_collection(validation_result, invoice_collection)
+
+            expected_errors = []
+            expected_warnings = []
+            if warning_mode == ValidationResult.WARNING_MODE_DEFAULT:
+                expected_warnings.append(InvoiceMultipleInvoicesPerDayError)
+                expected_warnings.append(InvoiceMultipleInvoicesPerDayError)
+            elif warning_mode == ValidationResult.WARNING_MODE_ERROR:
+                expected_errors.append(InvoiceMultipleInvoicesPerDayError)
+                expected_errors.append(InvoiceMultipleInvoicesPerDayError)
+            elif warning_mode == ValidationResult.WARNING_MODE_IGNORE:
+                pass
+
+            self.assertEqual(validation_result.num_errors(), len(expected_errors))
+            for doc_filename, errors in validation_result.errors().items():
+                self.assertTrue(doc_filename in [invoice_a.doc_filename, invoice_b.doc_filename])
+                self.assertEqual(len(errors), len(expected_errors))
+                exc_types = [error[0] for error in errors]
+                for exc_type in exc_types:
+                    self.assertIn(exc_type, expected_errors)
+
+            self.assertEqual(validation_result.num_warnings(), len(expected_warnings))
+            for doc_filename, warnings in validation_result.warnings().items():
+                self.assertTrue(doc_filename in [invoice_a.doc_filename, invoice_b.doc_filename])
+                self.assertEqual(len(warnings), len(expected_warnings))
+                exc_types = [warning[0] for warning in warnings]
+                for exc_type in exc_types:
+                    self.assertIn(exc_type, expected_warnings)
+           
+    def test_InvoiceProgram_mi_default(self):
+        self._test_InvoiceProgram_mi(warning_mode=ValidationResult.WARNING_MODE_DEFAULT)
+    
+    def test_InvoiceProgram_mi_error(self):
+        self._test_InvoiceProgram_mi(warning_mode=ValidationResult.WARNING_MODE_ERROR)
+
+    def test_InvoiceProgram_mi_ignore(self):
+        self._test_InvoiceProgram_mi(warning_mode=ValidationResult.WARNING_MODE_IGNORE)
 
     def test_InvoiceProgram_malformed_tax_code(self):
         with tempfile.NamedTemporaryFile() as db_file:

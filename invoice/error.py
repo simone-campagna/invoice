@@ -27,6 +27,7 @@ __all__ = [
     'InvoiceUserValidatorError',
     'InvoiceMultipleNamesError',
     'InvoiceMultipleTaxCodesError',
+    'InvoiceMultipleInvoicesPerDayError',
     'InvoiceUndefinedFieldError',
     'InvoiceYearError',
     'InvoiceDateError',
@@ -85,6 +86,9 @@ class InvoiceMultipleNamesError(InvoiceValidationError):
     pass
 
 class InvoiceMultipleTaxCodesError(InvoiceValidationError):
+    pass
+
+class InvoiceMultipleInvoicesPerDayError(InvoiceValidationError):
     pass
 
 class InvoiceTaxCodeError(InvoiceValidationError):

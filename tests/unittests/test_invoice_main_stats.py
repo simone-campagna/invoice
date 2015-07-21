@@ -137,24 +137,24 @@ TOTALE                                 2       2 --          153.00  100.00% --
     STATS_DAY_DEFAULT = STATS_DAY_TOTAL_LONG
 
     STATS_CLIENT_NO_TOTAL_LONG = """\
-codice_fiscale          da:         a: nome                fatture incasso %incasso
-BNNBRC01G01H663S 2014-01-22 2014-01-22 Robert Bruce Banner       1  102.00   66.67%
-WNYBRC01G01H663S 2014-01-25 2014-01-25 Bruce Wayne               1   51.00   33.33%
+codice_fiscale          da:         a: nome                cont. fatture incasso %incasso
+BNNBRC01G01H663S 2014-01-22 2014-01-22 Robert Bruce Banner [---]       1  102.00   66.67%
+WNYBRC01G01H663S 2014-01-25 2014-01-25 Bruce Wayne         <---]       1   51.00   33.33%
 """
     STATS_CLIENT_TOTAL_LONG = STATS_CLIENT_NO_TOTAL_LONG + """\
-TOTALE                                 --                        2  153.00  100.00%
+TOTALE                                 --                  --          2  153.00  100.00%
 """
     STATS_CLIENT_TOTAL_SHORT = """\
-codice_fiscale   nome                fatture incasso %incasso
-BNNBRC01G01H663S Robert Bruce Banner       1  102.00   66.67%
-WNYBRC01G01H663S Bruce Wayne               1   51.00   33.33%
-TOTALE           --                        2  153.00  100.00%
+codice_fiscale   nome                cont. fatture incasso %incasso
+BNNBRC01G01H663S Robert Bruce Banner [---]       1  102.00   66.67%
+WNYBRC01G01H663S Bruce Wayne         <---]       1   51.00   33.33%
+TOTALE           --                  --          2  153.00  100.00%
 """
     STATS_CLIENT_TOTAL_FULL = """\
-codice_fiscale          da:         a: nome                fatture h(fatture) incasso %incasso h(incasso)
-BNNBRC01G01H663S 2014-01-22 2014-01-22 Robert Bruce Banner       1 ##########  102.00   66.67% ##########
-WNYBRC01G01H663S 2014-01-25 2014-01-25 Bruce Wayne               1 ##########   51.00   33.33% #####     
-TOTALE                                 --                        2 --          153.00  100.00% --        
+codice_fiscale          da:         a: nome                cont. fatture h(fatture) incasso %incasso h(incasso)
+BNNBRC01G01H663S 2014-01-22 2014-01-22 Robert Bruce Banner [---]       1 ##########  102.00   66.67% ##########
+WNYBRC01G01H663S 2014-01-25 2014-01-25 Bruce Wayne         <---]       1 ##########   51.00   33.33% #####     
+TOTALE                                 --                  --          2 --          153.00  100.00% --        
 """
     STATS_CLIENT_DEFAULT = STATS_CLIENT_TOTAL_LONG
 

@@ -36,6 +36,7 @@ from .error import InvoiceSyntaxError, \
                    InvoiceDateError, \
                    InvoiceMultipleNamesError, \
                    InvoiceMultipleTaxCodesError, \
+                   InvoiceMultipleInvoicesPerDayError, \
                    InvoiceWrongNumberError, \
                    InvoiceDuplicatedNumberError, \
                    InvoiceMalformedTaxCodeError, \
@@ -116,6 +117,7 @@ class InvoiceProgram(object):
                               list_field_names=None,
                               show_scan_report=None,
                               table_mode=None,
+                              max_interruption_days=None,
                               reset=False):
         self.impl_init(
             patterns=patterns,
@@ -129,6 +131,7 @@ class InvoiceProgram(object):
             stats_group=stats_group,
             show_scan_report=show_scan_report,
             table_mode=table_mode,
+            max_interruption_days=max_interruption_days,
             reset=reset,
         )
         return 0
@@ -143,6 +146,7 @@ class InvoiceProgram(object):
                                 stats_group=None,
                                 show_scan_report=None,
                                 table_mode=None,
+                                max_interruption_days=None,
                                 reset=False,
                                 import_filename=None,
                                 export_filename=None,
@@ -159,6 +163,7 @@ class InvoiceProgram(object):
             stats_group=stats_group,
             show_scan_report=show_scan_report,
             table_mode=table_mode,
+            max_interruption_days=max_interruption_days,
             reset=reset,
             import_filename=import_filename,
             export_filename=export_filename,
@@ -225,8 +230,8 @@ class InvoiceProgram(object):
         self.impl_report(filters=filters)
         return 0
 
-    def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, table_mode=None, output_filename=None):
-        self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group, total=total, stats_mode=stats_mode, table_mode=table_mode,
+    def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, header=None, table_mode=None, output_filename=None):
+        self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group, total=total, stats_mode=stats_mode, header=header, table_mode=table_mode,
             output_filename=output_filename)
         return 0
 
@@ -248,7 +253,7 @@ class InvoiceProgram(object):
     def show_configuration(self, configuration):
         self.printer("configuration:")
         for field_name in configuration._fields:
-            self.printer("  + {:20s} = {!r}".format(field_name, getattr(configuration, field_name)))
+            self.printer("  + {:24s} = {!r}".format(field_name, getattr(configuration, field_name)))
 
     def show_patterns(self, patterns):
         self.printer("patterns:")
@@ -296,6 +301,7 @@ class InvoiceProgram(object):
                            list_field_names=None,
                            show_scan_report=None,
                            table_mode=None,
+                           max_interruption_days=None,
                            reset=False):
         if list_field_names is None:
             lsit_field_names = conf.DEFAULT_LIST_FIELD_NAMES
@@ -314,6 +320,7 @@ class InvoiceProgram(object):
             stats_group=stats_group,
             show_scan_report=show_scan_report,
             table_mode=table_mode,
+            max_interruption_days=max_interruption_days,
         )
         configuration = self.db.store_configuration(configuration)
         #self.show_configuration(configuration)
@@ -345,6 +352,7 @@ class InvoiceProgram(object):
                              stats_group=None,
                              show_scan_report=None,
                              table_mode=None,
+                             max_interruption_days=None,
                              reset=False,
                              import_filename=None,
                              export_filename=None,
@@ -367,6 +375,7 @@ class InvoiceProgram(object):
             stats_group=stats_group,
             show_scan_report=show_scan_report,
             table_mode=table_mode,
+            max_interruption_days=max_interruption_days,
         )
         configuration = self.db.store_configuration(configuration)
         if edit:
@@ -536,8 +545,9 @@ class InvoiceProgram(object):
         if group:
             yield group_value_function(group, *group_value), group
    
-    def impl_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, table_mode=None, output_filename=None):
+    def impl_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, header=None, table_mode=None, output_filename=None):
         total = self.db.get_config_option('total', total)
+        header = self.db.get_config_option('header', header)
         table_mode = self.db.get_config_option('table_mode', table_mode)
         self.db.check()
         if filters is None: # pragma: no cover
@@ -549,7 +559,8 @@ class InvoiceProgram(object):
         if stats_mode is None:
             stats_mode = conf.DEFAULT_STATS_MODE
 
-        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters, date_from=date_from, date_to=date_to)
+        global_invoice_collection = self.db.load_invoice_collection()
+        invoice_collection = self.filter_invoice_collection(global_invoice_collection, filters=filters, date_from=date_from, date_to=date_to)
         invoice_collection.sort()
         if invoice_collection:
             group_translation = {
@@ -584,7 +595,8 @@ class InvoiceProgram(object):
                 cc_header = 'clienti'
                 cc_total = 0
             header_d = {
-                cc_field_name: cc_header,
+                'continuation':			'cont.',
+                cc_field_name:			cc_header,
                 'invoice_count':		'fatture',
                 'income':			'incasso',
                 'income_percentage':		'%incasso',
@@ -592,21 +604,26 @@ class InvoiceProgram(object):
                 'invoice_count_bar':		'h(fatture)',
             }
             field_names = (cc_field_name, 'invoice_count', 'invoice_count_bar', 'income', 'income_percentage', 'income_bar')
+            if stats_group == conf.STATS_GROUP_CLIENT:
+                field_names = (cc_field_name, 'continuation')
+            else:
+                field_names = (cc_field_name, )
             if stats_mode == conf.STATS_MODE_SHORT:
                 group_field_names = (stats_group, )
-                field_names = (cc_field_name, 'invoice_count', 'income', 'income_percentage')
+                field_names += ('invoice_count', 'income', 'income_percentage')
             elif stats_mode == conf.STATS_MODE_LONG:
                 group_field_names = (stats_group, 'from', 'to')
-                field_names = (cc_field_name, 'invoice_count', 'income', 'income_percentage')
+                field_names += ('invoice_count', 'income', 'income_percentage')
             elif stats_mode == conf.STATS_MODE_FULL:
                 group_field_names = (stats_group, 'from', 'to')
-                field_names = (cc_field_name, 'invoice_count', 'invoice_count_bar', 'income', 'income_percentage', 'income_bar')
+                field_names += ('invoice_count', 'invoice_count_bar', 'income', 'income_percentage', 'income_bar')
             cum_field_names = ('invoice_count', 'income', 'income_percentage')
-            header = tuple(header_d.get(field_name, field_name) for field_name in field_names)
-            group_total = ('TOTAL', '', '')
-            group_header = tuple(group_translation[field_name] for field_name in group_field_names)
+            if header:
+                field_header = tuple(header_d.get(field_name, field_name) for field_name in field_names)
+                group_total = ('TOTAL', '', '')
+                group_header = tuple(group_translation[field_name] for field_name in group_field_names)
+                header = group_header + field_header
             all_field_names = group_field_names + field_names
-            all_header = group_header + header
             first_invoice = invoice_collection[0]
             last_invoice = invoice_collection[-1]
             first_date = first_invoice.date
@@ -623,6 +640,7 @@ class InvoiceProgram(object):
             rows = []
             if total:
                 total_row = {field_name: 0 for field_name in cum_field_names}
+                total_row['continuation'] = "--"
                 total_row[stats_group] = "TOTALE"
                 total_row[cc_field_name] = cc_total
                 total_row['from'] = ""
@@ -630,6 +648,18 @@ class InvoiceProgram(object):
                 total_row['income_bar'] = "--"
                 total_row['invoice_count_bar'] = "--"
             total_client_count = len(set(invoice.tax_code for invoice in invoice_collection))
+            configuration = self.db.load_configuration()
+            year = datetime.timedelta(days=configuration.max_interruption_days)
+            pre_post_symbol = {
+                True:  {
+                         True:  '<--->',
+                         False: '<---]',
+                       },
+                False: {
+                         True:  '[--->',
+                         False: '[---]',
+                       },
+            }
             for (group_value, group_date_from, group_date_to), group in self.group_by(invoice_collection, stats_group):
                 if date_from is not None and group_date_from is not None:
                     group_date_from = max(group_date_from, date_from)
@@ -653,6 +683,21 @@ class InvoiceProgram(object):
                     'from':			group_date_from,
                     'to':			group_date_to,
                 }
+                if stats_group == conf.STATS_GROUP_CLIENT:
+                    continuation = None
+                    pre_filters = [
+                        lambda i: (i.tax_code == group_value) and (i.date < group_date_from and i.date >= group_date_from - year),
+                    ]
+                    pre_collection = self.filter_invoice_collection(global_invoice_collection, filters=pre_filters)
+                    pre = len(pre_collection) > 0
+                        
+                    post_filters = [
+                        lambda i: (i.tax_code == group_value) and (i.date > group_date_to and i.date <= group_date_to + year),
+                    ]
+                    post_collection = self.filter_invoice_collection(global_invoice_collection, filters=post_filters)
+                    post = len(post_collection) > 0
+
+                    data['continuation'] = pre_post_symbol[pre][post]
                 if total:
                     for field_name in cum_field_names:
                         total_row[field_name] += data[field_name]
@@ -672,7 +717,7 @@ class InvoiceProgram(object):
             table = Table(
                 field_names=all_field_names,
                 mode=table_mode,
-                header=all_header,
+                header=header,
                 align=align,
                 convert=convert,
                 getter=Table.ITEM_GETTER,
@@ -952,6 +997,18 @@ class InvoiceProgram(object):
                         validation_result.add_warning(invoice, InvoiceMultipleTaxCodesError, message)
             ntd.setdefault(invoice.name, {}).setdefault(invoice.tax_code, []).append(invoice.doc_filename)
 
+        # verify multiple invoices in same day
+        cd = {}
+        for invoice in invoice_collection:
+            cd.setdefault((invoice.tax_code, invoice.date), []).append(invoice.doc_filename)
+        for (tax_code, date), doc_filenames in cd.items():
+            if len(doc_filenames) > 1:
+                for doc_filename in doc_filenames:
+                    message = "fattura {f}: sono state emesse {c} fatture nello stesso giorno".format(
+                        f=doc_filename,
+                        c=len(doc_filenames),
+                    )
+                    validation_result.add_warning(invoice, InvoiceMultipleInvoicesPerDayError, message)
         # verify numbering and dates per year
         for year in invoice_collection.years():
             invoices = validation_result.filter_validated_invoices(invoice_collection.filter(lambda invoice: invoice.year == year))
