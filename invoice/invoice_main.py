@@ -28,7 +28,7 @@ import sys
 import traceback
 
 from .database.filecopy import tempcopy, nocopy
-from .error import InvoiceSyntaxError, InvoiceVersionError
+from .error import InvoiceSyntaxError, InvoiceVersionError, InvoiceValidationError
 from . import conf
 from .log import get_default_logger, set_verbose_level
 from .invoice import Invoice
@@ -124,7 +124,9 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
 
     # configuration
     default_warning_mode = None
+    default_warning_suppression = None
     default_error_mode = None
+    default_error_suppression = None
     default_partial_update = None
     default_show_scan_report = None
     default_remove_orphaned = None
@@ -274,12 +276,15 @@ fattura:                   '/home/simone/Programs/Programming/invoice/example/20
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
 Stampa l'help
+L'argomento dell'help, se fornito, può essere uno dei comandi di %(prog)s
+oppure
+* 'errors' per avere la lista dei codici di errore
 """,
     )
     help_parser.set_defaults(
         function_name="program_help",
         parser=top_level_parser,
-        function_arguments=('parser_dict', 'command'),
+        function_arguments=('parser_dict', 'argument'),
     )
 
     ### init_parser ###
@@ -331,6 +336,7 @@ include tutti i file 'docs/*.doc', poi fra questi scarta tutti i file
         function_name="program_init",
         function_arguments=('patterns', 'reset',
                             'warning_mode', 'error_mode',
+                            'warning_suppression', 'error_suppression',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
                             'list_field_names', 'stats_group', 'show_scan_report', 'table_mode', 'max_interruption_days'),
@@ -366,11 +372,15 @@ supportati sono:
    - 'log': viene eseguito solo il log dei messaggi di warning
    - 'error': i warning vengono gestiti come errori 
    - 'ignore': i warning vengono ignorati
+ * warning_suppression[={ws}]: lista di warning da sopprimere
+   [esegui il comando '%(prog)s help errors' per la lista dei codici]
  * error_mode[={em}]: gestione degli errori sollevati durante la
    scansione:
    - 'log': viene eseguito solo il log dei messaggi di errore
    - 'raise': viene sollevata una eccezione ad ogni errore, che quindi
      interrompe la scansione
+ * error_suppression[={es}]: lista di errori da sopprimere
+   [esegui il comando '%(prog)s help errors' per la lista dei codici]
  * partial_update[={pu}]: in caso di errori durante la scansione, salva
    comunque nel database le fatture che non contengono errori;
  * remove_orphaned[={ro}]: se il documento relativo ad una fattura è
@@ -382,7 +392,9 @@ supportati sono:
    lista predefinita dei campi per il comando 'list'
 """.format(
             wm=InvoiceDb.DEFAULT_CONFIGURATION.warning_mode,
+            ws=InvoiceDb.DEFAULT_CONFIGURATION.warning_suppression,
             em=InvoiceDb.DEFAULT_CONFIGURATION.error_mode,
+            es=InvoiceDb.DEFAULT_CONFIGURATION.error_suppression,
             pu=InvoiceDb.DEFAULT_CONFIGURATION.partial_update,
             ro=InvoiceDb.DEFAULT_CONFIGURATION.remove_orphaned,
             hd=InvoiceDb.DEFAULT_CONFIGURATION.header,
@@ -395,6 +407,7 @@ supportati sono:
         function_name="program_config",
         function_arguments=('reset',
                             'warning_mode', 'error_mode',
+                            'warning_suppression', 'error_suppression',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
                             'list_field_names', 'stats_group', 'show_scan_report',
@@ -505,7 +518,10 @@ Questa rimozione di fatture già scansionate può avvenire in due casi:
     )
     scan_parser.set_defaults(
         function_name="program_scan",
-        function_arguments=('warning_mode', 'error_mode', 'remove_orphaned', 'partial_update', 'show_scan_report', 'table_mode', 'output_filename'),
+        function_arguments=('warning_mode', 'error_mode',
+                            'warning_suppression', 'error_suppression',
+                            'remove_orphaned', 'partial_update', 'show_scan_report',
+                            'table_mode', 'output_filename'),
     )
 
     ### clear_parser ###
@@ -535,7 +551,8 @@ Esegue una validazione del contenuto del database.
     )
     validate_parser.set_defaults(
         function_name="program_validate",
-        function_arguments=('warning_mode', 'error_mode'),
+        function_arguments=('warning_mode', 'error_mode',
+                            'warning_suppression', 'error_suppression'),
     )
 
     ### list_parser ###
@@ -670,14 +687,15 @@ e validati.
     )
     legacy_parser.set_defaults(
         function_name="legacy",
-        function_arguments=('patterns', 'filters', 'date_from', 'date_to', 'validate', 'list', 'report', 'warning_mode', 'error_mode'),
+        function_arguments=('patterns', 'filters', 'date_from', 'date_to', 'validate', 'list', 'report',
+                            'warning_mode', 'error_mode'),
     )
 
     ### help parser commands
-    help_parser.add_argument("command",
+    help_parser.add_argument("argument",
         nargs='?',
         default=top_level_parser_name,
-        help="comando di cui stampare l'help")
+        help="argomento di cui stampare l'help (un comando o altro)")
 
     ### upgrade option
     version_parser.add_argument("--upgrade", "-U",
@@ -720,6 +738,7 @@ e validati.
             help="lista lunga (mostra i tutti i campi: {})".format(','.join(conf.LIST_FIELD_NAMES_FULL)))
     
         list_argument_group.add_argument("--fields", "-o",
+            metavar="FL",
             dest="list_field_names",
             type=type_fields,
             default=default_list_field_names,
@@ -734,6 +753,7 @@ e validati.
 
     for parser in init_parser, config_parser:
         parser.add_argument("--max-interruption-days", "-I",
+            metavar="D",
             dest="max_interruption_days",
             type=int,
             default=default_max_interruption_days,
@@ -845,11 +865,27 @@ e validati.
             default=default_warning_mode,
             help="modalità di gestione dei warning")
 
+        parser.add_argument("--warning-suppression", "-ws",
+            metavar="SL",
+            dest="warning_suppression",
+            type=str,
+            nargs='*',
+            default=default_warning_suppression,
+            help="warning da sopprimere")
+
         parser.add_argument("--error-mode", "-e",
             dest="error_mode",
             choices=ValidationResult.ERROR_MODES,
             default=default_error_mode,
             help="modalità di gestione degli errori")
+
+        parser.add_argument("--error-suppression", "-es",
+            metavar="SL",
+            dest="error_suppression",
+            type=str,
+            nargs='*',
+            default=default_error_suppression,
+            help="errori da sopprimere")
 
     ### reset options
     init_parser.add_argument("--reset", "-r",

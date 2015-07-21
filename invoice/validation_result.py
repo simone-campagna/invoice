@@ -27,23 +27,24 @@ class ValidationResult(object):
     WARNING_MODE_ERROR = 'error'
     WARNING_MODE_IGNORE = 'ignore'
     WARNING_MODES = (WARNING_MODE_LOG, WARNING_MODE_ERROR, WARNING_MODE_IGNORE)
-    WARNING_MODE_DEFAULT = WARNING_MODE_LOG
+    DEFAULT_WARNING_MODE = WARNING_MODE_LOG
 
     ERROR_MODE_LOG = 'log'
     ERROR_MODE_IGNORE = 'ignore'
     ERROR_MODE_RAISE = 'raise'
     ERROR_MODES = (ERROR_MODE_LOG, ERROR_MODE_IGNORE, ERROR_MODE_RAISE)
-    ERROR_MODE_DEFAULT = ERROR_MODE_LOG
+    DEFAULT_ERROR_MODE = ERROR_MODE_LOG
 
     Entry = collections.namedtuple('Entry', ('exc_type', 'message'))
-    def __init__(self, logger, warning_mode=WARNING_MODE_DEFAULT, error_mode=ERROR_MODE_DEFAULT):
+    def __init__(self, logger, warning_mode=DEFAULT_WARNING_MODE, error_mode=DEFAULT_ERROR_MODE,
+                               warning_suppression=None, error_suppression=None):
         self._failing_invoices = dict()
         self.logger = logger
         self._errors = collections.OrderedDict()
         self._warnings = collections.OrderedDict()
 
         if error_mode is None: # pragma: no cover
-            error_mode = self.ERROR_MODE_DEFAULT
+            error_mode = self.DEFAULT_ERROR_MODE
 
         if error_mode == self.ERROR_MODE_LOG:
             self._function_error = self.impl_add_error
@@ -55,7 +56,7 @@ class ValidationResult(object):
             raise ValueError("error_mode {!r} non valido (i valori leciti sono {})".format(error_mode, '|'.join(self.ERROR_MODES)))
           
         if warning_mode is None: # pragma: no cover
-            warning_mode = self.WARNING_MODE_DEFAULT
+            warning_mode = self.DEFAULT_WARNING_MODE
 
         if warning_mode == self.WARNING_MODE_LOG:
             self._function_warning = self.impl_add_warning
@@ -68,6 +69,14 @@ class ValidationResult(object):
 
         self.warning_mode = warning_mode
         self.error_mode = error_mode
+
+        if error_suppression is None:
+            error_suppression = ()
+        self.error_suppression = set(error_suppression)
+
+        if warning_suppression is None:
+            warning_suppression = ()
+        self.warning_suppression = set(warning_suppression)
 
     def filter_invoices(self, invoices):
         validated_invoices = []
@@ -88,29 +97,41 @@ class ValidationResult(object):
     def failing_invoices(self):
         return self._failing_invoices
 
+    def format_message(self, exc_type, message):
+        return "[{}] {}".format(exc_type.exc_code(), message)
+
     def impl_add_critical(self, invoice, exc_type, message):
         self._errors.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
         self._failing_invoices[invoice.doc_filename] = invoice
-        self.logger.critical(message)
+        self.logger.critical(self.format_message(exc_type, message))
         raise exc_type(message)
 
     def impl_add_error(self, invoice, exc_type, message):
         self._errors.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
         self._failing_invoices[invoice.doc_filename] = invoice
-        self.logger.error(message)
+        self.logger.error(self.format_message(exc_type, message))
 
     def impl_add_warning(self, invoice, exc_type, message):
         self._warnings.setdefault(invoice.doc_filename, []).append(self.Entry(exc_type, message))
-        self.logger.warning(message)
+        self.logger.warning(self.format_message(exc_type, message))
 
     def impl_ignore(self, invoice, exc_type, message):
         pass
 
+    def _exc_match(self, exc_type, suppression):
+        return exc_type.__name__ in suppression or exc_type.exc_code() in suppression
+
     def add_error(self, invoice, exc_type, message):
-        self._function_error(invoice, exc_type, message)
+        if self._exc_match(exc_type, self.error_suppression):
+            self.logger.debug("fattura {}: errore {} ({}) soppresso".format(invoice.doc_filename, exc_type.__name__, message))
+        else:
+            self._function_error(invoice, exc_type, message)
 
     def add_warning(self, invoice, exc_type, message):
-        self._function_warning(invoice, exc_type, message)
+        if self._exc_match(exc_type, self.warning_suppression):
+            self.logger.debug("fattura {}: warning {} ({}) soppresso".format(invoice.doc_filename, exc_type.__name__, message))
+        else:
+            self._function_warning(invoice, exc_type, message)
 
     def __bool__(self):
         return len(self._errors) == 0

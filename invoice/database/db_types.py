@@ -179,10 +179,15 @@ class BaseSequence(BaseType):
     SEPARATOR = ','
     SCALAR_TYPE = BaseType
     SEQUENCE_TYPE = list
+    DB_TYPENAME = 'TEXT'
 
     @classmethod
     def impl_db_from(cls, s):
-        return cls.SEQUENCE_TYPE(cls.SCALAR_TYPE.impl_db_from(v.strip()) for v in s.split(cls.SEPARATOR))
+        s = s.strip()
+        if s:
+            return cls.SEQUENCE_TYPE(cls.SCALAR_TYPE.impl_db_from(v.strip()) for v in s.split(cls.SEPARATOR))
+        else:
+            return cls.SEQUENCE_TYPE()
 
     @classmethod
     def impl_db_to(cls, l):

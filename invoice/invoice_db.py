@@ -61,15 +61,20 @@ class InvoiceDb(Db):
     Validator = collections.namedtuple('Validator', ('filter_function', 'check_function', 'message'))
     Configuration = collections.namedtuple(
         'Configuration',
-        ('warning_mode', 'error_mode',
+        ('warning_mode', 
+         'warning_suppression',
+         'error_mode',
+         'error_suppression',
          'partial_update', 'remove_orphaned',
          'header', 'total',
          'stats_group', 'list_field_names',
          'show_scan_report', 'table_mode', 'max_interruption_days'))
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
     DEFAULT_CONFIGURATION = Configuration(
-        warning_mode=ValidationResult.WARNING_MODE_DEFAULT,
-        error_mode=ValidationResult.ERROR_MODE_DEFAULT,
+        warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
+        warning_suppression=(),
+        error_mode=ValidationResult.DEFAULT_ERROR_MODE,
+        error_suppression=(),
         remove_orphaned=True,
         partial_update=True,
         header=True,
@@ -93,7 +98,9 @@ class InvoiceDb(Db):
         'configuration': DbTable(
             fields=(
                 ('warning_mode', WarningModeOption()),
+                ('warning_suppression', StrTuple()),
                 ('error_mode', ErrorModeOption()),
+                ('error_suppression', StrTuple()),
                 ('remove_orphaned', Bool()),
                 ('partial_update', Bool()),
                 ('header', Bool()),

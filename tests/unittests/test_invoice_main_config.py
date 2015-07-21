@@ -38,7 +38,9 @@ class Test_invoice_main_config(unittest.TestCase):
     CONFIG_SHOW_WIGNORE_EIGNORE = """\
 configuration:
   + warning_mode             = 'ignore'
+  + warning_suppression      = ()
   + error_mode               = 'ignore'
+  + error_suppression        = ()
   + partial_update           = True
   + remove_orphaned          = True
   + header                   = True
@@ -52,7 +54,9 @@ configuration:
     CONFIG_SHOW_WERROR_ERAISE = """\
 configuration:
   + warning_mode             = 'error'
+  + warning_suppression      = ()
   + error_mode               = 'raise'
+  + error_suppression        = ()
   + partial_update           = True
   + remove_orphaned          = True
   + header                   = True
@@ -66,7 +70,9 @@ configuration:
     CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
 configuration:
   + warning_mode             = 'log'
+  + warning_suppression      = ()
   + error_mode               = 'log'
+  + error_suppression        = ()
   + partial_update           = True
   + remove_orphaned          = True
   + header                   = True
@@ -80,7 +86,9 @@ configuration:
     CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
 configuration:
   + warning_mode             = 'log'
+  + warning_suppression      = ()
   + error_mode               = 'log'
+  + error_suppression        = ()
   + partial_update           = False
   + remove_orphaned          = True
   + header                   = True
@@ -94,7 +102,9 @@ configuration:
     CONFIG_SHOW_MIX = """\
 configuration:
   + warning_mode             = 'log'
+  + warning_suppression      = ('006', '007')
   + error_mode               = 'log'
+  + error_suppression        = ('005',)
   + partial_update           = True
   + remove_orphaned          = True
   + header                   = True
@@ -252,7 +262,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b', '-I', '361'],
+                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b', '-I', '361', '-es', '005', '-ws', '006', '007'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_MIX)
 

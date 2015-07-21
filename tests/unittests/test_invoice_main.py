@@ -496,6 +496,33 @@ WNYBRC01G01H663S 2014      1
             args=["help", "unknown_command"]
         )
 
+    def test_invoice_main_help(self):
+        p = StringPrinter()
+
+        p.reset()
+        invoice_main(
+            printer=p,
+            logger=self.logger,
+            args=["help", "errors"]
+        )
+        self.assertEqual(p.string(), """\
+[001] la fattura contiene linee duplicate
+[002] il DOC file è assente
+[003] la numerazione delle fatture è inconsistente
+[004] la numerazione contiene dei duplicati
+[005] la numerazione contiene numeri non consecutivi
+[006] la valuta non è supportata
+[007] più nomi sono associati allo stesso codice fiscale
+[008] più codici fiscali sono associati allo stesso nome
+[009] sono state generate più fatture per lo stesso cliente nello stesso giorno
+[010] il codice fiscale non è corretto
+[011] il codice fiscale è malformato
+[012] un validatore fornisce errore
+[013] un campo obbligatorio non è definito
+[014] la data non è corretta
+[015] l'anno non è corretto
+""")
+
     def test_invoice_main_missing_subcommand(self):
         p = StringPrinter()
 
