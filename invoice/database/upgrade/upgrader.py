@@ -141,39 +141,53 @@ class MajorMinorUpgrader(Upgrader):
         else:
             return None
 
-    def do_downgrade(self, db, old_table, new_table, version_from, version_to, connection=None):
+    def do_downgrade(self, db, old_table, new_table, new_to_old, version_from, version_to, connection=None):
         with db.connect(connection) as connection:
             cursor = connection.cursor()
             new_field_names = new_table.dict_type._fields
             sql = """SELECT {field_names} FROM configuration;""".format(field_names=", ".join(new_field_names))
-            r = list(db.execute(cursor, sql))[-1]
-            new_values = dict(zip(new_field_names, r))
+            new_values = list(db.execute(cursor, sql))[-1]
+            new_data = {}
+            for field_name, value in zip(new_field_names, new_values):
+                field_type = new_table.fields[field_name]
+                new_data[field_name] = field_type.db_from(value)
+            new_data = dict(zip(new_field_names, new_values))
             db.drop('configuration', connection=connection)
             db.create_table('configuration', old_table.fields, connection=connection)
             old_field_names = old_table.dict_type._fields
+            old_values = []
+            old_data = {}
+            old_data.update(new_data)
+            old_data.update(new_to_old(new_data))
+            for field_name in old_field_names:
+                field_type = old_table.fields[field_name]
+                old_values.append(field_type.db_to(old_data[field_name]))
             sql = """INSERT INTO configuration ({field_names}) VALUES ({placeholders});""".format(
                 field_names=', '.join(old_field_names),
                 placeholders=', '.join('?' for field in old_field_names),
             )
-            db.execute(cursor, sql, tuple(new_values[field_name] for field_name in old_field_names))
+            db.execute(cursor, sql, old_values)
 
-    def do_upgrade(self, db, old_table, new_table, version_from, new_data, version_to, connection=None):
+    def do_upgrade(self, db, old_table, new_table, old_to_new, version_from, version_to, connection=None):
         with db.connect(connection) as connection:
             cursor = connection.cursor()
             old_field_names = old_table.dict_type._fields
             sql = """SELECT {field_names} FROM configuration;""".format(field_names=", ".join(old_field_names))
-            r = list(db.execute(cursor, sql))[-1]
-            old_values = dict(zip(old_field_names, r))
+            old_values = list(db.execute(cursor, sql))[-1]
+            old_data = {}
+            for field_name, value in zip(old_field_names, old_values):
+                field_type = old_table.fields[field_name]
+                old_data[field_name] = field_type.db_from(value)
             db.drop('configuration', connection=connection)
             db.create_table('configuration', new_table.fields, connection=connection)
             new_field_names = new_table.dict_type._fields
             new_values = []
+            new_data = {}
+            new_data.update(old_data)
+            new_data.update(old_to_new(old_data))
             for field_name in new_field_names:
-                if field_name in new_data:
-                    field_type = new_table.fields[field_name]
-                    new_values.append(field_type.db_to(new_data[field_name]))
-                else:
-                    new_values.append(old_values[field_name])
+                field_type = new_table.fields[field_name]
+                new_values.append(field_type.db_to(new_data[field_name]))
             sql = """INSERT INTO configuration ({field_names}) VALUES ({placeholders});""".format(
                 field_names=', '.join(new_field_names),
                 placeholders=', '.join('?' for field in new_field_names),

@@ -59,6 +59,6 @@ class TestInvoiceReader(unittest.TestCase):
     def test_InvoiceReader_missing(self):
         doc_filename = os.path.normpath(os.path.abspath(os.path.join(self.dirname, '2014_001_bruce_wayne.missing.doc')))
         invoice_reader = InvoiceReader(logger=self.logger)
-        validation_result = ValidationResult(logger=self.logger, error_mode=ValidationResult.ERROR_MODE_RAISE)
+        validation_result = ValidationResult(logger=self.logger, error_mode=(ValidationResult.ERROR_ACTION_RAISE,))
         with self.assertRaises(InvoiceMissingDocFileError) as cm:
             invoice = invoice_reader(validation_result, doc_filename)

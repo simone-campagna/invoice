@@ -28,6 +28,7 @@ from ..db_table import DbTable
 from .upgrader import MajorMinorUpgrader
 
 from ...version import Version
+from ...validation_result import ValidationResult
 from ... import conf
 
 class Upgrader_v2_4_x__v2_5_0(MajorMinorUpgrader):
@@ -50,9 +51,7 @@ class Upgrader_v2_4_x__v2_5_0(MajorMinorUpgrader):
     CONFIGURATION_TABLE_v2_5_0 = DbTable(
         fields=(
             ('warning_mode', Str()),
-            ('warning_suppression', StrTuple()),
             ('error_mode', Str()),
-            ('error_suppression', StrTuple()),
             ('remove_orphaned', Bool()),
             ('partial_update', Bool()),
             ('header', Bool()),
@@ -66,9 +65,16 @@ class Upgrader_v2_4_x__v2_5_0(MajorMinorUpgrader):
     )
 
     def impl_downgrade(self, db, version_from, version_to, connection=None):
+        def new_to_old(new_data):
+            return {
+                'max_interruption_days': conf.DEFAULT_MAX_INTERRUPTION_DAYS,
+                'warning_mode': ValidationResult.DEFAULT_WARNING_MODE,
+                'error_mode': ValidationResult.DEFAULT_ERROR_MODE,
+            }
         return self.do_downgrade(
             old_table=self.CONFIGURATION_TABLE_v2_4_x,
             new_table=self.CONFIGURATION_TABLE_v2_5_0,
+            new_to_old=new_to_old,
             db=db,
             version_from=version_from,
             version_to=version_to,
@@ -76,10 +82,16 @@ class Upgrader_v2_4_x__v2_5_0(MajorMinorUpgrader):
         )
 
     def impl_upgrade(self, db, version_from, version_to, connection=None):
+        def old_to_new(old_data):
+            return {
+                'max_interruption_days': conf.DEFAULT_MAX_INTERRUPTION_DAYS,
+                'warning_mode': ("{}:*".format(old_data['warning_mode']), ),
+                'error_mode': ("{}:*".format(old_data['error_mode']), ),
+            }
         return self.do_upgrade(
             old_table=self.CONFIGURATION_TABLE_v2_4_x,
             new_table=self.CONFIGURATION_TABLE_v2_5_0,
-            new_data={'max_interruption_days': conf.DEFAULT_MAX_INTERRUPTION_DAYS, 'warning_suppression': (), 'error_suppression': ()},
+            old_to_new=old_to_new,
             db=db,
             version_from=version_from,
             version_to=version_to,

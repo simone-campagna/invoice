@@ -37,10 +37,8 @@ from invoice.version import VERSION
 class Test_invoice_main_config(unittest.TestCase):
     CONFIG_SHOW_WIGNORE_EIGNORE = """\
 configuration:
-  + warning_mode             = 'ignore'
-  + warning_suppression      = ()
-  + error_mode               = 'ignore'
-  + error_suppression        = ()
+  + warning_mode             = ('ignore:*',)
+  + error_mode               = ('ignore:*',)
   + partial_update           = True
   + remove_orphaned          = True
   + header                   = True
@@ -53,10 +51,8 @@ configuration:
 """
     CONFIG_SHOW_WERROR_ERAISE = """\
 configuration:
-  + warning_mode             = 'error'
-  + warning_suppression      = ()
-  + error_mode               = 'raise'
-  + error_suppression        = ()
+  + warning_mode             = ('error:*',)
+  + error_mode               = ('raise:*',)
   + partial_update           = True
   + remove_orphaned          = True
   + header                   = True
@@ -69,10 +65,8 @@ configuration:
 """
     CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
 configuration:
-  + warning_mode             = 'log'
-  + warning_suppression      = ()
-  + error_mode               = 'log'
-  + error_suppression        = ()
+  + warning_mode             = ('log:*',)
+  + error_mode               = ('log:*',)
   + partial_update           = True
   + remove_orphaned          = True
   + header                   = True
@@ -85,10 +79,8 @@ configuration:
 """
     CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
 configuration:
-  + warning_mode             = 'log'
-  + warning_suppression      = ()
-  + error_mode               = 'log'
-  + error_suppression        = ()
+  + warning_mode             = ('log:*',)
+  + error_mode               = ('log:*',)
   + partial_update           = False
   + remove_orphaned          = True
   + header                   = True
@@ -101,10 +93,8 @@ configuration:
 """
     CONFIG_SHOW_MIX = """\
 configuration:
-  + warning_mode             = 'log'
-  + warning_suppression      = ('006', '007')
-  + error_mode               = 'log'
-  + error_suppression        = ('005',)
+  + warning_mode             = ('error:*', 'log:005')
+  + error_mode               = ('raise:009',)
   + partial_update           = True
   + remove_orphaned          = True
   + header                   = True
@@ -262,7 +252,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b', '-I', '361', '-es', '005', '-ws', '006', '007'],
+                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b', '-I', '361', '-w', 'error:*', 'log:005', '-e', 'raise:009'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_MIX)
 

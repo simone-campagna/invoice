@@ -85,13 +85,11 @@ class InvoiceProgram(object):
     def get_week_range(self, year, week_number):
         return self._week_manager.week_range(year=year, week_number=week_number)
 
-    def create_validation_result(self, warning_mode=None, warning_suppression=None, error_mode=None, error_suppression=None):
+    def create_validation_result(self, warning_mode=None, error_mode=None):
         return ValidationResult(
             logger=self.logger,
             warning_mode=warning_mode,
-            warning_suppression=warning_suppression,
             error_mode=error_mode,
-            error_suppression=error_suppression,
         )
 
     def program_help(self, *, parser_dict, argument):
@@ -109,9 +107,7 @@ class InvoiceProgram(object):
 
     def program_init(self, *, patterns,
                               warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
-                              warning_suppression=(),
                               error_mode=ValidationResult.DEFAULT_ERROR_MODE,
-                              error_suppression=(),
                               partial_update=True,
                               remove_orphaned=False,
                               header=True,
@@ -125,9 +121,7 @@ class InvoiceProgram(object):
         self.impl_init(
             patterns=patterns,
             warning_mode=warning_mode,
-            warning_suppression=warning_suppression,
             error_mode=error_mode,
-            error_suppression=error_suppression,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
             header=header,
@@ -142,9 +136,7 @@ class InvoiceProgram(object):
         return 0
 
     def program_config(self, *, warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
-                                warning_suppression=None,
                                 error_mode=ValidationResult.DEFAULT_ERROR_MODE,
-                                error_suppression=None,
                                 partial_update=True,
                                 remove_orphaned=True,
                                 header=True,
@@ -161,9 +153,7 @@ class InvoiceProgram(object):
                                 editor=None):
         self.impl_config(
             warning_mode=warning_mode,
-            warning_suppression=warning_suppression,
             error_mode=error_mode,
-            error_suppression=error_suppression,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
             header=header,
@@ -204,13 +194,10 @@ class InvoiceProgram(object):
         return 0
 
     def program_scan(self, *, warning_mode, error_mode,
-                              warning_suppression, error_suppression,
                               partial_update=True, remove_orphaned=True, show_scan_report=True, table_mode=None, output_filename=None):
         validation_result, invoice_collection = self.impl_scan(
             warning_mode=warning_mode,
-            warning_suppression=warning_suppression,
             error_mode=error_mode,
-            error_suppression=error_suppression,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
             show_scan_report=show_scan_report,
@@ -223,9 +210,8 @@ class InvoiceProgram(object):
         self.impl_clear()
         return 0
 
-    def program_validate(self, *, warning_mode, error_mode, warning_suppression, error_suppression):
-        self.impl_validate(warning_mode=warning_mode, error_mode=error_mode,
-                           warning_suppression=warning_suppression, error_suppression=error_suppression)
+    def program_validate(self, *, warning_mode, error_mode):
+        self.impl_validate(warning_mode=warning_mode, error_mode=error_mode)
         return 0
 
     def program_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None, order_field_names=None, table_mode=None, output_filename=None):
@@ -306,9 +292,7 @@ class InvoiceProgram(object):
 
     def impl_init(self, *, patterns,
                            warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
-                           warning_suppression=(),
                            error_mode=ValidationResult.DEFAULT_ERROR_MODE,
-                           error_suppression=(),
                            partial_update=True,
                            remove_orphaned=True,
                            header=True,
@@ -319,10 +303,6 @@ class InvoiceProgram(object):
                            table_mode=None,
                            max_interruption_days=None,
                            reset=False):
-        if warning_suppression is not None:
-            warning_suppression = tuple(warning_suppression)
-        if error_suppression is not None:
-            error_suppression = tuple(error_suppression)
         if list_field_names is None:
             lsit_field_names = conf.DEFAULT_LIST_FIELD_NAMES
         if reset and os.path.exists(self.db_filename):
@@ -331,9 +311,7 @@ class InvoiceProgram(object):
         self.db.initialize()
         configuration = self.db.Configuration(
             warning_mode=warning_mode,
-            warning_suppression=warning_suppression,
             error_mode=error_mode,
-            error_suppression=error_suppression,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
             header=header,
@@ -365,9 +343,7 @@ class InvoiceProgram(object):
             self.logger.error("la versione del database non è valida; è necessario eseguire l'upgrade (opzione --upgrade/-U)")
 
     def impl_config(self, *, warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
-                             warning_suppression=(),
                              error_mode=ValidationResult.DEFAULT_ERROR_MODE,
-                             error_suppression=(),
                              partial_update=True,
                              remove_orphaned=True,
                              header=True,
@@ -382,21 +358,19 @@ class InvoiceProgram(object):
                              export_filename=None,
                              edit=False,
                              editor=None):
-        if warning_suppression is not None:
-            warning_suppression = tuple(warning_suppression)
-        if error_suppression is not None:
-            error_suppression = tuple(error_suppression)
         self.db.check()
         if reset:
             self.db.clear('configuration')
         if import_filename:
             self.db.import_table('configuration', import_filename)
         list_field_names = self.db.get_config_option('list_field_names', list_field_names)
+        if error_mode is not None:
+            error_mode = tuple(error_mode)
+        if warning_mode is not None:
+            warning_mode = tuple(warning_mode)
         configuration = self.db.Configuration(
             warning_mode=warning_mode,
-            warning_suppression=warning_suppression,
             error_mode=error_mode,
-            error_suppression=error_suppression,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
             header=header,
@@ -471,15 +445,12 @@ class InvoiceProgram(object):
         self.db.check()
         self.db.delete('invoices')
 
-    def impl_validate(self, *, warning_mode, error_mode, warning_suppression, error_suppression):
+    def impl_validate(self, *, warning_mode, error_mode):
         self.db.check()
         warning_mode = self.db.get_config_option('warning_mode', warning_mode)
-        warning_suppression = self.db.get_config_option('warning_suppression', warning_suppression)
         error_mode = self.db.get_config_option('error_mode', error_mode)
-        error_suppression = self.db.get_config_option('error_suppression', error_suppression)
         invoice_collection = self.db.load_invoice_collection()
-        validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode,
-                                                          warning_suppression=warning_suppression, error_suppression=error_suppression)
+        validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
         with self.db.connect() as connection:
             user_validators = self.compile_user_validators(connection)
             self.validate_invoice_collection(validation_result, invoice_collection, user_validators=user_validators)
@@ -806,21 +777,17 @@ class InvoiceProgram(object):
         return user_validators
     
     def impl_scan(self, warning_mode=None, error_mode=None,
-                        warning_suppression=None, error_suppression=None,
                         partial_update=None, remove_orphaned=None, show_scan_report=None, table_mode=None, output_filename=None):
         self.db.check()
         warning_mode = self.db.get_config_option('warning_mode', warning_mode)
-        warning_suppression = self.db.get_config_option('warning_suppression', warning_suppression)
         error_mode = self.db.get_config_option('error_mode', error_mode)
-        error_suppression = self.db.get_config_option('error_suppression', error_suppression)
         show_scan_report = self.db.get_config_option('show_scan_report', show_scan_report)
         found_doc_filenames = set()
         db = self.db
         file_date_times = FileDateTimes()
         updated_invoice_collection = InvoiceCollection()
         removed_invoices = []
-        validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode,
-                                                          warning_suppression=warning_suppression, error_suppression=error_suppression)
+        validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
         with db.connect() as connection:
             configuration = db.load_configuration(connection)
             user_validators = self.compile_user_validators(connection)

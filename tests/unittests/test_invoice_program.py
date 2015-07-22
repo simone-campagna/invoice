@@ -399,7 +399,7 @@ KNTCRK01G01H663X 2014      5
             p.reset()
             validation_result, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
-                error_mode=ValidationResult.ERROR_MODE_RAISE,
+                error_mode=(ValidationResult.ERROR_ACTION_RAISE,),
             )
             self.assertEqual(validation_result.num_errors(), 0)
             self.assertEqual(validation_result.num_warnings(), 0)
@@ -407,9 +407,7 @@ KNTCRK01G01H663X 2014      5
             p.reset()
             invoice_program.impl_validate(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
-                warning_suppression=(),
-                error_mode=ValidationResult.ERROR_MODE_RAISE,
-                error_suppression=(),
+                error_mode=(ValidationResult.ERROR_ACTION_RAISE,),
             )
             self.assertEqual(validation_result.num_errors(), 0)
             self.assertEqual(validation_result.num_warnings(), 0)
@@ -437,7 +435,7 @@ KNTCRK01G01H663X 2014      5
             p.reset()
             validation_result, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
-                error_mode=ValidationResult.ERROR_MODE_RAISE,
+                error_mode=(ValidationResult.ERROR_ACTION_RAISE,),
             )
             self.assertEqual(validation_result.num_errors(), 0)
             self.assertEqual(validation_result.num_warnings(), 0)
@@ -488,7 +486,7 @@ KNTCRK01G01H663X 2014      5
             with self.assertRaises(InvoiceDuplicatedNumberError):
                 invoice_program.impl_scan(
                     warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
-                    error_mode=ValidationResult.ERROR_MODE_RAISE,
+                    error_mode=(ValidationResult.ERROR_ACTION_RAISE,),
                 )
 
     def test_InvoiceProgramErrorDuplicatedLine(self):
@@ -512,7 +510,7 @@ KNTCRK01G01H663X 2014      5
             with self.assertRaises(InvoiceDuplicatedLineError):
                 invoice_program.impl_scan(
                     warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
-                    error_mode=ValidationResult.ERROR_MODE_RAISE,
+                    error_mode=(ValidationResult.ERROR_ACTION_RAISE,),
                 )
 
     def test_InvoiceProgram_validate_ok(self):
@@ -615,7 +613,7 @@ KNTCRK01G01H663X 2014      5
                 exc_type, message = errors[0]
                 self.assertIs(exc_type, InvoiceDuplicatedNumberError)
         
-    def _test_InvoiceProgram_uf_mt(self, warning_mode, wsuppress=False, esuppress=False):
+    def _test_InvoiceProgram_uf_mt(self, warning_action, wsuppress=False, esuppress=False):
         with tempfile.NamedTemporaryFile() as db_file:
             p = StringPrinter()
             invoice_program = InvoiceProgram(
@@ -633,30 +631,49 @@ KNTCRK01G01H663X 2014      5
                 income=None, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
         
-            error_suppression = []
-            warning_suppression = []
+            error_action = ValidationResult.DEFAULT_ERROR_ACTION
+
+            warning_mode = [warning_action]
+            error_mode = []
 
             expected_errors = []
             expected_warnings = []
+
             if esuppress:
-                error_suppression.append(InvoiceUndefinedFieldError.exc_code())
+                error_mode.append("{}:{}".format(ValidationResult.ERROR_ACTION_IGNORE, InvoiceUndefinedFieldError.exc_code()))
             else:
                 expected_errors.append(InvoiceUndefinedFieldError)
 
             if wsuppress:
-                warning_suppression.append(InvoiceMultipleTaxCodesError.exc_code())
+                warning_mode.append("{}:{}".format(ValidationResult.WARNING_ACTION_IGNORE, InvoiceMultipleTaxCodesError.exc_code()))
             else:
-                if warning_mode == ValidationResult.DEFAULT_WARNING_MODE:
+                if warning_action == ValidationResult.DEFAULT_WARNING_ACTION:
                     expected_warnings.append(InvoiceMultipleTaxCodesError)
-                elif warning_mode == ValidationResult.WARNING_MODE_ERROR:
+                elif warning_action == ValidationResult.WARNING_ACTION_ERROR:
                     expected_errors.append(InvoiceMultipleTaxCodesError)
-                elif warning_mode == ValidationResult.WARNING_MODE_IGNORE:
+                elif warning_action == ValidationResult.WARNING_ACTION_IGNORE:
                     pass
 
-            validation_result = invoice_program.create_validation_result(warning_mode=warning_mode,
-                                                                         warning_suppression=warning_suppression,
-                                                                         error_suppression=error_suppression)
+            validation_result = invoice_program.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
             invoice_program.validate_invoice_collection(validation_result, invoice_collection)
+
+            #print("warning_action={}, wsuppress={}, esuppress={}, warning_mode={}, error_mode={}, expected_warnings={}, expected_errors={}".format(
+            #    warning_action,
+            #    wsuppress,
+            #    esuppress,
+            #    warning_mode,
+            #    error_mode,
+            #    expected_warnings,
+            #    expected_errors,
+            #))
+            #for c, entries in enumerate(validation_result.warnings().values()):
+            #    for entry in entries:
+            #        exc = entry.exc_type
+            #        print(" w {:2d} {} {}".format(c, exc.exc_code(), exc.__name__))
+            #for c, entries in enumerate(validation_result.errors().values()):
+            #    for entry in entries:
+            #        exc = entry.exc_type
+            #        print(" e {:2d} {} {}".format(c, exc.exc_code(), exc.__name__))
 
             self.assertEqual(validation_result.num_errors(), len(expected_errors))
             for doc_filename, errors in validation_result.errors().items():
@@ -675,42 +692,42 @@ KNTCRK01G01H663X 2014      5
                     self.assertIn(exc_type, expected_warnings)
            
     def test_InvoiceProgram_uf_mt_default(self):
-        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.DEFAULT_WARNING_MODE)
+        self._test_InvoiceProgram_uf_mt(warning_action=ValidationResult.DEFAULT_WARNING_ACTION)
     
     def test_InvoiceProgram_uf_mt_default_ws(self):
-        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.DEFAULT_WARNING_MODE, wsuppress=True)
+        self._test_InvoiceProgram_uf_mt(warning_action=ValidationResult.DEFAULT_WARNING_ACTION, wsuppress=True)
     
     def test_InvoiceProgram_uf_mt_default_es(self):
-        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.DEFAULT_WARNING_MODE, esuppress=True)
+        self._test_InvoiceProgram_uf_mt(warning_action=ValidationResult.DEFAULT_WARNING_ACTION, esuppress=True)
     
     def test_InvoiceProgram_uf_mt_default_ws_es(self):
-        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.DEFAULT_WARNING_MODE, wsuppress=True, esuppress=True)
+        self._test_InvoiceProgram_uf_mt(warning_action=ValidationResult.DEFAULT_WARNING_ACTION, wsuppress=True, esuppress=True)
     
     def test_InvoiceProgram_uf_mt_error(self):
-        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.WARNING_MODE_ERROR)
+        self._test_InvoiceProgram_uf_mt(warning_action=ValidationResult.WARNING_ACTION_ERROR)
 
     def test_InvoiceProgram_uf_mt_error_ws(self):
-        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.WARNING_MODE_ERROR, wsuppress=True)
+        self._test_InvoiceProgram_uf_mt(warning_action=ValidationResult.WARNING_ACTION_ERROR, wsuppress=True)
 
     def test_InvoiceProgram_uf_mt_error_es(self):
-        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.WARNING_MODE_ERROR, esuppress=True)
+        self._test_InvoiceProgram_uf_mt(warning_action=ValidationResult.WARNING_ACTION_ERROR, esuppress=True)
 
     def test_InvoiceProgram_uf_mt_error_ws_es(self):
-        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.WARNING_MODE_ERROR, wsuppress=True, esuppress=True)
+        self._test_InvoiceProgram_uf_mt(warning_action=ValidationResult.WARNING_ACTION_ERROR, wsuppress=True, esuppress=True)
 
     def test_InvoiceProgram_uf_mt_ignore(self):
-        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.WARNING_MODE_IGNORE)
+        self._test_InvoiceProgram_uf_mt(warning_action=ValidationResult.WARNING_ACTION_IGNORE)
 
     def test_InvoiceProgram_uf_mt_ignore_ws(self):
-        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.WARNING_MODE_IGNORE, wsuppress=True)
+        self._test_InvoiceProgram_uf_mt(warning_action=ValidationResult.WARNING_ACTION_IGNORE, wsuppress=True)
 
     def test_InvoiceProgram_uf_mt_ignore_es(self):
-        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.WARNING_MODE_IGNORE, esuppress=True)
+        self._test_InvoiceProgram_uf_mt(warning_action=ValidationResult.WARNING_ACTION_IGNORE, esuppress=True)
 
     def test_InvoiceProgram_uf_mt_ignore_ws_es(self):
-        self._test_InvoiceProgram_uf_mt(warning_mode=ValidationResult.WARNING_MODE_IGNORE, wsuppress=True, esuppress=True)
+        self._test_InvoiceProgram_uf_mt(warning_action=ValidationResult.WARNING_ACTION_IGNORE, wsuppress=True, esuppress=True)
 
-    def _test_InvoiceProgram_uf_mn(self, warning_mode):
+    def _test_InvoiceProgram_uf_mn(self, warning_action):
         with tempfile.NamedTemporaryFile() as db_file:
             p = StringPrinter()
             invoice_program = InvoiceProgram(
@@ -728,17 +745,17 @@ KNTCRK01G01H663X 2014      5
                 income=None, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
         
-            validation_result = invoice_program.create_validation_result(warning_mode=warning_mode)
+            validation_result = invoice_program.create_validation_result(warning_mode=(warning_action,))
             invoice_program.validate_invoice_collection(validation_result, invoice_collection)
 
             expected_errors = []
             expected_warnings = []
             expected_errors.append(InvoiceUndefinedFieldError)
-            if warning_mode == ValidationResult.DEFAULT_WARNING_MODE:
+            if warning_action == ValidationResult.DEFAULT_WARNING_ACTION:
                 expected_warnings.append(InvoiceMultipleNamesError)
-            elif warning_mode == ValidationResult.WARNING_MODE_ERROR:
+            elif warning_action == ValidationResult.WARNING_ACTION_ERROR:
                 expected_errors.append(InvoiceMultipleNamesError)
-            elif warning_mode == ValidationResult.WARNING_MODE_IGNORE:
+            elif warning_action == ValidationResult.WARNING_ACTION_IGNORE:
                 pass
 
             self.assertEqual(validation_result.num_errors(), len(expected_errors))
@@ -758,15 +775,15 @@ KNTCRK01G01H663X 2014      5
                     self.assertIn(exc_type, expected_warnings)
            
     def test_InvoiceProgram_uf_mn_default(self):
-        self._test_InvoiceProgram_uf_mn(warning_mode=ValidationResult.DEFAULT_WARNING_MODE)
+        self._test_InvoiceProgram_uf_mn(warning_action=ValidationResult.DEFAULT_WARNING_ACTION)
     
     def test_InvoiceProgram_uf_mn_error(self):
-        self._test_InvoiceProgram_uf_mn(warning_mode=ValidationResult.WARNING_MODE_ERROR)
+        self._test_InvoiceProgram_uf_mn(warning_action=ValidationResult.WARNING_ACTION_ERROR)
 
     def test_InvoiceProgram_uf_mn_ignore(self):
-        self._test_InvoiceProgram_uf_mn(warning_mode=ValidationResult.WARNING_MODE_IGNORE)
+        self._test_InvoiceProgram_uf_mn(warning_action=ValidationResult.WARNING_ACTION_IGNORE)
 
-    def _test_InvoiceProgram_mi(self, warning_mode):
+    def _test_InvoiceProgram_mi(self, warning_action):
         with tempfile.NamedTemporaryFile() as db_file:
             p = StringPrinter()
             invoice_program = InvoiceProgram(
@@ -790,18 +807,18 @@ KNTCRK01G01H663X 2014      5
                 income=20.0, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a, invoice_b], logger=self.logger)
         
-            validation_result = invoice_program.create_validation_result(warning_mode=warning_mode)
+            validation_result = invoice_program.create_validation_result(warning_mode=(warning_action,))
             invoice_program.validate_invoice_collection(validation_result, invoice_collection)
 
             expected_errors = []
             expected_warnings = []
-            if warning_mode == ValidationResult.DEFAULT_WARNING_MODE:
+            if warning_action == ValidationResult.DEFAULT_WARNING_ACTION:
                 expected_warnings.append(InvoiceMultipleInvoicesPerDayError)
                 expected_warnings.append(InvoiceMultipleInvoicesPerDayError)
-            elif warning_mode == ValidationResult.WARNING_MODE_ERROR:
+            elif warning_action == ValidationResult.WARNING_ACTION_ERROR:
                 expected_errors.append(InvoiceMultipleInvoicesPerDayError)
                 expected_errors.append(InvoiceMultipleInvoicesPerDayError)
-            elif warning_mode == ValidationResult.WARNING_MODE_IGNORE:
+            elif warning_action == ValidationResult.WARNING_ACTION_IGNORE:
                 pass
 
             self.assertEqual(validation_result.num_errors(), len(expected_errors))
@@ -821,13 +838,13 @@ KNTCRK01G01H663X 2014      5
                     self.assertIn(exc_type, expected_warnings)
            
     def test_InvoiceProgram_mi_default(self):
-        self._test_InvoiceProgram_mi(warning_mode=ValidationResult.DEFAULT_WARNING_MODE)
+        self._test_InvoiceProgram_mi(warning_action=ValidationResult.DEFAULT_WARNING_ACTION)
     
     def test_InvoiceProgram_mi_error(self):
-        self._test_InvoiceProgram_mi(warning_mode=ValidationResult.WARNING_MODE_ERROR)
+        self._test_InvoiceProgram_mi(warning_action=ValidationResult.WARNING_ACTION_ERROR)
 
     def test_InvoiceProgram_mi_ignore(self):
-        self._test_InvoiceProgram_mi(warning_mode=ValidationResult.WARNING_MODE_IGNORE)
+        self._test_InvoiceProgram_mi(warning_action=ValidationResult.WARNING_ACTION_IGNORE)
 
     def test_InvoiceProgram_malformed_tax_code(self):
         with tempfile.NamedTemporaryFile() as db_file:
@@ -1136,6 +1153,6 @@ KNTCRK01G01H663X 2014      5
                 income=100, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
         
-            validation_result = invoice_program.create_validation_result(warning_mode=ValidationResult.WARNING_MODE_RAISE)
+            validation_result = invoice_program.create_validation_result(warning_mode=(ValidationResult.WARNING_ACTION_RAISE,))
             with self.assertRaises(InvoiceMultipleTaxCodesError):
                 invoice_program.validate_invoice_collection(validation_result, invoice_collection)

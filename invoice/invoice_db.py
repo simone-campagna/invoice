@@ -37,12 +37,6 @@ from .database.db_types import Str, Int, Float, Date, DateTime, Path, Bool, StrT
 from .database.upgrade.upgrader import Upgrader
 from .validation_result import ValidationResult
 
-class WarningModeOption(OptionType):
-    OPTIONS = ValidationResult.WARNING_MODES
-
-class ErrorModeOption(OptionType):
-    OPTIONS = ValidationResult.ERROR_MODES
-
 class StatsGroupOption(OptionType):
     OPTIONS = conf.STATS_GROUPS
 
@@ -62,9 +56,7 @@ class InvoiceDb(Db):
     Configuration = collections.namedtuple(
         'Configuration',
         ('warning_mode', 
-         'warning_suppression',
          'error_mode',
-         'error_suppression',
          'partial_update', 'remove_orphaned',
          'header', 'total',
          'stats_group', 'list_field_names',
@@ -72,9 +64,7 @@ class InvoiceDb(Db):
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
     DEFAULT_CONFIGURATION = Configuration(
         warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
-        warning_suppression=(),
         error_mode=ValidationResult.DEFAULT_ERROR_MODE,
-        error_suppression=(),
         remove_orphaned=True,
         partial_update=True,
         header=True,
@@ -97,10 +87,8 @@ class InvoiceDb(Db):
         ),
         'configuration': DbTable(
             fields=(
-                ('warning_mode', WarningModeOption()),
-                ('warning_suppression', StrTuple()),
-                ('error_mode', ErrorModeOption()),
-                ('error_suppression', StrTuple()),
+                ('warning_mode', StrTuple()),
+                ('error_mode', StrTuple()),
                 ('remove_orphaned', Bool()),
                 ('partial_update', Bool()),
                 ('header', Bool()),

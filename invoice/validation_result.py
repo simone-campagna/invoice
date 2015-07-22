@@ -21,65 +21,108 @@ __all__ = [
 ]
 
 import collections
+import fnmatch
+
+from .error import InvoiceValidationError
 
 class ValidationResult(object):
-    WARNING_MODE_LOG = 'log'
-    WARNING_MODE_ERROR = 'error'
-    WARNING_MODE_IGNORE = 'ignore'
-    WARNING_MODE_RAISE = 'raise'
-    WARNING_MODES = (WARNING_MODE_LOG, WARNING_MODE_ERROR, WARNING_MODE_IGNORE, WARNING_MODE_RAISE)
-    DEFAULT_WARNING_MODE = WARNING_MODE_LOG
+    WARNING_ACTION_LOG = 'log'
+    WARNING_ACTION_ERROR = 'error'
+    WARNING_ACTION_IGNORE = 'ignore'
+    WARNING_ACTION_RAISE = 'raise'
+    WARNING_ACTIONS = (WARNING_ACTION_LOG, WARNING_ACTION_ERROR, WARNING_ACTION_IGNORE, WARNING_ACTION_RAISE)
+    DEFAULT_WARNING_ACTION = WARNING_ACTION_LOG
+    DEFAULT_WARNING_MODE = ("{}:*".format(DEFAULT_WARNING_ACTION), )
 
-    ERROR_MODE_LOG = 'log'
-    ERROR_MODE_IGNORE = 'ignore'
-    ERROR_MODE_RAISE = 'raise'
-    ERROR_MODES = (ERROR_MODE_LOG, ERROR_MODE_IGNORE, ERROR_MODE_RAISE)
-    DEFAULT_ERROR_MODE = ERROR_MODE_LOG
+    ERROR_ACTION_LOG = 'log'
+    ERROR_ACTION_IGNORE = 'ignore'
+    ERROR_ACTION_RAISE = 'raise'
+    ERROR_ACTIONS = (ERROR_ACTION_LOG, ERROR_ACTION_IGNORE, ERROR_ACTION_RAISE)
+    DEFAULT_ERROR_ACTION = ERROR_ACTION_LOG
+    DEFAULT_ERROR_MODE = ("{}:*".format(DEFAULT_ERROR_ACTION), )
 
     Entry = collections.namedtuple('Entry', ('exc_type', 'message'))
-    def __init__(self, logger, warning_mode=DEFAULT_WARNING_MODE, error_mode=DEFAULT_ERROR_MODE,
-                               warning_suppression=None, error_suppression=None):
+
+    def __init__(self, logger, warning_mode=DEFAULT_WARNING_MODE, error_mode=DEFAULT_ERROR_MODE):
         self._failing_invoices = dict()
         self.logger = logger
         self._errors = collections.OrderedDict()
         self._warnings = collections.OrderedDict()
 
-        if error_mode is None: # pragma: no cover
+        if error_mode is None:
             error_mode = self.DEFAULT_ERROR_MODE
-
-        if error_mode == self.ERROR_MODE_LOG:
-            self._function_error = self.impl_add_error
-        elif error_mode == self.ERROR_MODE_RAISE:
-            self._function_error = self.impl_add_critical
-        elif error_mode == self.ERROR_MODE_IGNORE:
-            self._function_error = self.impl_ignore
-        else: # pragma: no cover
-            raise ValueError("error_mode {!r} non valido (i valori leciti sono {})".format(error_mode, '|'.join(self.ERROR_MODES)))
-          
-        if warning_mode is None: # pragma: no cover
-            warning_mode = self.DEFAULT_WARNING_MODE
-
-        if warning_mode == self.WARNING_MODE_LOG:
-            self._function_warning = self.impl_add_warning
-        elif warning_mode == self.WARNING_MODE_ERROR:
-            self._function_warning = self._function_error
-        elif warning_mode == self.WARNING_MODE_IGNORE:
-            self._function_warning = self.impl_ignore
-        elif warning_mode == self.WARNING_MODE_RAISE:
-            self._function_warning = self.impl_add_critical
-        else: # pragma: no cover
-            raise ValueError("warning_mode {!r} non valido (i valori leciti sono {})".format(warning_mode, '|'.join(self.WARNING_MODES)))
-
-        self.warning_mode = warning_mode
         self.error_mode = error_mode
 
-        if error_suppression is None:
-            error_suppression = ()
-        self.error_suppression = set(error_suppression)
+        if warning_mode is None:
+            warning_mode = self.DEFAULT_WARNING_MODE
+        self.warning_mode = warning_mode
 
-        if warning_suppression is None:
-            warning_suppression = ()
-        self.warning_suppression = set(warning_suppression)
+        self.error_function = {
+            self.ERROR_ACTION_LOG: self.impl_add_error,
+            self.ERROR_ACTION_RAISE: self.impl_add_critical,
+            self.ERROR_ACTION_IGNORE: self.impl_ignore,
+        }
+        self.warning_function = {
+            self.WARNING_ACTION_LOG: self.impl_add_warning,
+            self.WARNING_ACTION_ERROR: self.impl_add_error,
+            self.WARNING_ACTION_RAISE: self.impl_add_critical,
+            self.WARNING_ACTION_IGNORE: self.impl_ignore,
+        }
+
+        self.error_action = self._make_error_action(mode=error_mode)
+        self.warning_action = self._make_warning_action(mode=warning_mode)
+
+
+    @classmethod
+    def _type_mode(cls, mode_item, *, mode_type, actions):
+        ilist = [itoken.strip() for itoken in mode_item.split(':', 1)]
+        action = ilist[0]
+        if len(ilist) > 1:
+            pattern = ilist[1]
+        else:
+            pattern = '*'
+        if action not in actions:
+            raise ValueError("{mt} {m!r}: azione {a!r} non valida (i valori leciti sono {al})".format(
+                mt=mode_type,
+                m=item,
+                a=action,
+                al='|'.join(actions),
+            ))
+        return action, pattern
+
+    @classmethod
+    def type_warning_mode(cls, mode_item):
+        return cls._type_mode(mode_item=mode_item, mode_type='warning_mode', actions=cls.WARNING_ACTIONS)
+        
+    @classmethod
+    def type_error_mode(cls, mode_item):
+        return cls._type_mode(mode_item=mode_item, mode_type='error_mode', actions=cls.ERROR_ACTIONS)
+        
+    @classmethod
+    def check_warning_mode(cls, mode_item):
+        return ':'.join(cls.type_warning_mode(mode_item))
+
+    @classmethod
+    def check_error_mode(cls, mode_item):
+        return ':'.join(cls.type_error_mode(mode_item))
+
+    @classmethod
+    def _make_action(cls, *, default_action, type_function, mode): 
+        d = collections.defaultdict(lambda : default_action)
+        exc_codes = [exc.exc_code() for exc in InvoiceValidationError.subclasses()]
+        for mode_item in mode:
+            action, pattern = type_function(mode_item)
+            for exc_code in fnmatch.filter(exc_codes, pattern):
+                d[exc_code] = action
+        return d
+
+    @classmethod
+    def _make_warning_action(cls, mode):
+        return cls._make_action(default_action=cls.DEFAULT_WARNING_ACTION, type_function=cls.type_warning_mode, mode=mode)
+
+    @classmethod
+    def _make_error_action(cls, mode):
+        return cls._make_action(default_action=cls.DEFAULT_ERROR_ACTION, type_function=cls.type_error_mode, mode=mode)
 
     def filter_invoices(self, invoices):
         validated_invoices = []
@@ -121,20 +164,17 @@ class ValidationResult(object):
     def impl_ignore(self, invoice, exc_type, message):
         pass
 
-    def _exc_match(self, exc_type, suppression):
-        return exc_type.__name__ in suppression or exc_type.exc_code() in suppression
-
     def add_error(self, invoice, exc_type, message):
-        if self._exc_match(exc_type, self.error_suppression):
-            self.logger.debug("fattura {}: errore {} ({}) soppresso".format(invoice.doc_filename, exc_type.__name__, message))
-        else:
-            self._function_error(invoice, exc_type, message)
+        exc_code = exc_type.exc_code()
+        action = self.error_action[exc_code]
+        function = self.error_function[action]
+        function(invoice, exc_type, message)
 
     def add_warning(self, invoice, exc_type, message):
-        if self._exc_match(exc_type, self.warning_suppression):
-            self.logger.debug("fattura {}: warning {} ({}) soppresso".format(invoice.doc_filename, exc_type.__name__, message))
-        else:
-            self._function_warning(invoice, exc_type, message)
+        exc_code = exc_type.exc_code()
+        action = self.warning_action[exc_code]
+        function = self.warning_function[action]
+        function(invoice, exc_type, message)
 
     def __bool__(self):
         return len(self._errors) == 0

@@ -108,6 +108,12 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     def type_pattern(s):
         return InvoiceDb.make_pattern(s)
 
+    def type_warning_mode(s):
+        return ValidationResult.check_warning_mode(s)
+
+    def type_error_mode(s):
+        return ValidationResult.check_error_mode(s)
+
     all_field_names = []
     for field_name in Invoice._fields:
         all_field_names.append(field_name)
@@ -124,9 +130,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
 
     # configuration
     default_warning_mode = None
-    default_warning_suppression = None
     default_error_mode = None
-    default_error_suppression = None
     default_partial_update = None
     default_show_scan_report = None
     default_remove_orphaned = None
@@ -336,7 +340,6 @@ include tutti i file 'docs/*.doc', poi fra questi scarta tutti i file
         function_name="program_init",
         function_arguments=('patterns', 'reset',
                             'warning_mode', 'error_mode',
-                            'warning_suppression', 'error_suppression',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
                             'list_field_names', 'stats_group', 'show_scan_report', 'table_mode', 'max_interruption_days'),
@@ -367,20 +370,25 @@ Permette di visualizzare la versione del programma e del database.
 Permette di modificare e visualizzare i parametri di configurazione; la
 visualizzazione avviene DOPO la modifica. I parametri attualmente
 supportati sono:
- * warning_mode[={wm}]: gestione dei warning sollevati durante la
-   scansione:
-   - 'log': viene eseguito solo il log dei messaggi di warning
-   - 'error': i warning vengono gestiti come errori 
-   - 'ignore': i warning vengono ignorati
- * warning_suppression[={ws}]: lista di warning da sopprimere
-   [esegui il comando '%(prog)s help errors' per la lista dei codici]
- * error_mode[={em}]: gestione degli errori sollevati durante la
-   scansione:
-   - 'log': viene eseguito solo il log dei messaggi di errore
-   - 'raise': viene sollevata una eccezione ad ogni errore, che quindi
-     interrompe la scansione
- * error_suppression[={es}]: lista di errori da sopprimere
-   [esegui il comando '%(prog)s help errors' per la lista dei codici]
+ * warning_mode=(<mode>[:<pattern>], ...): gestione dei warning sollevati
+   durante la scansione o la validazione:
+   + <mode> può essere:
+     - 'log': viene eseguito solo il log dei messaggi di warning
+     - 'error': i warning vengono gestiti come errori 
+     - 'raise': i warning generano immediatamente una eccezione e
+       terminano l'esecuzione
+     - 'ignore': i warning vengono ignorati
+   + <pattern> è un pattern per determinare a quali warning deve essere
+     applicato <mode>
+ * error_mode=(<mode>[:<pattern>], ...): gestione degli errori sollevati
+   durante la scansione o la validazione:
+   + <mode> può essere:
+     - 'log': viene eseguito solo il log dei messaggi di errore
+     - 'raise': gli errori generano immediatamente una eccezione e
+       terminano l'esecuzione
+     - 'ignore': gli errori vengono ignorati
+   + <pattern> è un pattern per determinare a quali errori deve essere
+     applicato <mode>
  * partial_update[={pu}]: in caso di errori durante la scansione, salva
    comunque nel database le fatture che non contengono errori;
  * remove_orphaned[={ro}]: se il documento relativo ad una fattura è
@@ -392,9 +400,7 @@ supportati sono:
    lista predefinita dei campi per il comando 'list'
 """.format(
             wm=InvoiceDb.DEFAULT_CONFIGURATION.warning_mode,
-            ws=InvoiceDb.DEFAULT_CONFIGURATION.warning_suppression,
             em=InvoiceDb.DEFAULT_CONFIGURATION.error_mode,
-            es=InvoiceDb.DEFAULT_CONFIGURATION.error_suppression,
             pu=InvoiceDb.DEFAULT_CONFIGURATION.partial_update,
             ro=InvoiceDb.DEFAULT_CONFIGURATION.remove_orphaned,
             hd=InvoiceDb.DEFAULT_CONFIGURATION.header,
@@ -407,7 +413,6 @@ supportati sono:
         function_name="program_config",
         function_arguments=('reset',
                             'warning_mode', 'error_mode',
-                            'warning_suppression', 'error_suppression',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
                             'list_field_names', 'stats_group', 'show_scan_report',
@@ -519,7 +524,6 @@ Questa rimozione di fatture già scansionate può avvenire in due casi:
     scan_parser.set_defaults(
         function_name="program_scan",
         function_arguments=('warning_mode', 'error_mode',
-                            'warning_suppression', 'error_suppression',
                             'remove_orphaned', 'partial_update', 'show_scan_report',
                             'table_mode', 'output_filename'),
     )
@@ -551,8 +555,7 @@ Esegue una validazione del contenuto del database.
     )
     validate_parser.set_defaults(
         function_name="program_validate",
-        function_arguments=('warning_mode', 'error_mode',
-                            'warning_suppression', 'error_suppression'),
+        function_arguments=('warning_mode', 'error_mode'),
     )
 
     ### list_parser ###
@@ -861,31 +864,17 @@ e validati.
     for parser in init_parser, config_parser, scan_parser, validate_parser, legacy_parser:
         parser.add_argument("--warning-mode", "-w",
             dest="warning_mode",
-            choices=ValidationResult.WARNING_MODES,
+            type=type_warning_mode,
+            nargs='*',
             default=default_warning_mode,
             help="modalità di gestione dei warning")
 
-        parser.add_argument("--warning-suppression", "-ws",
-            metavar="SL",
-            dest="warning_suppression",
-            type=str,
-            nargs='*',
-            default=default_warning_suppression,
-            help="warning da sopprimere")
-
         parser.add_argument("--error-mode", "-e",
             dest="error_mode",
-            choices=ValidationResult.ERROR_MODES,
+            type=type_error_mode,
+            nargs='*',
             default=default_error_mode,
             help="modalità di gestione degli errori")
-
-        parser.add_argument("--error-suppression", "-es",
-            metavar="SL",
-            dest="error_suppression",
-            type=str,
-            nargs='*',
-            default=default_error_suppression,
-            help="errori da sopprimere")
 
     ### reset options
     init_parser.add_argument("--reset", "-r",

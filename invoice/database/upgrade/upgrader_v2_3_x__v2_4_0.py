@@ -64,6 +64,7 @@ class Upgrader_v2_3_x__v2_4_0(MajorMinorUpgrader):
         return self.do_downgrade(
             old_table=self.CONFIGURATION_TABLE_v2_3_x,
             new_table=self.CONFIGURATION_TABLE_v2_4_0,
+            new_to_old=lambda x: {},
             db=db,
             version_from=version_from,
             version_to=version_to,
@@ -74,7 +75,7 @@ class Upgrader_v2_3_x__v2_4_0(MajorMinorUpgrader):
         return self.do_upgrade(
             old_table=self.CONFIGURATION_TABLE_v2_3_x,
             new_table=self.CONFIGURATION_TABLE_v2_4_0,
-            new_data={'table_mode': conf.DEFAULT_TABLE_MODE},
+            old_to_new=lambda x: {'table_mode': conf.DEFAULT_TABLE_MODE},
             db=db,
             version_from=version_from,
             version_to=version_to,
