@@ -1,0 +1,4 @@
+include requirements/*.txt
+include docs/sphinx/source/conf.py
+include docs/sphinx/source/*.rst
+include docs/sphinx/source/img/*.jpg

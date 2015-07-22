@@ -1,0 +1,10 @@
+flake8-chart
+pep8-naming
+flake8-blind-except
+flake8-coding
+flake8-snippets
+flake8-todo
+flake8-print
+flake8-import-order
+#flake8-pep257
+#flake8-docstrings
