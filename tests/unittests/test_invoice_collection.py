@@ -38,18 +38,21 @@ class TestInvoiceCollection(unittest.TestCase):
             year=2015, number=1,
             name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
             city='New York', date=datetime.date(2015, 1, 1),
+            quantity=1, service='therapy',
             income=200.0, currency='euro')
         self._invoice_002_peter_parker = Invoice(
             doc_filename='2015_002_peter_parker.doc',
             year=2015, number=2,
             name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
             city='New York', date=datetime.date(2015, 1, 2),
+            quantity=1, service='therapy',
             income=100.0, currency='euro')
         self._invoice_003_peter_parker = Invoice(
             doc_filename='2015_003_peter_parser.doc',
             year=2015, number=3,
             name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
             city='New York', date=datetime.date(2015, 1, 3),
+            quantity=1, service='therapy',
             income=150.0, currency='euro')
         self._invoices = [
             self._invoice_001_peter_parker,

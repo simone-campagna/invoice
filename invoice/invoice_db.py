@@ -127,6 +127,8 @@ class InvoiceDb(Db):
                 ('tax_code', Str()),
                 ('city', Str()),
                 ('date', Date()),
+                ('quantity', Int()),
+                ('service', Str()),
                 ('income', Float()),
                 ('currency', Str()),
             ),

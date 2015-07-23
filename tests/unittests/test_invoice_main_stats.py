@@ -180,6 +180,50 @@ TOTALE                                  2       2 --          153.00  100.00% --
 """
     STATS_CITY_DEFAULT = STATS_CITY_TOTAL_LONG
 
+    STATS_SERVICE_NO_TOTAL_LONG = """\
+prestazione                                    da:         a: clienti fatture incasso %incasso
+Group therapy for depressed superheroes 2014-01-25 2014-01-25       1       1   51.00   33.33%
+Therapy for rage control                2014-01-22 2014-01-22       1       1  102.00   66.67%
+"""
+    STATS_SERVICE_TOTAL_LONG = STATS_SERVICE_NO_TOTAL_LONG + """\
+TOTALE                                                              2       2  153.00  100.00%
+"""
+    STATS_SERVICE_TOTAL_SHORT = """\
+prestazione                             clienti fatture incasso %incasso
+Group therapy for depressed superheroes       1       1   51.00   33.33%
+Therapy for rage control                      1       1  102.00   66.67%
+TOTALE                                        2       2  153.00  100.00%
+"""
+    STATS_SERVICE_TOTAL_FULL = """\
+prestazione                                    da:         a: clienti fatture h(fatture) incasso %incasso h(incasso)
+Group therapy for depressed superheroes 2014-01-25 2014-01-25       1       1 ##########   51.00   33.33% #####     
+Therapy for rage control                2014-01-22 2014-01-22       1       1 ##########  102.00   66.67% ##########
+TOTALE                                                              2       2 --          153.00  100.00% --        
+"""
+    STATS_SERVICE_DEFAULT = STATS_SERVICE_TOTAL_LONG
+
+    STATS_TASK_NO_TOTAL_LONG = """\
+codice_fiscale   prestazione                                    da:         a: clienti fatture incasso %incasso
+BNNBRC01G01H663S Therapy for rage control                2014-01-22 2014-01-22       1       1  102.00   66.67%
+WNYBRC01G01H663S Group therapy for depressed superheroes 2014-01-25 2014-01-25       1       1   51.00   33.33%
+"""
+    STATS_TASK_TOTAL_LONG = STATS_TASK_NO_TOTAL_LONG + """\
+TOTALE                                                                               2       2  153.00  100.00%
+"""
+    STATS_TASK_TOTAL_SHORT = """\
+codice_fiscale   prestazione                             clienti fatture incasso %incasso
+BNNBRC01G01H663S Therapy for rage control                      1       1  102.00   66.67%
+WNYBRC01G01H663S Group therapy for depressed superheroes       1       1   51.00   33.33%
+TOTALE                                                         2       2  153.00  100.00%
+"""
+    STATS_TASK_TOTAL_FULL = """\
+codice_fiscale   prestazione                                    da:         a: clienti fatture h(fatture) incasso %incasso h(incasso)
+BNNBRC01G01H663S Therapy for rage control                2014-01-22 2014-01-22       1       1 ##########  102.00   66.67% ##########
+WNYBRC01G01H663S Group therapy for depressed superheroes 2014-01-25 2014-01-25       1       1 ##########   51.00   33.33% #####     
+TOTALE                                                                               2       2 --          153.00  100.00% --        
+"""
+    STATS_TASK_DEFAULT = STATS_TASK_TOTAL_LONG
+
     STATS_NONE_DEFAULT = STATS_MONTH_DEFAULT
     STATS_NONE_TOTAL_LONG = STATS_MONTH_TOTAL_LONG
     STATS_NONE_NO_TOTAL_LONG = STATS_MONTH_NO_TOTAL_LONG
@@ -228,6 +272,42 @@ TOTALE                                  2       2 --          153.00  100.00% --
                 args=args,
             )
             self.assertEqual(p.string(), output)
+
+    def test_invoice_main_stats_service(self):
+        return self._test_invoice_main_stats('service', None, self.STATS_SERVICE_DEFAULT)
+
+    def test_invoice_main_stats_service_no_total(self):
+        return self._test_invoice_main_stats('service', False, self.STATS_SERVICE_NO_TOTAL_LONG)
+
+    def test_invoice_main_stats_service_total(self):
+        return self._test_invoice_main_stats('service', True, self.STATS_SERVICE_TOTAL_LONG)
+
+    def test_invoice_main_stats_service_total_short(self):
+        return self._test_invoice_main_stats('service', True, self.STATS_SERVICE_TOTAL_SHORT, '-s')
+
+    def test_invoice_main_stats_service_total_long(self):
+        return self._test_invoice_main_stats('service', True, self.STATS_SERVICE_TOTAL_LONG, '-l')
+
+    def test_invoice_main_stats_service_total_full(self):
+        return self._test_invoice_main_stats('service', True, self.STATS_SERVICE_TOTAL_FULL, '-f')
+
+    def test_invoice_main_stats_task(self):
+        return self._test_invoice_main_stats('task', None, self.STATS_TASK_DEFAULT)
+
+    def test_invoice_main_stats_task_no_total(self):
+        return self._test_invoice_main_stats('task', False, self.STATS_TASK_NO_TOTAL_LONG)
+
+    def test_invoice_main_stats_task_total(self):
+        return self._test_invoice_main_stats('task', True, self.STATS_TASK_TOTAL_LONG)
+
+    def test_invoice_main_stats_task_total_short(self):
+        return self._test_invoice_main_stats('task', True, self.STATS_TASK_TOTAL_SHORT, '-s')
+
+    def test_invoice_main_stats_task_total_long(self):
+        return self._test_invoice_main_stats('task', True, self.STATS_TASK_TOTAL_LONG, '-l')
+
+    def test_invoice_main_stats_task_total_full(self):
+        return self._test_invoice_main_stats('task', True, self.STATS_TASK_TOTAL_FULL, '-f')
 
     def test_invoice_main_stats_year(self):
         return self._test_invoice_main_stats('year', None, self.STATS_YEAR_DEFAULT)

@@ -510,6 +510,11 @@ class InvoiceProgram(object):
                 invoices[0].date,
                 invoices[-1].date)
 
+    def _get_task_group_value(self, invoices, client, service):
+        return ((client, service),
+                invoices[0].date,
+                invoices[-1].date)
+
     def group_by(self, invoice_collection, stats_group):
         invoice_collection.sort()
         invoices = invoice_collection
@@ -529,6 +534,14 @@ class InvoiceProgram(object):
             invoices = sorted(invoice_collection, key=lambda invoice: invoice.date.weekday())
             group_function = lambda invoice: (invoice.date.weekday(), )
             group_value_function = self._get_weekday_group_value
+        elif stats_group == conf.STATS_GROUP_SERVICE:
+            invoices = sorted(invoice_collection, key=lambda invoice: invoice.service)
+            group_function = lambda invoice: (invoice.service, )
+            group_value_function = self._get_group_value
+        elif stats_group == conf.STATS_GROUP_TASK:
+            invoices = sorted(invoice_collection, key=lambda invoice: (invoice.tax_code, invoice.service))
+            group_function = lambda invoice: (invoice.tax_code, invoice.service, )
+            group_value_function = self._get_task_group_value
         elif stats_group == conf.STATS_GROUP_CLIENT:
             invoices = sorted(invoice_collection, key=lambda invoice: invoice.tax_code)
             group_function = lambda invoice: (invoice.tax_code, )
@@ -576,6 +589,8 @@ class InvoiceProgram(object):
                 conf.STATS_GROUP_DAY:		'giorno',
                 conf.STATS_GROUP_WEEKDAY:	'giorno',
                 conf.STATS_GROUP_CLIENT:	Invoice.get_field_translation('tax_code'),
+                conf.STATS_GROUP_SERVICE:	Invoice.get_field_translation('service'),
+                conf.STATS_GROUP_TASK:		'incarico',
                 conf.STATS_GROUP_CITY:		Invoice.get_field_translation('city'),
                 'from':				'da:',
                 'to':				'a:',
@@ -614,14 +629,18 @@ class InvoiceProgram(object):
                 field_names = (cc_field_name, 'continuation')
             else:
                 field_names = (cc_field_name, )
+            if stats_group == conf.STATS_GROUP_TASK:
+                stats_group_fields = ('client', 'service')
+            else:
+                stats_group_fields = (stats_group, )
             if stats_mode == conf.STATS_MODE_SHORT:
-                group_field_names = (stats_group, )
+                group_field_names = stats_group_fields
                 field_names += ('invoice_count', 'income', 'income_percentage')
             elif stats_mode == conf.STATS_MODE_LONG:
-                group_field_names = (stats_group, 'from', 'to')
+                group_field_names = stats_group_fields + ('from', 'to')
                 field_names += ('invoice_count', 'income', 'income_percentage')
             elif stats_mode == conf.STATS_MODE_FULL:
-                group_field_names = (stats_group, 'from', 'to')
+                group_field_names = stats_group_fields + ('from', 'to')
                 field_names += ('invoice_count', 'invoice_count_bar', 'income', 'income_percentage', 'income_bar')
             cum_field_names = ('invoice_count', 'income', 'income_percentage')
             if header:
@@ -646,8 +665,13 @@ class InvoiceProgram(object):
             rows = []
             if total:
                 total_row = {field_name: 0 for field_name in cum_field_names}
+                total_s = "TOTALE"
+                if stats_group == conf.STATS_GROUP_TASK:
+                    total_row['client'] = total_s
+                    total_row['service'] = ""
+                else:
+                    total_row[stats_group] = total_s
                 total_row['continuation'] = "--"
-                total_row[stats_group] = "TOTALE"
                 total_row[cc_field_name] = cc_total
                 total_row['from'] = ""
                 total_row['to'] = ""
@@ -710,6 +734,9 @@ class InvoiceProgram(object):
                     total_row['client_count'] = total_client_count
                 if stats_group == conf.STATS_GROUP_CLIENT:
                     data[cc_field_name] = group[0].name
+                elif stats_group == conf.STATS_GROUP_TASK:
+                    data['client'] = group[0].tax_code
+                    data['service'] = group[0].service
                 rows.append(data)
             #bars
             max_income = max(row['income'] for row in rows)

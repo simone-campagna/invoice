@@ -117,6 +117,9 @@ regexpr = ^\s*(?P<city>[^,]+)(?:,|\s)\s*(?P<date>\d{1,2}/\d{1,2}/\d\d\d\d)\s*$
 
 [importo e valuta]
 regexpr = Totale\s+fattura\s+(?P<income>[\d,\.]*)\s+(?P<currency>\w+)\s*$
+
+[quantità e prestazione]
+regexpr = \s*N°\s*(?P<quantity>\d+)\s*(?P<service>[^\d]*)(?:\s+[Pp][Ee][Rr]\s+)?\s*
 """
 
 def load_scanner(scanner_config_filename):

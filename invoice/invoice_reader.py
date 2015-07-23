@@ -64,6 +64,8 @@ class InvoiceReader(object):
                 'tax_code': self.convert_tax_code,
                 'city': str,
                 'date': self.convert_date,
+                'quantity': int,
+                'service': self.convert_service,
                 'income': self.convert_income,
                 'currency': str,
             }
@@ -110,6 +112,12 @@ class InvoiceReader(object):
             return datet.date()
         return None
            
+    @classmethod
+    def convert_service(cls, service_s):
+        l = [token.lower() for token in service_s.split()]
+        l[0] = l[0].title()
+        return ' '.join(l)
+
     def read_text(self, doc_filename):
         cmdline = ["catdoc", doc_filename, "-f", "ascii", "-w"]
         p = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
