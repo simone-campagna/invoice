@@ -54,6 +54,7 @@ from .week import WeekManager
 from .database.db_types import Path
 from .table import Table
 from . import conf
+from .scanner import load_scanner
 from .version import VERSION
 from .ee import snow
 
@@ -305,9 +306,14 @@ class InvoiceProgram(object):
                            reset=False):
         if list_field_names is None:
             lsit_field_names = conf.DEFAULT_LIST_FIELD_NAMES
-        if reset and os.path.exists(self.db_filename):
-            self.logger.info("cancellazione del db {!r}...".format(self.db_filename))
-            os.remove(self.db_filename)
+        scanner_config_file = conf.get_scanner_config_file()
+        if reset:
+            if os.path.exists(self.db_filename):
+                self.logger.info("cancellazione del db {!r}...".format(self.db_filename))
+                os.remove(self.db_filename)
+            if os.path.exists(scanner_config_file):
+                self.logger.info("cancellazione dello scanner config file {!r}...".format(scanner_config_file))
+                os.remove(scanner_config_file)
         self.db.initialize()
         configuration = self.db.Configuration(
             warning_mode=warning_mode,
@@ -327,6 +333,7 @@ class InvoiceProgram(object):
         self.check_patterns(patterns)
         patterns = self.db.store_patterns(patterns)
         #self.show_patterns(patterns)
+        load_scanner(scanner_config_file)
 
        
     def impl_version(self, upgrade=False):
@@ -510,8 +517,8 @@ class InvoiceProgram(object):
                 invoices[0].date,
                 invoices[-1].date)
 
-    def _get_task_group_value(self, invoices, client, service):
-        return ((client, service),
+    def _get_task_group_value(self, invoices, tax_code, name, service):
+        return ((tax_code, name, service),
                 invoices[0].date,
                 invoices[-1].date)
 
@@ -539,8 +546,8 @@ class InvoiceProgram(object):
             group_function = lambda invoice: (invoice.service, )
             group_value_function = self._get_group_value
         elif stats_group == conf.STATS_GROUP_TASK:
-            invoices = sorted(invoice_collection, key=lambda invoice: (invoice.tax_code, invoice.service))
-            group_function = lambda invoice: (invoice.tax_code, invoice.service, )
+            invoices = sorted(invoice_collection, key=lambda invoice: (invoice.tax_code, invoice.name, invoice.service))
+            group_function = lambda invoice: (invoice.tax_code, invoice.name, invoice.service, )
             group_value_function = self._get_task_group_value
         elif stats_group == conf.STATS_GROUP_CLIENT:
             invoices = sorted(invoice_collection, key=lambda invoice: invoice.tax_code)
@@ -591,6 +598,7 @@ class InvoiceProgram(object):
                 conf.STATS_GROUP_CLIENT:	Invoice.get_field_translation('tax_code'),
                 conf.STATS_GROUP_SERVICE:	Invoice.get_field_translation('service'),
                 conf.STATS_GROUP_TASK:		'incarico',
+                'name':                         Invoice.get_field_translation('name'),
                 conf.STATS_GROUP_CITY:		Invoice.get_field_translation('city'),
                 'from':				'da:',
                 'to':				'a:',
@@ -624,13 +632,14 @@ class InvoiceProgram(object):
                 'income_bar':			'h(incasso)',
                 'invoice_count_bar':		'h(fatture)',
             }
-            field_names = (cc_field_name, 'invoice_count', 'invoice_count_bar', 'income', 'income_percentage', 'income_bar')
-            if stats_group == conf.STATS_GROUP_CLIENT:
+            if stats_group == conf.STATS_GROUP_TASK:
+                field_names = ()
+            elif stats_group == conf.STATS_GROUP_CLIENT:
                 field_names = (cc_field_name, 'continuation')
             else:
                 field_names = (cc_field_name, )
             if stats_group == conf.STATS_GROUP_TASK:
-                stats_group_fields = ('client', 'service')
+                stats_group_fields = ('client', 'name', 'service')
             else:
                 stats_group_fields = (stats_group, )
             if stats_mode == conf.STATS_MODE_SHORT:
@@ -668,6 +677,7 @@ class InvoiceProgram(object):
                 total_s = "TOTALE"
                 if stats_group == conf.STATS_GROUP_TASK:
                     total_row['client'] = total_s
+                    total_row['name'] = ""
                     total_row['service'] = ""
                 else:
                     total_row[stats_group] = total_s
@@ -736,6 +746,7 @@ class InvoiceProgram(object):
                     data[cc_field_name] = group[0].name
                 elif stats_group == conf.STATS_GROUP_TASK:
                     data['client'] = group[0].tax_code
+                    data['name'] = group[0].name
                     data['service'] = group[0].service
                 rows.append(data)
             #bars

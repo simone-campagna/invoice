@@ -204,21 +204,21 @@ TOTALE                                 4       5  433.00  100.00%
             year=2015, number=1,
             name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 1),
-            quantity=1, service='therapy',
+            service='therapy A',
             income=200.0, currency='euro')
         self._invoice_002_peter_parker = Invoice(
             doc_filename='2015_002_peter_parker.doc',
             year=2015, number=2,
             name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 2),
-            quantity=1, service='therapy',
+            service='therapy B',
             income=100.0, currency='euro')
         self._invoice_003_peter_parker = Invoice(
             doc_filename='2015_003_peter_parser.doc',
             year=2015, number=3,
             name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 3),
-            quantity=1, service='therapy',
+            service='therapy A',
             income=150.0, currency='euro')
         self._invoices = [
             self._invoice_001_peter_parker,
@@ -230,28 +230,28 @@ TOTALE                                 4       5  433.00  100.00%
             year=2015, number=4,
             name='Parker B. Peter', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 4),
-            quantity=1, service='therapy',
+            service='therapy A',
             income=200.0, currency='euro')
         self._invoice_004_peter_parker_wrong_date = Invoice(
             doc_filename='2015_004_peter_parker.doc',
             year=2015, number=4,
             name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 2),
-            quantity=1, service='therapy',
+            service='therapy B',
             income=200.0, currency='euro')
         self._invoice_004_peter_parker_wrong_number = Invoice(
             doc_filename='2015_004_peter_parker.doc',
             year=2015, number=6,
             name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 5),
-            quantity=1, service='therapy',
+            service='therapy B',
             income=200.0, currency='euro')
         self._invoice_004_peter_parker_duplicated_number = Invoice(
             doc_filename='2015_004_peter_parker.doc',
             year=2015, number=self._invoices[-1].number,
             name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 5),
-            quantity=1, service='therapy',
+            service='therapy A',
             income=200.0, currency='euro')
 
     def test_InvoiceProgram(self):
@@ -635,7 +635,7 @@ KNTCRK01G01H663X 2014      5
                 year=2015, number=4,
                 name='Peter B. Parker', tax_code='WNYBRC01G01H663S', 
                 city='New York', date=datetime.date(2015, 1, 4),
-                quantity=1, service='therapy',
+                service='therapy',
                 income=None, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
         
@@ -750,7 +750,7 @@ KNTCRK01G01H663X 2014      5
                 year=2015, number=4,
                 name='Parker B. Peter', tax_code='PRKPRT01G01H663M', 
                 city='New York', date=datetime.date(2015, 1, 4),
-                quantity=1, service='therapy',
+                service='therapy',
                 income=None, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
         
@@ -807,14 +807,14 @@ KNTCRK01G01H663X 2014      5
                 year=2015, number=4,
                 name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
                 city='New York', date=datetime.date(2015, 1, 4),
-                quantity=1, service='therapy',
+                service='therapy',
                 income=20.0, currency='euro')
             invoice_b = Invoice(
                 doc_filename='2015_005_parker_peter.doc',
                 year=2015, number=5,
                 name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
                 city='New York', date=datetime.date(2015, 1, 4),
-                quantity=1, service='therapy',
+                service='therapy',
                 income=20.0, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a, invoice_b], logger=self.logger)
         
@@ -920,7 +920,7 @@ KNTCRK01G01H663X 2014      5
                 year=2012, number=1,
                 name='Peter B. Parker', tax_code='PRKPRT01A01B123M',
                 city='New York', date=datetime.date(2015, 1, 4),
-                quantity=1, service='therapy',
+                service='therapy',
                 income=0.0, currency='euro'))
 
             p.reset()
@@ -1162,7 +1162,7 @@ KNTCRK01G01H663X 2014      5
                 year=2015, number=4,
                 name='Peter B. Parker', tax_code='WNYBRC01G01H663S', 
                 city='New York', date=datetime.date(2015, 1, 4),
-                quantity=1, service='therapy',
+                service='therapy',
                 income=100, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
         

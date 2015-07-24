@@ -81,7 +81,6 @@ FIELD_TRANSLATION = collections.OrderedDict((
     ('tax_code',	'codice_fiscale'),
     ('city',		'città'),
     ('date',		'data'),
-    ('quantity',	'quantità'),
     ('service',		'prestazione'),
     ('income',		'incasso'),
     ('currency',	'valuta'),

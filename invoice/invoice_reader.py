@@ -64,7 +64,6 @@ class InvoiceReader(object):
                 'tax_code': self.convert_tax_code,
                 'city': str,
                 'date': self.convert_date,
-                'quantity': int,
                 'service': self.convert_service,
                 'income': self.convert_income,
                 'currency': str,

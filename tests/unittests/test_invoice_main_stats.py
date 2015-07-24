@@ -203,24 +203,24 @@ TOTALE                                                              2       2 --
     STATS_SERVICE_DEFAULT = STATS_SERVICE_TOTAL_LONG
 
     STATS_TASK_NO_TOTAL_LONG = """\
-codice_fiscale   prestazione                                    da:         a: clienti fatture incasso %incasso
-BNNBRC01G01H663S Therapy for rage control                2014-01-22 2014-01-22       1       1  102.00   66.67%
-WNYBRC01G01H663S Group therapy for depressed superheroes 2014-01-25 2014-01-25       1       1   51.00   33.33%
+codice_fiscale   nome                prestazione                                    da:         a: fatture incasso %incasso
+BNNBRC01G01H663S Robert Bruce Banner Therapy for rage control                2014-01-22 2014-01-22       1  102.00   66.67%
+WNYBRC01G01H663S Bruce Wayne         Group therapy for depressed superheroes 2014-01-25 2014-01-25       1   51.00   33.33%
 """
     STATS_TASK_TOTAL_LONG = STATS_TASK_NO_TOTAL_LONG + """\
-TOTALE                                                                               2       2  153.00  100.00%
+TOTALE                                                                                                   2  153.00  100.00%
 """
     STATS_TASK_TOTAL_SHORT = """\
-codice_fiscale   prestazione                             clienti fatture incasso %incasso
-BNNBRC01G01H663S Therapy for rage control                      1       1  102.00   66.67%
-WNYBRC01G01H663S Group therapy for depressed superheroes       1       1   51.00   33.33%
-TOTALE                                                         2       2  153.00  100.00%
+codice_fiscale   nome                prestazione                             fatture incasso %incasso
+BNNBRC01G01H663S Robert Bruce Banner Therapy for rage control                      1  102.00   66.67%
+WNYBRC01G01H663S Bruce Wayne         Group therapy for depressed superheroes       1   51.00   33.33%
+TOTALE                                                                             2  153.00  100.00%
 """
     STATS_TASK_TOTAL_FULL = """\
-codice_fiscale   prestazione                                    da:         a: clienti fatture h(fatture) incasso %incasso h(incasso)
-BNNBRC01G01H663S Therapy for rage control                2014-01-22 2014-01-22       1       1 ##########  102.00   66.67% ##########
-WNYBRC01G01H663S Group therapy for depressed superheroes 2014-01-25 2014-01-25       1       1 ##########   51.00   33.33% #####     
-TOTALE                                                                               2       2 --          153.00  100.00% --        
+codice_fiscale   nome                prestazione                                    da:         a: fatture h(fatture) incasso %incasso h(incasso)
+BNNBRC01G01H663S Robert Bruce Banner Therapy for rage control                2014-01-22 2014-01-22       1 ##########  102.00   66.67% ##########
+WNYBRC01G01H663S Bruce Wayne         Group therapy for depressed superheroes 2014-01-25 2014-01-25       1 ##########   51.00   33.33% #####     
+TOTALE                                                                                                   2 --          153.00  100.00% --        
 """
     STATS_TASK_DEFAULT = STATS_TASK_TOTAL_LONG
 
