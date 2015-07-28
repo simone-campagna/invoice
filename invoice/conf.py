@@ -67,6 +67,10 @@ __all__ = [
     'get_db_file',
     'get_scanner_config_file',
     'DEFAULT_EDITOR',
+    'WATCH_LOCK_FILE',
+    'WATCH_LOG_FILE',
+    'DEFAULT_WATCH_NOTIFY_SUCCESS',
+    'DEFAULT_WATCH_DELAY',
 ]
 
 import collections
@@ -142,7 +146,7 @@ DEFAULT_TABLE_MODE = TABLE_MODE_TEXT
 DEFAULT_MAX_INTERRUPTION_DAYS = 365
 
 VERSION_MAJOR = 2
-VERSION_MINOR = 6
+VERSION_MINOR = 7
 VERSION_PATCH = 0
 
 VERSION = '{}.{}.{}'.format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
@@ -160,6 +164,8 @@ def setup(rc_dir=None, db_file=None):
     global RC_DIR
     global DB_FILE
     global SCANNER_CONFIG_FILE
+    global WATCH_LOCK_FILE
+    global WATCH_LOG_FILE
     if rc_dir is None:
         rc_dir = os.path.join('~', '.invoice')
     RC_DIR_EXPR = os.environ.get(RC_DIR_VAR, rc_dir)
@@ -177,6 +183,8 @@ def setup(rc_dir=None, db_file=None):
         DB_FILE = os.path.join(RC_DIR, DB_FILE)
 
     SCANNER_CONFIG_FILE = os.path.join(RC_DIR, "scanner.config")
+    WATCH_LOCK_FILE = os.path.join(RC_DIR, "watch.lock")
+    WATCH_LOG_FILE = os.path.join(RC_DIR, "watch.log")
 
 def get_rc_dir():
     return RC_DIR
@@ -190,3 +198,6 @@ def get_scanner_config_file():
 setup()
 
 DEFAULT_EDITOR = os.environ.get("INVOICE_EDITOR", os.environ.get("EDITOR", "vim"))
+
+DEFAULT_WATCH_NOTIFY_SUCCESS = True
+DEFAULT_WATCH_DELAY = 0.5

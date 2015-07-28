@@ -60,7 +60,8 @@ class InvoiceDb(Db):
          'partial_update', 'remove_orphaned',
          'header', 'total',
          'stats_group', 'list_field_names',
-         'show_scan_report', 'table_mode', 'max_interruption_days'))
+         'show_scan_report', 'table_mode', 'max_interruption_days',
+         'watch_notify_success', 'watch_delay'))
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
     DEFAULT_CONFIGURATION = Configuration(
         warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
@@ -73,7 +74,10 @@ class InvoiceDb(Db):
         list_field_names=conf.DEFAULT_LIST_FIELD_NAMES,
         show_scan_report=False,
         table_mode=conf.DEFAULT_TABLE_MODE,
-        max_interruption_days=conf.DEFAULT_MAX_INTERRUPTION_DAYS)
+        max_interruption_days=conf.DEFAULT_MAX_INTERRUPTION_DAYS,
+        watch_notify_success=conf.DEFAULT_WATCH_NOTIFY_SUCCESS,
+        watch_delay=conf.DEFAULT_WATCH_DELAY,
+    )
     
     TABLES = {
         'version': DbTable(
@@ -98,6 +102,8 @@ class InvoiceDb(Db):
                 ('show_scan_report', Bool()),
                 ('table_mode', TableModeOption()),
                 ('max_interruption_days', Int()),
+                ('watch_notify_success', Bool()),
+                ('watch_delay', Float()),
             ),
             dict_type=Configuration,
             singleton=True,

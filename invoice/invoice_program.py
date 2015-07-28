@@ -49,6 +49,8 @@ from .invoice_collection_reader import InvoiceCollectionReader
 from .invoice_reader import InvoiceReader
 from .invoice_db import InvoiceDb
 from .invoice import Invoice
+from .observe import observe, DocObserver
+from .popup import popup
 from .validation_result import ValidationResult
 from .week import WeekManager
 from .database.db_types import Path
@@ -118,6 +120,8 @@ class InvoiceProgram(object):
                               show_scan_report=None,
                               table_mode=None,
                               max_interruption_days=None,
+                              watch_notify_success=None,
+                              watch_delay=None,
                               reset=False):
         self.impl_init(
             patterns=patterns,
@@ -132,6 +136,8 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
             table_mode=table_mode,
             max_interruption_days=max_interruption_days,
+            watch_notify_success=watch_notify_success,
+            watch_delay=watch_delay,
             reset=reset,
         )
         return 0
@@ -147,6 +153,8 @@ class InvoiceProgram(object):
                                 show_scan_report=None,
                                 table_mode=None,
                                 max_interruption_days=None,
+                                watch_notify_success=None,
+                                watch_delay=None,
                                 reset=False,
                                 import_filename=None,
                                 export_filename=None,
@@ -164,6 +172,8 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
             table_mode=table_mode,
             max_interruption_days=max_interruption_days,
+            watch_notify_success=watch_notify_success,
+            watch_delay=watch_delay,
             reset=reset,
             import_filename=import_filename,
             export_filename=export_filename,
@@ -194,8 +204,8 @@ class InvoiceProgram(object):
         )
         return 0
 
-    def program_watch(self):
-        self.impl_watch()
+    def program_watch(self, *, action=None, watch_notify_success=None, watch_delay=None):
+        self.impl_watch(action=action, watch_notify_success=watch_notify_success, watch_delay=watch_delay)
         return 0
 
     def program_scan(self, *, warning_mode, error_mode,
@@ -307,6 +317,8 @@ class InvoiceProgram(object):
                            show_scan_report=None,
                            table_mode=None,
                            max_interruption_days=None,
+                           watch_notify_success=None,
+                           watch_delay=None,
                            reset=False):
         if list_field_names is None:
             lsit_field_names = conf.DEFAULT_LIST_FIELD_NAMES
@@ -331,6 +343,8 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
             table_mode=table_mode,
             max_interruption_days=max_interruption_days,
+            watch_notify_success=watch_notify_success,
+            watch_delay=watch_delay,
         )
         configuration = self.db.store_configuration(configuration)
         #self.show_configuration(configuration)
@@ -364,6 +378,8 @@ class InvoiceProgram(object):
                              show_scan_report=None,
                              table_mode=None,
                              max_interruption_days=None,
+                             watch_notify_success=None,
+                             watch_delay=None,
                              reset=False,
                              import_filename=None,
                              export_filename=None,
@@ -391,6 +407,8 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
             table_mode=table_mode,
             max_interruption_days=max_interruption_days,
+            watch_notify_success=watch_notify_success,
+            watch_delay=watch_delay,
         )
         configuration = self.db.store_configuration(configuration)
         if edit:
@@ -818,78 +836,52 @@ class InvoiceProgram(object):
                     validator.message)))
         return user_validators
     
-    def impl_watch(self):
+    def impl_watch(self, *, action=None, watch_notify_success=None, watch_delay=None):
         self.db.check()
+        watch_notify_success = self.db.get_config_option('watch_notify_success', watch_notify_success)
+        watch_delay = self.db.get_config_option('watch_delay', watch_delay)
         dirdata = {}
         for pattern in self.db.load_patterns():
             p_dirname, p_filename = os.path.split(pattern.pattern)
             for dirname in glob.glob(p_dirname):
                 dirdata.setdefault(dirname, []).append(p_filename)
+
+        function = lambda event_queue, watch_notify_success=True: self.watch_function(event_queue=event_queue, watch_notify_success=watch_notify_success)
+        doc_observer = DocObserver(dirdata=dirdata,
+                                   function=function,
+                                   logger=self.logger,
+                                   watch_delay=watch_delay,
+                                   watch_notify_success=watch_notify_success)
+        if action is None:
+            doc_observer.run()
+        else:
+            result = doc_observer.apply_action(action)
+            self.printer("watch {} -> {}".format(action, result))
         
-        from watchdog.events import PatternMatchingEventHandler
-        from watchdog.observers import Observer
-        from PyQt4 import QtGui
-        import sys
-        import time
-
-        class InvoiceDocEventHandler(PatternMatchingEventHandler):
-            def __init__(self, logger, event_queue, **options):
-                self.logger = logger
-                self.event_queue = []
-                super().__init__(**options)
-
-            def cleanup(self):
-                pass
-
-            def on_any_event(self, event):
-                self.logger.warning("got event {}".format(event))
-                event_queue.append(event)
-
-        def scan_function(program, info_success=True):
-            result, updated_invoice_collection = program.impl_scan()
-            program.logger.info("result: {}".format(result))
-            lines = []
-            qtfunction = QtGui.QMessageBox.information
-            if result.num_errors() + result.num_warnings() == 0:
-                if info_success:
-                    lines.append("Success!")
-            else:
-                if result.num_warnings() > 0:
-                    qtfunction = QtGui.QMessageBox.warning
-                    for doc_filename, entries in result.warnings().items():
-                        lines.append("Warning:")
-                        for entry in entries:
-                            lines.append("+ {}".format(entry.message))
-                if result.num_errors() > 0:
-                    qtfunction = QtGui.QMessageBox.warning
-                    for doc_filename, entries in result.errors().items():
-                        lines.append("Error:")
-                        for entry in entries:
-                            lines.append("+ {}".format(entry.message))
-            if lines:
-                message = '\n'.join(lines)
-                app = QtGui.QApplication(sys.argv)
-                qtfunction(None, "Validation result", message)
-
-        observer = Observer()
-        event_queue = []
-        for dirname, filepatterns in dirdata.items():
-            self.logger.info("watching dir {}, patterns {}...".format(dirname, filepatterns))
-            event_handler = InvoiceDocEventHandler(logger=self.logger, event_queue=event_queue, patterns=filepatterns)
-            observer.schedule(event_handler, dirname,
-                              recursive=True)
-        scan_function(self, info_success=False)
-        observer.start()
-        try:
-            while True:
-                if event_queue:
-                    scan_function(self)
-                    del event_queue[:]
-                time.sleep(1)
-        except KeyboardInterrupt:
-            observer.stop()
-        event_handler.cleanup()
-        observer.join()
+    def watch_function(self, event_queue, watch_notify_success=True):
+        result, updated_invoice_collection = self.impl_scan()
+        self.logger.info("result: {}".format(result))
+        lines = []
+        popup_type = 'info'
+        if result.num_errors() + result.num_warnings() == 0:
+            if watch_notify_success:
+                lines.append("Success!")
+        else:
+            if result.num_warnings() > 0:
+                popup_type = 'warning'
+                for doc_filename, entries in result.warnings().items():
+                    lines.append("Warning:")
+                    for entry in entries:
+                        lines.append("+ {}".format(entry.message))
+            if result.num_errors() > 0:
+                popup_type = 'error'
+                for doc_filename, entries in result.errors().items():
+                    lines.append("Error:")
+                    for entry in entries:
+                        lines.append("+ {}".format(entry.message))
+        if lines:
+            message = '\n'.join(lines)
+            popup(kind=popup_type, title="Validation result", text=message, x=300, y=400)
 
     def impl_scan(self, warning_mode=None, error_mode=None,
                         partial_update=None, remove_orphaned=None, show_scan_report=None, table_mode=None, output_filename=None):

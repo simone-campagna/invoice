@@ -1,1 +1,4 @@
 XlsxWriter
+--allow-external SIP
+--allow-external PyQt4
+watchdog

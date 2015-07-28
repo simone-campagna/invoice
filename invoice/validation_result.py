@@ -84,7 +84,7 @@ class ValidationResult(object):
         if action not in actions:
             raise ValueError("{mt} {m!r}: azione {a!r} non valida (i valori leciti sono {al})".format(
                 mt=mode_type,
-                m=item,
+                m=mode_item,
                 a=action,
                 al='|'.join(actions),
             ))
