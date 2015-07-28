@@ -833,51 +833,58 @@ class InvoiceProgram(object):
         import time
 
         class InvoiceDocEventHandler(PatternMatchingEventHandler):
-            def __init__(self, program, function, **options):
-                self.program = program
-                self.function = function
+            def __init__(self, logger, event_queue, **options):
+                self.logger = logger
+                self.event_queue = []
                 super().__init__(**options)
 
             def cleanup(self):
                 pass
 
             def on_any_event(self, event):
-                self.program.logger.warning("got event {}".format(event))
-                self.function(program=self.program)
+                self.logger.warning("got event {}".format(event))
+                event_queue.append(event)
 
-        def scan_function(program):
+        def scan_function(program, info_success=True):
             result, updated_invoice_collection = program.impl_scan()
             program.logger.info("result: {}".format(result))
-            if result.num_errors() + result.num_warnings() > 0:
-                lines = []
-                qtfunction = QtGui.QMessageBox.information
+            lines = []
+            qtfunction = QtGui.QMessageBox.information
+            if result.num_errors() + result.num_warnings() == 0:
+                if info_success:
+                    lines.append("Success!")
+            else:
                 if result.num_warnings() > 0:
                     qtfunction = QtGui.QMessageBox.warning
                     for doc_filename, entries in result.warnings().items():
-                        lines.append("WRN: {}".format(doc_filename))
+                        lines.append("Warning:")
                         for entry in entries:
                             lines.append("+ {}".format(entry.message))
                 if result.num_errors() > 0:
                     qtfunction = QtGui.QMessageBox.warning
                     for doc_filename, entries in result.errors().items():
-                        lines.append("ERR: {}".format(doc_filename))
+                        lines.append("Error:")
                         for entry in entries:
                             lines.append("+ {}".format(entry.message))
-                if lines():
-                    message = '\n'.join(lines)
-                    app = QtGui.QApplication(sys.argv)
-                    qtfunction(None, "Validation result", message)
+            if lines:
+                message = '\n'.join(lines)
+                app = QtGui.QApplication(sys.argv)
+                qtfunction(None, "Validation result", message)
 
         observer = Observer()
+        event_queue = []
         for dirname, filepatterns in dirdata.items():
             self.logger.info("watching dir {}, patterns {}...".format(dirname, filepatterns))
-            event_handler = InvoiceDocEventHandler(program=self, function=scan_function, patterns=filepatterns)
+            event_handler = InvoiceDocEventHandler(logger=self.logger, event_queue=event_queue, patterns=filepatterns)
             observer.schedule(event_handler, dirname,
                               recursive=True)
-        scan_function(self)
+        scan_function(self, info_success=False)
         observer.start()
         try:
             while True:
+                if event_queue:
+                    scan_function(self)
+                    del event_queue[:]
                 time.sleep(1)
         except KeyboardInterrupt:
             observer.stop()
