@@ -471,6 +471,22 @@ Ad esempio:
         function_arguments=('validators', 'reset', 'import_filename', 'export_filename', 'editor', 'edit'),
     )
 
+    ### watch_parser ###
+    watch_parser = add_subparser(subparsers,
+        "watch",
+        parents=(common_parser, ),
+        add_help=False,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""\
+Resta in attesa di modifiche ai documenti (nuove fatture, fatture
+modificate, ...).
+Esegue una scansione in caso di modifiche.
+""")
+    watch_parser.set_defaults(
+        function_name="program_watch",
+        function_arguments=(),
+    )
+
     ### scan_parser ###
     scan_parser = add_subparser(subparsers,
         "scan",

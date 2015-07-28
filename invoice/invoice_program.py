@@ -194,6 +194,10 @@ class InvoiceProgram(object):
         )
         return 0
 
+    def program_watch(self):
+        self.impl_watch()
+        return 0
+
     def program_scan(self, *, warning_mode, error_mode,
                               partial_update=True, remove_orphaned=True, show_scan_report=True, table_mode=None, output_filename=None):
         validation_result, invoice_collection = self.impl_scan(
@@ -814,6 +818,72 @@ class InvoiceProgram(object):
                     validator.message)))
         return user_validators
     
+    def impl_watch(self):
+        self.db.check()
+        dirdata = {}
+        for pattern in self.db.load_patterns():
+            p_dirname, p_filename = os.path.split(pattern.pattern)
+            for dirname in glob.glob(p_dirname):
+                dirdata.setdefault(dirname, []).append(p_filename)
+        
+        from watchdog.events import PatternMatchingEventHandler
+        from watchdog.observers import Observer
+        from PyQt4 import QtGui
+        import sys
+        import time
+
+        class InvoiceDocEventHandler(PatternMatchingEventHandler):
+            def __init__(self, program, function, **options):
+                self.program = program
+                self.function = function
+                super().__init__(**options)
+
+            def cleanup(self):
+                pass
+
+            def on_any_event(self, event):
+                self.program.logger.warning("got event {}".format(event))
+                self.function(program=self.program)
+
+        def scan_function(program):
+            result, updated_invoice_collection = program.impl_scan()
+            program.logger.info("result: {}".format(result))
+            if result.num_errors() + result.num_warnings() > 0:
+                lines = []
+                qtfunction = QtGui.QMessageBox.information
+                if result.num_warnings() > 0:
+                    qtfunction = QtGui.QMessageBox.warning
+                    for doc_filename, entries in result.warnings().items():
+                        lines.append("WRN: {}".format(doc_filename))
+                        for entry in entries:
+                            lines.append("+ {}".format(entry.message))
+                if result.num_errors() > 0:
+                    qtfunction = QtGui.QMessageBox.warning
+                    for doc_filename, entries in result.errors().items():
+                        lines.append("ERR: {}".format(doc_filename))
+                        for entry in entries:
+                            lines.append("+ {}".format(entry.message))
+                if lines():
+                    message = '\n'.join(lines)
+                    app = QtGui.QApplication(sys.argv)
+                    qtfunction(None, "Validation result", message)
+
+        observer = Observer()
+        for dirname, filepatterns in dirdata.items():
+            self.logger.info("watching dir {}, patterns {}...".format(dirname, filepatterns))
+            event_handler = InvoiceDocEventHandler(program=self, function=scan_function, patterns=filepatterns)
+            observer.schedule(event_handler, dirname,
+                              recursive=True)
+        scan_function(self)
+        observer.start()
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            observer.stop()
+        event_handler.cleanup()
+        observer.join()
+
     def impl_scan(self, warning_mode=None, error_mode=None,
                         partial_update=None, remove_orphaned=None, show_scan_report=None, table_mode=None, output_filename=None):
         self.db.check()
