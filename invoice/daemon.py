@@ -21,6 +21,7 @@ __copyright__ = 'Copyright (c) 2013 Simone Campagna'
 __license__ = 'Apache License Version 2.0'
 __version__ = '1.0'
 
+import collections
 import os
 import fcntl
 import time
@@ -40,6 +41,7 @@ from .lock_file import LockFile
 class DaemonError(Exception):
   pass
 
+LockInfo = collections.namedtuple('LockInfo', ('locked', 'host', 'pid'))
 class Daemon(object):
   INTERACTIVE_ACTIONS = ['start', 'restart', 'restore']
   ACTIONS = ['start', 'stop', 'abort', 'status', 'restart', 'restore', 'is_running', 'is_locked', 'lock_info', 'lock_wait']
@@ -203,7 +205,7 @@ class Daemon(object):
   def lock_info(self):
     locked = self.lock_file.is_locked()
     l_hostname, l_pid = self._read_lock_data()
-    return locked, l_hostname, l_pid
+    return LockInfo(locked, l_hostname, l_pid)
 
   def _release_lock(self):
     #l_hostname, l_pid = self._read_lock_data()
