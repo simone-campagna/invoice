@@ -845,7 +845,7 @@ class InvoiceProgram(object):
         return user_validators
     
     def impl_watch(self, *, action=None, watch_notify_level=None, watch_delay=None): # pragma: no cover
-        if not _HAS_OBSERVER:
+        if not _HAS_OBSERVE:
             raise NotImplementedError("funzione non disponibile; probabilmente devi installare watchdog ('sudo pip3 install watchdog')")
         if not _HAS_POPUP:
             raise NotImplementedError("funzione non disponibile; probabilmente devi installare python3-pyqt4 ('sudo apt-get install python3-pyqt4')")
