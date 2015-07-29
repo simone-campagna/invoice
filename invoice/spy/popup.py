@@ -24,9 +24,7 @@ __all__ = [
     'popup_error',
 ]
 
-# pragma: no cover
-
-try:
+try: # pragma: no cover
     from PyQt4 import QtGui
     from PyQt4.QtCore import Qt
     HAS_PYQT4 = True
@@ -36,10 +34,10 @@ import sys
 
 _APP = None
 
-def has_popup():
+def has_popup(): # pragma: no cover
     return HAS_PYQT4
 
-if HAS_PYQT4:
+if HAS_PYQT4: # pragma: no cover
     def popup(kind, title, text, detailed_text=None):
         if kind == 'info':
             qtfunction = QtGui.QMessageBox.information

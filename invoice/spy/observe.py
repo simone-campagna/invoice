@@ -22,9 +22,7 @@ __all__ = [
     'DocObserver',
 ]
 
-# pragma: no cover
-
-try:
+try: # pragma: no cover
     from watchdog.observers import Observer
     from watchdog.events import PatternMatchingEventHandler
     HAS_WATCHDOG = True
@@ -36,10 +34,10 @@ import time
 from .. import conf
 from ..daemon import Daemon
 
-def has_observe():
+def has_observe(): # pragma: no cover
     return HAS_WATCHDOG
 
-if HAS_WATCHDOG:
+if HAS_WATCHDOG: # pragma: no cover
     class InvoiceDocEventHandler(PatternMatchingEventHandler):
         def __init__(self, event_queue, logger=None, **options):
             self.logger = logger

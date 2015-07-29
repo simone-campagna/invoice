@@ -33,7 +33,7 @@ import io
 
 __author__ = "Simone Campagna"
 
-class LockFile(io.FileIO):
+class LockFile(io.FileIO): # pragma: no cover
   def __init__(self, name, mode='w'):
     super().__init__(name, mode)
 

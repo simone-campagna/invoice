@@ -42,7 +42,8 @@ class DaemonError(Exception):
   pass
 
 LockInfo = collections.namedtuple('LockInfo', ('locked', 'host', 'pid'))
-class Daemon(object):
+
+class Daemon(object): # pragma: no cover
   INTERACTIVE_ACTIONS = ['start', 'restart', 'restore']
   ACTIONS = ['start', 'stop', 'abort', 'status', 'restart', 'restore', 'is_running', 'is_locked', 'lock_info', 'lock_wait']
   ACTION_MAP = {}
