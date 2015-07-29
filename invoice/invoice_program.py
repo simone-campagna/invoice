@@ -49,8 +49,8 @@ from .invoice_collection_reader import InvoiceCollectionReader
 from .invoice_reader import InvoiceReader
 from .invoice_db import InvoiceDb
 from .invoice import Invoice
-from .observe import has_observe, observe, DocObserver
-from .popup import has_popup, popup
+from .spy.observe import has_observe, observe, DocObserver
+from .spy.popup import has_popup, popup
 from .validation_result import ValidationResult
 from .week import WeekManager
 from .database.db_types import Path

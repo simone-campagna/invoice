@@ -33,8 +33,8 @@ except ImportError:
 
 import time
 
-from . import conf
-from .daemon import Daemon
+from .. import conf
+from ..daemon import Daemon
 
 def has_observe():
     return HAS_WATCHDOG
