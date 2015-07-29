@@ -26,7 +26,7 @@ from watchdog.events import PatternMatchingEventHandler
 
 import time
 
-from .conf import WATCH_LOCK_FILE, WATCH_LOG_FILE
+from . import conf
 from .daemon import Daemon
 
 class InvoiceDocEventHandler(PatternMatchingEventHandler):
@@ -43,7 +43,14 @@ class InvoiceDocEventHandler(PatternMatchingEventHandler):
             self.logger.warning("got event {}".format(event))
         self.event_queue.append(event)
 
-def observe(dirdata, function, logger=None, watch_delay=1, watch_notify_success=True):
+def observe(dirdata, function, logger=None, watch_delay=1, watch_notify_level=None):
+    if watch_notify_level is None:
+        watch_notify_level = conf.DEFAULT_WATCH_NOTIFY_LEVEL
+    watch_notify_level_index = conf.WATCH_NOTIFY_LEVEL_INDEX[watch_notify_level]
+    if watch_notify_level_index == conf.WATCH_NOTIFY_LEVEL_INDEX[conf.WATCH_NOTIFY_LEVEL_INFO]:
+        initial_watch_notify_level = conf.WATCH_NOTIFY_LEVEL_WARNING
+    else:
+        initial_watch_notify_level = watch_notify_level
     observer = Observer()
     event_queue = []
     for dirname, filepatterns in dirdata.items():
@@ -52,12 +59,12 @@ def observe(dirdata, function, logger=None, watch_delay=1, watch_notify_success=
             event_handler = InvoiceDocEventHandler(logger=logger, event_queue=event_queue, patterns=filepatterns)
             observer.schedule(event_handler, dirname,
                               recursive=True)
-    function(event_queue=event_queue, watch_notify_success=False)
+    function(event_queue=event_queue, watch_notify_level=initial_watch_notify_level)
     observer.start()
     try:
         while True:
             if event_queue:
-                function(event_queue=event_queue, watch_notify_success=watch_notify_success)
+                function(event_queue=event_queue, watch_notify_level=watch_notify_level)
                 del event_queue[:]
             time.sleep(watch_delay)
     except KeyboardInterrupt:
@@ -67,15 +74,15 @@ def observe(dirdata, function, logger=None, watch_delay=1, watch_notify_success=
 
 
 class DocObserver(Daemon):
-    def __init__(self, dirdata, function, logger=None, watch_delay=1, watch_notify_success=True):
+    def __init__(self, dirdata, function, logger=None, watch_delay=1, watch_notify_level=None):
         self.dirdata = dirdata
         self.function = function
         self.logger = logger
         self.watch_delay = watch_delay
-        self.watch_notify_success = watch_notify_success
-        super().__init__(lock_file=WATCH_LOCK_FILE,
-                         stdout=WATCH_LOG_FILE,
-                         stderr=WATCH_LOG_FILE,
+        self.watch_notify_level = watch_notify_level
+        super().__init__(lock_file=conf.WATCH_LOCK_FILE,
+                         stdout=conf.WATCH_LOG_FILE,
+                         stderr=conf.WATCH_LOG_FILE,
                          name='watch')
 
     def run(self):
@@ -83,4 +90,4 @@ class DocObserver(Daemon):
                 function=self.function,
                 logger=self.logger,
                 watch_delay=self.watch_delay,
-                watch_notify_success=self.watch_notify_success)
+                watch_notify_level=self.watch_notify_level)

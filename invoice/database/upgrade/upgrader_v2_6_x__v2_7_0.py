@@ -62,7 +62,7 @@ class Upgrader_v2_6_x__v2_7_0(MajorMinorUpgrader):
             ('show_scan_report', Bool()),
             ('table_mode', Str()),
             ('max_interruption_days', Int()),
-            ('watch_notify_success', Bool()),
+            ('watch_notify_level', Str()),
             ('watch_delay', Float()),
         ),
     )
@@ -86,7 +86,7 @@ class Upgrader_v2_6_x__v2_7_0(MajorMinorUpgrader):
     def impl_upgrade(self, db, version_from, version_to, connection=None):
         def old_to_new(old_data):
             return {
-                'watch_notify_success': conf.DEFAULT_WATCH_NOTIFY_SUCCESS,
+                'watch_notify_level': conf.DEFAULT_WATCH_NOTIFY_LEVEL,
                 'watch_delay': conf.DEFAULT_WATCH_DELAY,
             }
         return self.do_upgrade(

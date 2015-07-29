@@ -120,7 +120,7 @@ class InvoiceProgram(object):
                               show_scan_report=None,
                               table_mode=None,
                               max_interruption_days=None,
-                              watch_notify_success=None,
+                              watch_notify_level=None,
                               watch_delay=None,
                               reset=False):
         self.impl_init(
@@ -136,7 +136,7 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
             table_mode=table_mode,
             max_interruption_days=max_interruption_days,
-            watch_notify_success=watch_notify_success,
+            watch_notify_level=watch_notify_level,
             watch_delay=watch_delay,
             reset=reset,
         )
@@ -153,7 +153,7 @@ class InvoiceProgram(object):
                                 show_scan_report=None,
                                 table_mode=None,
                                 max_interruption_days=None,
-                                watch_notify_success=None,
+                                watch_notify_level=None,
                                 watch_delay=None,
                                 reset=False,
                                 import_filename=None,
@@ -172,7 +172,7 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
             table_mode=table_mode,
             max_interruption_days=max_interruption_days,
-            watch_notify_success=watch_notify_success,
+            watch_notify_level=watch_notify_level,
             watch_delay=watch_delay,
             reset=reset,
             import_filename=import_filename,
@@ -204,8 +204,8 @@ class InvoiceProgram(object):
         )
         return 0
 
-    def program_watch(self, *, action=None, watch_notify_success=None, watch_delay=None):
-        self.impl_watch(action=action, watch_notify_success=watch_notify_success, watch_delay=watch_delay)
+    def program_watch(self, *, action=None, watch_notify_level=None, watch_delay=None):
+        self.impl_watch(action=action, watch_notify_level=watch_notify_level, watch_delay=watch_delay)
         return 0
 
     def program_scan(self, *, warning_mode, error_mode,
@@ -317,7 +317,7 @@ class InvoiceProgram(object):
                            show_scan_report=None,
                            table_mode=None,
                            max_interruption_days=None,
-                           watch_notify_success=None,
+                           watch_notify_level=None,
                            watch_delay=None,
                            reset=False):
         if list_field_names is None:
@@ -343,7 +343,7 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
             table_mode=table_mode,
             max_interruption_days=max_interruption_days,
-            watch_notify_success=watch_notify_success,
+            watch_notify_level=watch_notify_level,
             watch_delay=watch_delay,
         )
         configuration = self.db.store_configuration(configuration)
@@ -378,7 +378,7 @@ class InvoiceProgram(object):
                              show_scan_report=None,
                              table_mode=None,
                              max_interruption_days=None,
-                             watch_notify_success=None,
+                             watch_notify_level=None,
                              watch_delay=None,
                              reset=False,
                              import_filename=None,
@@ -407,7 +407,7 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
             table_mode=table_mode,
             max_interruption_days=max_interruption_days,
-            watch_notify_success=watch_notify_success,
+            watch_notify_level=watch_notify_level,
             watch_delay=watch_delay,
         )
         configuration = self.db.store_configuration(configuration)
@@ -836,9 +836,9 @@ class InvoiceProgram(object):
                     validator.message)))
         return user_validators
     
-    def impl_watch(self, *, action=None, watch_notify_success=None, watch_delay=None):
+    def impl_watch(self, *, action=None, watch_notify_level=None, watch_delay=None):
         self.db.check()
-        watch_notify_success = self.db.get_config_option('watch_notify_success', watch_notify_success)
+        watch_notify_level = self.db.get_config_option('watch_notify_level', watch_notify_level)
         watch_delay = self.db.get_config_option('watch_delay', watch_delay)
         dirdata = {}
         for pattern in self.db.load_patterns():
@@ -846,36 +846,39 @@ class InvoiceProgram(object):
             for dirname in glob.glob(p_dirname):
                 dirdata.setdefault(dirname, []).append(p_filename)
 
-        function = lambda event_queue, watch_notify_success=True: self.watch_function(event_queue=event_queue, watch_notify_success=watch_notify_success)
+        function = lambda event_queue, watch_notify_level=True: self.watch_function(event_queue=event_queue, watch_notify_level=watch_notify_level)
         doc_observer = DocObserver(dirdata=dirdata,
                                    function=function,
                                    logger=self.logger,
                                    watch_delay=watch_delay,
-                                   watch_notify_success=watch_notify_success)
+                                   watch_notify_level=watch_notify_level)
         if action is None:
             doc_observer.run()
         else:
             result = doc_observer.apply_action(action)
             self.printer("watch {} -> {}".format(action, result))
         
-    def watch_function(self, event_queue, watch_notify_success=True):
+    def watch_function(self, event_queue, watch_notify_level=None):
         result, updated_invoice_collection = self.impl_scan()
         self.logger.info("result: {}".format(result))
         lines = []
         detailed_lines = []
         popup_type = 'info'
+        if watch_notify_level is None:
+            watch_notify_level = conf.DEFAULT_WATCH_NOTIFY_LEVEL
+        watch_notify_level_index = conf.WATCH_NOTIFY_LEVEL_INDEX[watch_notify_level]
         if result.num_errors() + result.num_warnings() == 0:
-            if watch_notify_success:
+            if watch_notify_level_index <= conf.WATCH_NOTIFY_LEVEL_INDEX[conf.WATCH_NOTIFY_LEVEL_INFO]:
                 lines.append("Success!")
         else:
-            if result.num_warnings() > 0:
+            if result.num_warnings() > 0 and watch_notify_level_index <= conf.WATCH_NOTIFY_LEVEL_INDEX[conf.WATCH_NOTIFY_LEVEL_WARNING]:
                 popup_type = 'warning'
                 lines.append("Found #{} warnings".format(result.num_warnings()))
                 #lines.append("Warning:")
                 for doc_filename, entries in result.warnings().items():
                     for entry in entries:
                         lines.append("+ {}".format(entry.message))
-            if result.num_errors() > 0:
+            if result.num_errors() > 0 and watch_notify_level_index <= conf.WATCH_NOTIFY_LEVEL_INDEX[conf.WATCH_NOTIFY_LEVEL_ERROR]:
                 lines.append("Found #{} errors".format(result.num_errors()))
                 popup_type = 'error'
                 #lines.append("Error:")
