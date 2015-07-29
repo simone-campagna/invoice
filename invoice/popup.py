@@ -23,6 +23,7 @@ __all__ = [
     'popup_error',
 ]
 
+# pragma: no cover
 
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt

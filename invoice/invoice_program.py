@@ -49,8 +49,16 @@ from .invoice_collection_reader import InvoiceCollectionReader
 from .invoice_reader import InvoiceReader
 from .invoice_db import InvoiceDb
 from .invoice import Invoice
-from .observe import observe, DocObserver
-from .popup import popup
+try:
+    from .observe import observe, DocObserver
+    _HAS_OBSERVE = True
+except ImportError:
+    _HAS_OBSERVE = False
+try:
+    from .popup import popup
+    _HAS_POPUP = True
+except ImportError:
+    _HAS_POPUP = False
 from .validation_result import ValidationResult
 from .week import WeekManager
 from .database.db_types import Path
@@ -204,7 +212,7 @@ class InvoiceProgram(object):
         )
         return 0
 
-    def program_watch(self, *, action=None, watch_notify_level=None, watch_delay=None):
+    def program_watch(self, *, action=None, watch_notify_level=None, watch_delay=None): # pragma: no cover
         self.impl_watch(action=action, watch_notify_level=watch_notify_level, watch_delay=watch_delay)
         return 0
 
@@ -836,7 +844,11 @@ class InvoiceProgram(object):
                     validator.message)))
         return user_validators
     
-    def impl_watch(self, *, action=None, watch_notify_level=None, watch_delay=None):
+    def impl_watch(self, *, action=None, watch_notify_level=None, watch_delay=None): # pragma: no cover
+        if not _HAS_OBSERVER:
+            raise NotImplementedError("funzione non disponibile; probabilmente devi installare watchdog ('sudo pip3 install watchdog')")
+        if not _HAS_POPUP:
+            raise NotImplementedError("funzione non disponibile; probabilmente devi installare python3-pyqt4 ('sudo apt-get install python3-pyqt4')")
         self.db.check()
         watch_notify_level = self.db.get_config_option('watch_notify_level', watch_notify_level)
         watch_delay = self.db.get_config_option('watch_delay', watch_delay)
@@ -858,7 +870,7 @@ class InvoiceProgram(object):
             result = doc_observer.apply_action(action)
             self.printer("watch {} -> {}".format(action, result))
         
-    def watch_function(self, event_queue, watch_notify_level=None):
+    def watch_function(self, event_queue, watch_notify_level=None): # pragma: no cover
         result, updated_invoice_collection = self.impl_scan()
         self.logger.info("result: {}".format(result))
         lines = []

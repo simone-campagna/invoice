@@ -21,6 +21,8 @@ __all__ = [
     'DocObserver',
 ]
 
+# pragma: no cover
+
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 

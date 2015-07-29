@@ -70,7 +70,7 @@ class Upgrader_v2_6_x__v2_7_0(MajorMinorUpgrader):
     def impl_downgrade(self, db, version_from, version_to, connection=None):
         def new_to_old(new_data):
             return {
-                'watch_notify_success': conf.DEFAULT_WATCH_NOTIFY_SUCCESS,
+                'watch_notify_level': conf.DEFAULT_WATCH_NOTIFY_LEVEL,
                 'watch_delay': conf.DEFAULT_WATCH_DELAY,
             }
         return self.do_downgrade(
