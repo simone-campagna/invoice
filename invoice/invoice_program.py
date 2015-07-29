@@ -862,6 +862,7 @@ class InvoiceProgram(object):
         result, updated_invoice_collection = self.impl_scan()
         self.logger.info("result: {}".format(result))
         lines = []
+        detailed_lines = []
         popup_type = 'info'
         if result.num_errors() + result.num_warnings() == 0:
             if watch_notify_success:
@@ -869,19 +870,25 @@ class InvoiceProgram(object):
         else:
             if result.num_warnings() > 0:
                 popup_type = 'warning'
+                lines.append("Found #{} warnings".format(result.num_warnings()))
+                #lines.append("Warning:")
                 for doc_filename, entries in result.warnings().items():
-                    lines.append("Warning:")
                     for entry in entries:
                         lines.append("+ {}".format(entry.message))
             if result.num_errors() > 0:
+                lines.append("Found #{} errors".format(result.num_errors()))
                 popup_type = 'error'
+                #lines.append("Error:")
                 for doc_filename, entries in result.errors().items():
-                    lines.append("Error:")
                     for entry in entries:
                         lines.append("+ {}".format(entry.message))
-        if lines:
-            message = '\n'.join(lines)
-            popup(kind=popup_type, title="Validation result", text=message, x=300, y=400)
+        if lines or detailed_lines:
+            text = '\n'.join(lines)
+            if detailed_lines:
+                detailed_text = '\n'.join(detailed_lines)
+            else:
+                detailed_text = None
+            popup(kind=popup_type, title="Invoice validation result", text=text, detailed_text=detailed_text)
 
     def impl_scan(self, warning_mode=None, error_mode=None,
                         partial_update=None, remove_orphaned=None, show_scan_report=None, table_mode=None, output_filename=None):

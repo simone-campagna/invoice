@@ -28,7 +28,7 @@ from PyQt4 import QtGui
 import sys
 
 
-def popup(kind, title, text, x=None, y=None):
+def popup(kind, title, text, detailed_text=None):
     if kind == 'info':
         qtfunction = QtGui.QMessageBox.information
     elif kind == 'warning':
@@ -36,13 +36,17 @@ def popup(kind, title, text, x=None, y=None):
     elif kind == 'error':
         qtfunction = QtGui.QMessageBox.critical
     app = QtGui.QApplication(sys.argv)
-    qtfunction(None, title, text)
+    mb = QtGui.QMessageBox()
+    mb.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+    qtfunction(mb, title, text, detailed_text)
+    #if detailed_text:
+    #    mb.setDetailedText(detailed_text)
 
-def popup_info(title, text):
-    return popup('info', title, text)
+def popup_info(title, text, detailed_text=None):
+    return popup('info', title, text, detailed_text=detailed_text)
 
-def popup_warning(title, text):
-    return popup('warning', title, text)
+def popup_warning(title, text, detailed_text=None):
+    return popup('warning', title, text, detailed_text=detailed_text)
 
-def popup_error(title, text):
-    return popup('error', title, text)
+def popup_error(title, text, detailed_text=None):
+    return popup('error', title, text, detailed_text=detailed_text)
