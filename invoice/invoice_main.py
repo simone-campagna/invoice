@@ -28,7 +28,7 @@ import sys
 import traceback
 
 from .database.filecopy import tempcopy, nocopy
-from .observe import DocObserver
+from .daemon import Daemon
 from .error import InvoiceSyntaxError, InvoiceVersionError, InvoiceValidationError
 from . import conf
 from .log import get_default_logger, set_verbose_level
@@ -515,7 +515,7 @@ alla verbosità influenzano il contenuto di questo file.
     watch_parser.add_argument("action",
         nargs='?',
         default=None,
-        choices=DocObserver.ACTIONS,
+        choices=Daemon.ACTIONS,
         help="azione")
 
     for parser in config_parser, init_parser, watch_parser:
