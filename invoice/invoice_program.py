@@ -867,24 +867,35 @@ class InvoiceProgram(object):
         if watch_notify_level is None:
             watch_notify_level = conf.DEFAULT_WATCH_NOTIFY_LEVEL
         watch_notify_level_index = conf.WATCH_NOTIFY_LEVEL_INDEX[watch_notify_level]
+        max_warnings = 3
+        max_errors = 3
+        def welines(max, items):
+            count = 0
+            ls = []
+            for doc_filename, entries in items:
+                for entry in entries:
+                    if count < max:
+                        ls.append("+ {}".format(entry.message))
+                    count += 1
+            return ls
+            
         if result.num_errors() + result.num_warnings() == 0:
             if watch_notify_level_index <= conf.WATCH_NOTIFY_LEVEL_INDEX[conf.WATCH_NOTIFY_LEVEL_INFO]:
                 lines.append("Success!")
         else:
+            wes = []
             if result.num_warnings() > 0 and watch_notify_level_index <= conf.WATCH_NOTIFY_LEVEL_INDEX[conf.WATCH_NOTIFY_LEVEL_WARNING]:
                 popup_type = 'warning'
-                lines.append("Found #{} warnings".format(result.num_warnings()))
-                #lines.append("Warning:")
-                for doc_filename, entries in result.warnings().items():
-                    for entry in entries:
-                        lines.append("+ {}".format(entry.message))
+                wes.append("#{} warnings".format(result.num_warnings()))
+                detailed_lines.append("=== First {} warnings:".format(max_warnings))
+                detailed_lines.extend(welines(max_warnings, result.warnings().items()))
             if result.num_errors() > 0 and watch_notify_level_index <= conf.WATCH_NOTIFY_LEVEL_INDEX[conf.WATCH_NOTIFY_LEVEL_ERROR]:
-                lines.append("Found #{} errors".format(result.num_errors()))
+                wes.append("#{} errors".format(result.num_errors()))
+                detailed_lines.append("=== First {} errors:".format(max_errors))
+                detailed_lines.extend(welines(max_errors, result.errors().items()))
                 popup_type = 'error'
-                #lines.append("Error:")
-                for doc_filename, entries in result.errors().items():
-                    for entry in entries:
-                        lines.append("+ {}".format(entry.message))
+            if wes:
+                lines.append("Found {}".format(', '.join(wes)))
         if lines or detailed_lines:
             text = '\n'.join(lines)
             if detailed_lines:

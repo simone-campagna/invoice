@@ -25,22 +25,32 @@ __all__ = [
 
 
 from PyQt4 import QtGui
+from PyQt4.QtCore import Qt
 import sys
 
+_APP = None
 
 def popup(kind, title, text, detailed_text=None):
     if kind == 'info':
         qtfunction = QtGui.QMessageBox.information
+        icon = QtGui.QMessageBox.Information
     elif kind == 'warning':
         qtfunction = QtGui.QMessageBox.warning
+        icon = QtGui.QMessageBox.Warning
     elif kind == 'error':
         qtfunction = QtGui.QMessageBox.critical
-    app = QtGui.QApplication(sys.argv)
-    mb = QtGui.QMessageBox()
-    mb.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-    qtfunction(mb, title, text, detailed_text)
-    #if detailed_text:
-    #    mb.setDetailedText(detailed_text)
+        icon = QtGui.QMessageBox.Critical
+    global _APP
+    if _APP is None:
+        _APP = QtGui.QApplication(sys.argv)
+  
+    mb = QtGui.QMessageBox(icon, title, text)
+    mb.setTextFormat(Qt.LogText)
+    mb.setSizeGripEnabled(True)
+    size_policy = QtGui.QSizePolicy.Expanding
+    mb.setSizePolicy(size_policy, size_policy)
+    mb.setInformativeText(detailed_text)
+    mb.exec_()
 
 def popup_info(title, text, detailed_text=None):
     return popup('info', title, text, detailed_text=detailed_text)
