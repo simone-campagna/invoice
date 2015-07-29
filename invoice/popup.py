@@ -17,6 +17,7 @@
 
 __author__ = "Simone Campagna"
 __all__ = [
+    'has_popup'
     'popup',
     'popup_info',
     'popup_warning',
@@ -25,39 +26,53 @@ __all__ = [
 
 # pragma: no cover
 
-from PyQt4 import QtGui
-from PyQt4.QtCore import Qt
+try:
+    from PyQt4 import QtGui
+    from PyQt4.QtCore import Qt
+    HAS_PYQT4 = True
+except ImportError:
+    HAS_PYQT4 = False
 import sys
 
 _APP = None
 
-def popup(kind, title, text, detailed_text=None):
-    if kind == 'info':
-        qtfunction = QtGui.QMessageBox.information
-        icon = QtGui.QMessageBox.Information
-    elif kind == 'warning':
-        qtfunction = QtGui.QMessageBox.warning
-        icon = QtGui.QMessageBox.Warning
-    elif kind == 'error':
-        qtfunction = QtGui.QMessageBox.critical
-        icon = QtGui.QMessageBox.Critical
-    global _APP
-    if _APP is None:
-        _APP = QtGui.QApplication(sys.argv)
-  
-    mb = QtGui.QMessageBox(icon, title, text)
-    mb.setTextFormat(Qt.LogText)
-    mb.setSizeGripEnabled(True)
-    size_policy = QtGui.QSizePolicy.Expanding
-    mb.setSizePolicy(size_policy, size_policy)
-    mb.setInformativeText(detailed_text)
-    mb.exec_()
+def has_popup():
+    return HAS_PYQT4
 
-def popup_info(title, text, detailed_text=None):
-    return popup('info', title, text, detailed_text=detailed_text)
-
-def popup_warning(title, text, detailed_text=None):
-    return popup('warning', title, text, detailed_text=detailed_text)
-
-def popup_error(title, text, detailed_text=None):
-    return popup('error', title, text, detailed_text=detailed_text)
+if HAS_PYQT4:
+    def popup(kind, title, text, detailed_text=None):
+        if kind == 'info':
+            qtfunction = QtGui.QMessageBox.information
+            icon = QtGui.QMessageBox.Information
+        elif kind == 'warning':
+            qtfunction = QtGui.QMessageBox.warning
+            icon = QtGui.QMessageBox.Warning
+        elif kind == 'error':
+            qtfunction = QtGui.QMessageBox.critical
+            icon = QtGui.QMessageBox.Critical
+        global _APP
+        if _APP is None:
+            _APP = QtGui.QApplication(sys.argv)
+      
+        mb = QtGui.QMessageBox(icon, title, text)
+        mb.setTextFormat(Qt.LogText)
+        mb.setSizeGripEnabled(True)
+        size_policy = QtGui.QSizePolicy.Expanding
+        mb.setSizePolicy(size_policy, size_policy)
+        mb.setInformativeText(detailed_text)
+        mb.setWindowModality(Qt.WindowModal)
+        mb.exec_()
+    
+    def popup_info(title, text, detailed_text=None):
+        return popup('info', title, text, detailed_text=detailed_text)
+    
+    def popup_warning(title, text, detailed_text=None):
+        return popup('warning', title, text, detailed_text=detailed_text)
+    
+    def popup_error(title, text, detailed_text=None):
+        return popup('error', title, text, detailed_text=detailed_text)
+else:
+    popup = None
+    popup_info = None
+    popup_warning = None
+    popup_error = None

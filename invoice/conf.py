@@ -67,14 +67,14 @@ __all__ = [
     'get_db_file',
     'get_scanner_config_file',
     'DEFAULT_EDITOR',
-    'WATCH_LOCK_FILE',
-    'WATCH_LOG_FILE',
-    'WATCH_NOTIFY_LEVEL_INFO',
-    'WATCH_NOTIFY_LEVEL_WARNING',
-    'WATCH_NOTIFY_LEVEL_ERROR',
-    'WATCH_NOTIFY_LEVELS',
-    'DEFAULT_WATCH_NOTIFY_LEVEL',
-    'DEFAULT_WATCH_DELAY',
+    'SPY_LOCK_FILE',
+    'SPY_LOG_FILE',
+    'SPY_NOTIFY_LEVEL_INFO',
+    'SPY_NOTIFY_LEVEL_WARNING',
+    'SPY_NOTIFY_LEVEL_ERROR',
+    'SPY_NOTIFY_LEVELS',
+    'DEFAULT_SPY_NOTIFY_LEVEL',
+    'DEFAULT_SPY_DELAY',
 ]
 
 import collections
@@ -168,8 +168,8 @@ def setup(rc_dir=None, db_file=None):
     global RC_DIR
     global DB_FILE
     global SCANNER_CONFIG_FILE
-    global WATCH_LOCK_FILE
-    global WATCH_LOG_FILE
+    global SPY_LOCK_FILE
+    global SPY_LOG_FILE
     if rc_dir is None:
         rc_dir = os.path.join('~', '.invoice')
     RC_DIR_EXPR = os.environ.get(RC_DIR_VAR, rc_dir)
@@ -187,8 +187,8 @@ def setup(rc_dir=None, db_file=None):
         DB_FILE = os.path.join(RC_DIR, DB_FILE)
 
     SCANNER_CONFIG_FILE = os.path.join(RC_DIR, "scanner.config")
-    WATCH_LOCK_FILE = os.path.join(RC_DIR, "watch.lock")
-    WATCH_LOG_FILE = os.path.join(RC_DIR, "watch.log")
+    SPY_LOCK_FILE = os.path.join(RC_DIR, ".spy.lock")
+    SPY_LOG_FILE = os.path.join(RC_DIR, "spy.log")
 
 def get_rc_dir():
     return RC_DIR
@@ -203,10 +203,10 @@ setup()
 
 DEFAULT_EDITOR = os.environ.get("INVOICE_EDITOR", os.environ.get("EDITOR", "vim"))
 
-WATCH_NOTIFY_LEVEL_INFO = 'info'
-WATCH_NOTIFY_LEVEL_WARNING = 'warning'
-WATCH_NOTIFY_LEVEL_ERROR = 'error'
-WATCH_NOTIFY_LEVELS = (WATCH_NOTIFY_LEVEL_INFO, WATCH_NOTIFY_LEVEL_WARNING, WATCH_NOTIFY_LEVEL_ERROR)
-WATCH_NOTIFY_LEVEL_INDEX = {'info': 0, 'warning': 1, 'error': 2}
-DEFAULT_WATCH_NOTIFY_LEVEL = WATCH_NOTIFY_LEVEL_WARNING
-DEFAULT_WATCH_DELAY = 0.5
+SPY_NOTIFY_LEVEL_INFO = 'info'
+SPY_NOTIFY_LEVEL_WARNING = 'warning'
+SPY_NOTIFY_LEVEL_ERROR = 'error'
+SPY_NOTIFY_LEVELS = (SPY_NOTIFY_LEVEL_INFO, SPY_NOTIFY_LEVEL_WARNING, SPY_NOTIFY_LEVEL_ERROR)
+SPY_NOTIFY_LEVEL_INDEX = {'info': 0, 'warning': 1, 'error': 2}
+DEFAULT_SPY_NOTIFY_LEVEL = SPY_NOTIFY_LEVEL_WARNING
+DEFAULT_SPY_DELAY = 0.5

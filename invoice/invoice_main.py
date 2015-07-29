@@ -142,8 +142,8 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_stats_mode = None
     default_table_mode = None
     default_max_interruption_days = None
-    default_watch_notify_level = None
-    default_watch_delay = None
+    default_spy_notify_level = None
+    default_spy_delay = None
 
     prog = os.path.basename(sys.argv[0])
     common_parser = argparse.ArgumentParser(
@@ -346,7 +346,7 @@ include tutti i file 'docs/*.doc', poi fra questi scarta tutti i file
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
                             'list_field_names', 'stats_group', 'show_scan_report', 'table_mode', 'max_interruption_days',
-                            'watch_notify_level', 'watch_delay'),
+                            'spy_notify_level', 'spy_delay'),
     )
 
     ### version ###
@@ -422,7 +422,7 @@ supportati sono:
                             'list_field_names', 'stats_group', 'show_scan_report',
                             'table_mode',
                             'max_interruption_days',
-                            'watch_notify_level', 'watch_delay',
+                            'spy_notify_level', 'spy_delay',
                             'import_filename', 'export_filename',
                             'edit', 'editor'),
     )
@@ -476,9 +476,9 @@ Ad esempio:
         function_arguments=('validators', 'reset', 'import_filename', 'export_filename', 'editor', 'edit'),
     )
 
-    ### watch_parser ###
-    watch_parser = add_subparser(subparsers,
-        "watch",
+    ### spy_parser ###
+    spy_parser = add_subparser(subparsers,
+        "spy",
         parents=(common_parser, ),
         add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -489,53 +489,53 @@ L'output della scansione viene mostrato con un popup.
 
 La funzionalità può essere eseguita in interattivo:
 
-$ %(prog)s watch
+$ %(prog)s spy
 
 in tal caso, può essere interrotto con un Ctrl-C.
 
 Oppure il programma può essere avviato come demone:
 
-$ %(prog)s watch start
-watch start -> watch is running by simone-5755G:15014
+$ %(prog)s spy start
+spy start -> spy is running by simone-5755G:15014
 
 Per fermare il demone:
 
-$ %(prog)s watch stop
-watch start -> watch is not running
+$ %(prog)s spy stop
+spy start -> spy is not running
 
 È possibile utilizzare altre azioni, come 
 
-$ invoice watch status
-watch status -> watch is not running
+$ invoice spy status
+spy status -> spy is not running
 
-L'output di watch è contenuto nel file {wlog}. Le opzioni relative
+L'output di spy è contenuto nel file {wlog}. Le opzioni relative
 alla verbosità influenzano il contenuto di questo file.
 
-""".format(wlog=conf.WATCH_LOG_FILE))
-    watch_parser.add_argument("action",
+""".format(wlog=conf.SPY_LOG_FILE))
+    spy_parser.add_argument("action",
         nargs='?',
         default=None,
         choices=Daemon.ACTIONS,
         help="azione")
 
-    for parser in config_parser, init_parser, watch_parser:
-        parser.add_argument("--watch-notify-level", "-wl",
-            dest="watch_notify_level",
+    for parser in config_parser, init_parser, spy_parser:
+        parser.add_argument("--spy-notify-level", "-sl",
+            dest="spy_notify_level",
             metavar="on/off",
-            choices=conf.WATCH_NOTIFY_LEVELS,
-            default=default_watch_notify_level,
+            choices=conf.SPY_NOTIFY_LEVELS,
+            default=default_spy_notify_level,
             help="seleziona il livello di notifica")
     
-        parser.add_argument("--watch-delay", "-wd",
-            dest="watch_delay",
+        parser.add_argument("--spy-delay", "-sd",
+            dest="spy_delay",
             metavar="S",
             type=float,
-            default=default_watch_delay,
+            default=default_spy_delay,
             help="intervallo di polling")
 
     parser.set_defaults(
-        function_name="program_watch",
-        function_arguments=('action', 'watch_notify_level', 'watch_delay'),
+        function_name="program_spy",
+        function_arguments=('action', 'spy_notify_level', 'spy_delay'),
     )
 
     ### scan_parser ###

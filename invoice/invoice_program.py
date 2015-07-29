@@ -49,16 +49,8 @@ from .invoice_collection_reader import InvoiceCollectionReader
 from .invoice_reader import InvoiceReader
 from .invoice_db import InvoiceDb
 from .invoice import Invoice
-try:
-    from .observe import observe, DocObserver
-    _HAS_OBSERVE = True
-except ImportError:
-    _HAS_OBSERVE = False
-try:
-    from .popup import popup
-    _HAS_POPUP = True
-except ImportError:
-    _HAS_POPUP = False
+from .observe import has_observe, observe, DocObserver
+from .popup import has_popup, popup
 from .validation_result import ValidationResult
 from .week import WeekManager
 from .database.db_types import Path
@@ -128,8 +120,8 @@ class InvoiceProgram(object):
                               show_scan_report=None,
                               table_mode=None,
                               max_interruption_days=None,
-                              watch_notify_level=None,
-                              watch_delay=None,
+                              spy_notify_level=None,
+                              spy_delay=None,
                               reset=False):
         self.impl_init(
             patterns=patterns,
@@ -144,8 +136,8 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
             table_mode=table_mode,
             max_interruption_days=max_interruption_days,
-            watch_notify_level=watch_notify_level,
-            watch_delay=watch_delay,
+            spy_notify_level=spy_notify_level,
+            spy_delay=spy_delay,
             reset=reset,
         )
         return 0
@@ -161,8 +153,8 @@ class InvoiceProgram(object):
                                 show_scan_report=None,
                                 table_mode=None,
                                 max_interruption_days=None,
-                                watch_notify_level=None,
-                                watch_delay=None,
+                                spy_notify_level=None,
+                                spy_delay=None,
                                 reset=False,
                                 import_filename=None,
                                 export_filename=None,
@@ -180,8 +172,8 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
             table_mode=table_mode,
             max_interruption_days=max_interruption_days,
-            watch_notify_level=watch_notify_level,
-            watch_delay=watch_delay,
+            spy_notify_level=spy_notify_level,
+            spy_delay=spy_delay,
             reset=reset,
             import_filename=import_filename,
             export_filename=export_filename,
@@ -212,8 +204,8 @@ class InvoiceProgram(object):
         )
         return 0
 
-    def program_watch(self, *, action=None, watch_notify_level=None, watch_delay=None): # pragma: no cover
-        self.impl_watch(action=action, watch_notify_level=watch_notify_level, watch_delay=watch_delay)
+    def program_spy(self, *, action=None, spy_notify_level=None, spy_delay=None): # pragma: no cover
+        self.impl_spy(action=action, spy_notify_level=spy_notify_level, spy_delay=spy_delay)
         return 0
 
     def program_scan(self, *, warning_mode, error_mode,
@@ -325,8 +317,8 @@ class InvoiceProgram(object):
                            show_scan_report=None,
                            table_mode=None,
                            max_interruption_days=None,
-                           watch_notify_level=None,
-                           watch_delay=None,
+                           spy_notify_level=None,
+                           spy_delay=None,
                            reset=False):
         if list_field_names is None:
             lsit_field_names = conf.DEFAULT_LIST_FIELD_NAMES
@@ -351,8 +343,8 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
             table_mode=table_mode,
             max_interruption_days=max_interruption_days,
-            watch_notify_level=watch_notify_level,
-            watch_delay=watch_delay,
+            spy_notify_level=spy_notify_level,
+            spy_delay=spy_delay,
         )
         configuration = self.db.store_configuration(configuration)
         #self.show_configuration(configuration)
@@ -386,8 +378,8 @@ class InvoiceProgram(object):
                              show_scan_report=None,
                              table_mode=None,
                              max_interruption_days=None,
-                             watch_notify_level=None,
-                             watch_delay=None,
+                             spy_notify_level=None,
+                             spy_delay=None,
                              reset=False,
                              import_filename=None,
                              export_filename=None,
@@ -415,8 +407,8 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
             table_mode=table_mode,
             max_interruption_days=max_interruption_days,
-            watch_notify_level=watch_notify_level,
-            watch_delay=watch_delay,
+            spy_notify_level=spy_notify_level,
+            spy_delay=spy_delay,
         )
         configuration = self.db.store_configuration(configuration)
         if edit:
@@ -844,41 +836,41 @@ class InvoiceProgram(object):
                     validator.message)))
         return user_validators
     
-    def impl_watch(self, *, action=None, watch_notify_level=None, watch_delay=None): # pragma: no cover
-        if not _HAS_OBSERVE:
+    def impl_spy(self, *, action=None, spy_notify_level=None, spy_delay=None): # pragma: no cover
+        if not has_observe():
             raise NotImplementedError("funzione non disponibile; probabilmente devi installare watchdog ('sudo pip3 install watchdog')")
-        if not _HAS_POPUP:
+        if not has_popup():
             raise NotImplementedError("funzione non disponibile; probabilmente devi installare python3-pyqt4 ('sudo apt-get install python3-pyqt4')")
         self.db.check()
-        watch_notify_level = self.db.get_config_option('watch_notify_level', watch_notify_level)
-        watch_delay = self.db.get_config_option('watch_delay', watch_delay)
+        spy_notify_level = self.db.get_config_option('spy_notify_level', spy_notify_level)
+        spy_delay = self.db.get_config_option('spy_delay', spy_delay)
         dirdata = {}
         for pattern in self.db.load_patterns():
             p_dirname, p_filename = os.path.split(pattern.pattern)
             for dirname in glob.glob(p_dirname):
                 dirdata.setdefault(dirname, []).append(p_filename)
 
-        function = lambda event_queue, watch_notify_level=True: self.watch_function(event_queue=event_queue, watch_notify_level=watch_notify_level)
+        function = lambda event_queue, spy_notify_level=True: self.spy_function(event_queue=event_queue, spy_notify_level=spy_notify_level)
         doc_observer = DocObserver(dirdata=dirdata,
                                    function=function,
                                    logger=self.logger,
-                                   watch_delay=watch_delay,
-                                   watch_notify_level=watch_notify_level)
+                                   spy_delay=spy_delay,
+                                   spy_notify_level=spy_notify_level)
         if action is None:
             doc_observer.run()
         else:
             result = doc_observer.apply_action(action)
-            self.printer("watch {} -> {}".format(action, result))
+            self.printer("spy {} -> {}".format(action, result))
         
-    def watch_function(self, event_queue, watch_notify_level=None): # pragma: no cover
+    def spy_function(self, event_queue, spy_notify_level=None): # pragma: no cover
         result, updated_invoice_collection = self.impl_scan()
         self.logger.info("result: {}".format(result))
         lines = []
         detailed_lines = []
         popup_type = 'info'
-        if watch_notify_level is None:
-            watch_notify_level = conf.DEFAULT_WATCH_NOTIFY_LEVEL
-        watch_notify_level_index = conf.WATCH_NOTIFY_LEVEL_INDEX[watch_notify_level]
+        if spy_notify_level is None:
+            spy_notify_level = conf.DEFAULT_SPY_NOTIFY_LEVEL
+        spy_notify_level_index = conf.SPY_NOTIFY_LEVEL_INDEX[spy_notify_level]
         max_warnings = 3
         max_errors = 3
         def welines(max, items):
@@ -892,16 +884,16 @@ class InvoiceProgram(object):
             return ls
             
         if result.num_errors() + result.num_warnings() == 0:
-            if watch_notify_level_index <= conf.WATCH_NOTIFY_LEVEL_INDEX[conf.WATCH_NOTIFY_LEVEL_INFO]:
+            if spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_INFO]:
                 lines.append("Success!")
         else:
             wes = []
-            if result.num_warnings() > 0 and watch_notify_level_index <= conf.WATCH_NOTIFY_LEVEL_INDEX[conf.WATCH_NOTIFY_LEVEL_WARNING]:
+            if result.num_warnings() > 0 and spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_WARNING]:
                 popup_type = 'warning'
                 wes.append("#{} warnings".format(result.num_warnings()))
                 detailed_lines.append("=== First {} warnings:".format(max_warnings))
                 detailed_lines.extend(welines(max_warnings, result.warnings().items()))
-            if result.num_errors() > 0 and watch_notify_level_index <= conf.WATCH_NOTIFY_LEVEL_INDEX[conf.WATCH_NOTIFY_LEVEL_ERROR]:
+            if result.num_errors() > 0 and spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_ERROR]:
                 wes.append("#{} errors".format(result.num_errors()))
                 detailed_lines.append("=== First {} errors:".format(max_errors))
                 detailed_lines.extend(welines(max_errors, result.errors().items()))
@@ -914,7 +906,7 @@ class InvoiceProgram(object):
                 detailed_text = '\n'.join(detailed_lines)
             else:
                 detailed_text = None
-            popup(kind=popup_type, title="Invoice validation result", text=text, detailed_text=detailed_text)
+            popup(kind=popup_type, title="Invoice Spy", text=text, detailed_text=detailed_text)
 
     def impl_scan(self, warning_mode=None, error_mode=None,
                         partial_update=None, remove_orphaned=None, show_scan_report=None, table_mode=None, output_filename=None):

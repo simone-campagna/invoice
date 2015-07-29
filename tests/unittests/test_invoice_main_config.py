@@ -48,8 +48,8 @@ configuration:
   + show_scan_report         = False
   + table_mode               = 'text'
   + max_interruption_days    = 365
-  + watch_notify_level       = 'warning'
-  + watch_delay              = 0.5
+  + spy_notify_level         = 'warning'
+  + spy_delay                = 0.5
 """
     CONFIG_SHOW_WERROR_ERAISE = """\
 configuration:
@@ -64,8 +64,8 @@ configuration:
   + show_scan_report         = False
   + table_mode               = 'text'
   + max_interruption_days    = 365
-  + watch_notify_level       = 'warning'
-  + watch_delay              = 0.5
+  + spy_notify_level         = 'warning'
+  + spy_delay                = 0.5
 """
     CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
 configuration:
@@ -80,8 +80,8 @@ configuration:
   + show_scan_report         = False
   + table_mode               = 'text'
   + max_interruption_days    = 365
-  + watch_notify_level       = 'warning'
-  + watch_delay              = 0.5
+  + spy_notify_level         = 'warning'
+  + spy_delay                = 0.5
 """
     CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
 configuration:
@@ -96,8 +96,8 @@ configuration:
   + show_scan_report         = False
   + table_mode               = 'text'
   + max_interruption_days    = 365
-  + watch_notify_level       = 'warning'
-  + watch_delay              = 0.5
+  + spy_notify_level         = 'warning'
+  + spy_delay                = 0.5
 """
     CONFIG_SHOW_MIX = """\
 configuration:
@@ -112,8 +112,8 @@ configuration:
   + show_scan_report         = True
   + table_mode               = 'text'
   + max_interruption_days    = 361
-  + watch_notify_level       = 'info'
-  + watch_delay              = 0.32
+  + spy_notify_level         = 'info'
+  + spy_delay                = 0.32
 """
 
     VERSION_OUTPUT = """\
@@ -262,7 +262,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b', '-I', '361', '-w', 'error:*', 'log:005', '-e', 'raise:009', '-wl', 'info', '-wd','0.32'],
+                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b', '-I', '361', '-w', 'error:*', 'log:005', '-e', 'raise:009', '-sl', 'info', '-sd','0.32'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_MIX)
 

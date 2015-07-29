@@ -46,8 +46,8 @@ class FieldNameOption(OptionType):
 class TableModeOption(OptionType):
     OPTIONS = conf.TABLE_MODES
 
-class WatchNotifyLevelOption(OptionType):
-    OPTIONS = conf.WATCH_NOTIFY_LEVELS
+class SpyNotifyLevelOption(OptionType):
+    OPTIONS = conf.SPY_NOTIFY_LEVELS
 
 class FieldNameOptionTuple(BaseSequence):
     SCALAR_TYPE = FieldNameOption
@@ -64,7 +64,7 @@ class InvoiceDb(Db):
          'header', 'total',
          'stats_group', 'list_field_names',
          'show_scan_report', 'table_mode', 'max_interruption_days',
-         'watch_notify_level', 'watch_delay'))
+         'spy_notify_level', 'spy_delay'))
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
     DEFAULT_CONFIGURATION = Configuration(
         warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
@@ -78,8 +78,8 @@ class InvoiceDb(Db):
         show_scan_report=False,
         table_mode=conf.DEFAULT_TABLE_MODE,
         max_interruption_days=conf.DEFAULT_MAX_INTERRUPTION_DAYS,
-        watch_notify_level=conf.DEFAULT_WATCH_NOTIFY_LEVEL,
-        watch_delay=conf.DEFAULT_WATCH_DELAY,
+        spy_notify_level=conf.DEFAULT_SPY_NOTIFY_LEVEL,
+        spy_delay=conf.DEFAULT_SPY_DELAY,
     )
     
     TABLES = {
@@ -105,8 +105,8 @@ class InvoiceDb(Db):
                 ('show_scan_report', Bool()),
                 ('table_mode', TableModeOption()),
                 ('max_interruption_days', Int()),
-                ('watch_notify_level', WatchNotifyLevelOption()),
-                ('watch_delay', Float()),
+                ('spy_notify_level', SpyNotifyLevelOption()),
+                ('spy_delay', Float()),
             ),
             dict_type=Configuration,
             singleton=True,
