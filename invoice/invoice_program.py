@@ -842,7 +842,6 @@ class InvoiceProgram(object):
         if not has_popup():
             raise NotImplementedError("funzione non disponibile; probabilmente devi installare python3-pyqt4 ('sudo apt-get install python3-pyqt4')")
         self.db.check()
-        spy_notify_level = self.db.get_config_option('spy_notify_level', spy_notify_level)
         spy_delay = self.db.get_config_option('spy_delay', spy_delay)
         dirdata = {}
         for pattern in self.db.load_patterns():
@@ -850,7 +849,7 @@ class InvoiceProgram(object):
             for dirname in glob.glob(p_dirname):
                 dirdata.setdefault(dirname, []).append(p_filename)
 
-        function = lambda event_queue, spy_notify_level=True: self.spy_function(event_queue=event_queue, spy_notify_level=spy_notify_level)
+        function = lambda event_queue, spy_notify_level, initial: self.spy_function(event_queue=event_queue, spy_notify_level=spy_notify_level, initial=initial)
         doc_observer = DocObserver(dirdata=dirdata,
                                    function=function,
                                    logger=self.logger,
@@ -862,15 +861,22 @@ class InvoiceProgram(object):
             result = doc_observer.apply_action(action)
             self.printer("spy {} -> {}".format(action, result))
         
-    def spy_function(self, event_queue, spy_notify_level=None): # pragma: no cover
+    def spy_function(self, event_queue, spy_notify_level=None, initial=False): # pragma: no cover
+        print("spy_function0: initial={}, level={}".format(initial, spy_notify_level))
         result, updated_invoice_collection = self.impl_scan()
         self.logger.info("result: {}".format(result))
         lines = []
         detailed_lines = []
         popup_type = 'info'
-        if spy_notify_level is None:
-            spy_notify_level = conf.DEFAULT_SPY_NOTIFY_LEVEL
+        self.db.reset_config_cache()
+        spy_notify_level = self.db.get_config_option('spy_notify_level', spy_notify_level)
+        print("spy_function2: initial={}, level={}".format(initial, spy_notify_level))
         spy_notify_level_index = conf.SPY_NOTIFY_LEVEL_INDEX[spy_notify_level]
+        if initial and spy_notify_level_index == conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_INFO]:
+            spy_notify_level = conf.SPY_NOTIFY_LEVEL_WARNING
+            spy_notify_level_index = conf.SPY_NOTIFY_LEVEL_INDEX[spy_notify_level]
+        print("spy_function2: initial={}, level={}".format(initial, spy_notify_level))
+
         max_warnings = 3
         max_errors = 3
         def welines(max, items):

@@ -303,9 +303,12 @@ END"""
                 invoice_collection.add(invoice)
         return invoice_collection
                 
-    def get_config_option(self, option, value, connection=None):
+    def reset_config_cache(self):
+        self._configuration = None
+
+    def get_config_option(self, option, value, connection=None, refresh=False):
         if value is None:
-            if self._configuration is None:
+            if self._configuration is None or refresh:
                 self._configuration = self.load_configuration(connection=connection)
             value = getattr(self._configuration, option)
         return value
