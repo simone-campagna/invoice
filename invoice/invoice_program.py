@@ -887,12 +887,18 @@ class InvoiceProgram(object):
         if result.num_errors() + result.num_warnings() == 0:
             if updated_invoice_collection and spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_INFO]:
                 rl = []
+                trd = {
+                    'added': 'aggiunte',
+                    'modified': 'modificate',
+                    'removed': 'rimosse',
+                }
                 for scan_event_type in 'added', 'modified', 'removed':
                     num_invoices = scan_events[scan_event_type]
                     if num_invoices > 0:
-                        rl.append("{}={}".format(scan_event_type, num_invoices))
+                        rl.append("{}: {}".format(trd[scan_event_type], num_invoices))
                 if rl:
-                    lines.append("Successful scan: {}".format(', '.join(rl)))
+                    lines.append("Scansione eseguita con successo!")
+                    lines.append("Fatture {}".format(', '.join(rl)))
         else:
             wes = []
             if result.num_warnings() > 0 and spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_WARNING]:
@@ -994,7 +1000,7 @@ class InvoiceProgram(object):
                     for invoice in db.read('invoices', where=where, connection=connection):
                         discarded_doc_filenames.add(invoice.doc_filename)
                     db.delete('invoices', where=where, connection=connection)
-                    scan_events['removed'] += len(discarded_doc_filenames)
+                scan_events['removed'] += len(discarded_doc_filenames)
                 # force rescan
                 for doc_filename in discarded_doc_filenames:
                     existing_doc_filenames[doc_filename] = False
