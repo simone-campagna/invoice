@@ -81,6 +81,10 @@ class InvoiceDb(Db):
         spy_notify_level=conf.DEFAULT_SPY_NOTIFY_LEVEL,
         spy_delay=conf.DEFAULT_SPY_DELAY,
     )
+    InternalOptions = collections.namedtuple('InternalOptions', ('needs_refresh',))
+    DEFAULT_INTERNAL_OPTIONS = InternalOptions(
+        needs_refresh=False,
+    )
     
     TABLES = {
         'version': DbTable(
@@ -109,6 +113,13 @@ class InvoiceDb(Db):
                 ('spy_delay', Float()),
             ),
             dict_type=Configuration,
+            singleton=True,
+        ),
+        'internal_options': DbTable(
+            fields=(
+                ('needs_refresh', Bool()),
+            ),
+            dict_type=InternalOptions,
             singleton=True,
         ),
         'patterns': DbTable(
@@ -185,6 +196,7 @@ class InvoiceDb(Db):
         with self.connect(connection) as connection:
             super().impl_initialize(connection=connection)
             cursor = connection.cursor()
+            # invoices triggers
             sql = """CREATE TRIGGER insert_on_invoices BEFORE INSERT ON invoices
 BEGIN
 INSERT OR REPLACE INTO scan_date_times (doc_filename, scan_date_time) VALUES (new.doc_filename, {!r});
@@ -200,6 +212,25 @@ BEGIN
 DELETE FROM scan_date_times WHERE doc_filename == old.doc_filename;
 END"""
             self.execute(cursor, sql)
+            # validators triggers
+            sql = """CREATE TRIGGER insert_on_validators BEFORE INSERT ON validators
+BEGIN
+UPDATE internal_options SET needs_refresh = 1 WHERE NOT needs_refresh;
+END"""
+            self.execute(cursor, sql)
+            sql = """CREATE TRIGGER update_on_validators BEFORE UPDATE ON validators
+BEGIN
+UPDATE internal_options SET needs_refresh = 1 WHERE NOT needs_refresh;
+END"""
+            self.execute(cursor, sql)
+            sql = """CREATE TRIGGER delete_on_validators BEFORE DELETE ON validators
+BEGIN
+UPDATE internal_options SET needs_refresh = 1 WHERE NOT needs_refresh;
+END"""
+            self.execute(cursor, sql)
+            # internal_options table
+            self.store_internal_options(self.DEFAULT_INTERNAL_OPTIONS, connection=connection)
+            # version table
             self.write('version', [VERSION], connection=connection)
 
     @classmethod
@@ -247,20 +278,6 @@ END"""
                 self.write('patterns', patterns, connection=connection)
         return patterns
 
-    def store_configuration(self, configuration, connection=None):
-        with self.connect(connection) as connection:
-            default_configuration = self.load_configuration(connection=connection)
-            self.clear('configuration')
-            data = {}
-            for field in self.Configuration._fields:
-                value = getattr(configuration, field)
-                if value is None:
-                    value = getattr(default_configuration, field)
-                data[field] = value
-            configuration = self.Configuration(**data)
-            self.write('configuration', [configuration], connection=connection)
-        return configuration
-
     def load_patterns(self, connection=None):
         with self.connect(connection) as connection:
             patterns = list(self.read('patterns', connection=connection))
@@ -277,6 +294,46 @@ END"""
             else:
                 configuration = configurations[-1]
         return configuration
+
+    def store_configuration(self, configuration, connection=None):
+        with self.connect(connection) as connection:
+            default_configuration = self.load_configuration(connection=connection)
+            self.clear('configuration')
+            data = {}
+            for field in self.Configuration._fields:
+                value = getattr(configuration, field)
+                if value is None:
+                    value = getattr(default_configuration, field)
+                data[field] = value
+            configuration = self.Configuration(**data)
+            self.write('configuration', [configuration], connection=connection)
+        return configuration
+
+    def default_internal_options(self, connection=None):
+        return self.DEFAULT_INTERNAL_OPTIONS
+
+    def load_internal_options(self, connection=None):
+        with self.connect(connection) as connection:
+            internal_options = list(self.read('internal_options', connection=connection))
+            if len(internal_options) == 0:
+                internal_options = self.DEFAULT_INTERNAL_OPTIONS
+            else:
+                internal_options = internal_options[-1]
+        return internal_options
+
+    def store_internal_options(self, internal_options, connection=None):
+        with self.connect(connection) as connection:
+            default_internal_options = self.load_internal_options(connection=connection)
+            self.clear('internal_options')
+            data = {}
+            for field in self.InternalOptions._fields:
+                value = getattr(internal_options, field)
+                if value is None:
+                    value = getattr(default_internal_options, field)
+                data[field] = value
+            internal_options = self.InternalOptions(**data)
+            self.write('internal_options', [internal_options], connection=connection)
+        return internal_options
 
     def store_invoice_collection(self, invoice_collection, connection=None): # pragma: no cover
         with self.connect(connection) as connection:

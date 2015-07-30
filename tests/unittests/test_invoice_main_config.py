@@ -48,7 +48,7 @@ configuration:
   + show_scan_report         = False
   + table_mode               = 'text'
   + max_interruption_days    = 365
-  + spy_notify_level         = 'warning'
+  + spy_notify_level         = 'info'
   + spy_delay                = 0.5
 """
     CONFIG_SHOW_WERROR_ERAISE = """\
@@ -64,7 +64,7 @@ configuration:
   + show_scan_report         = False
   + table_mode               = 'text'
   + max_interruption_days    = 365
-  + spy_notify_level         = 'warning'
+  + spy_notify_level         = 'info'
   + spy_delay                = 0.5
 """
     CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
@@ -80,7 +80,7 @@ configuration:
   + show_scan_report         = False
   + table_mode               = 'text'
   + max_interruption_days    = 365
-  + spy_notify_level         = 'warning'
+  + spy_notify_level         = 'info'
   + spy_delay                = 0.5
 """
     CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
@@ -96,7 +96,7 @@ configuration:
   + show_scan_report         = False
   + table_mode               = 'text'
   + max_interruption_days    = 365
-  + spy_notify_level         = 'warning'
+  + spy_notify_level         = 'info'
   + spy_delay                = 0.5
 """
     CONFIG_SHOW_MIX = """\
@@ -273,6 +273,9 @@ versione del database:  {}
                 args=['-d', db_filename.name, 'scan'],
             )
             self.assertEqual(p.string(), """\
+#fatture aggiunte: 5
+#fatture modificate: 0
+#fatture rimosse: 0
 ultima fattura inserita per ciascun anno:
 -----------------------------------------
 codice_fiscale   città      numero incasso

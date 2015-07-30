@@ -397,19 +397,23 @@ KNTCRK01G01H663X 2014      5
                 printer=p,
             )
 
+            docs_pattern = os.path.join(self.dirname, '*.doc')
             p.reset()
             invoice_program.impl_init(
-                patterns=[os.path.join(self.dirname, '*.doc')],
+                patterns=[docs_pattern],
                 reset=True,
             )
 
             p.reset()
-            validation_result, invoice_collection = invoice_program.impl_scan(
+            validation_result, scan_events, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                 error_mode=(ValidationResult.ERROR_ACTION_RAISE,),
             )
             self.assertEqual(validation_result.num_errors(), 0)
             self.assertEqual(validation_result.num_warnings(), 0)
+            self.assertEqual(scan_events['added'], len(glob.glob(docs_pattern)))
+            self.assertEqual(scan_events['modified'], 0)
+            self.assertEqual(scan_events['removed'], 0)
 
             p.reset()
             invoice_program.impl_validate(
@@ -430,9 +434,16 @@ KNTCRK01G01H663X 2014      5
                 printer=p,
             )
 
-            patterns=[os.path.join(self.dirname, '*.doc'), '!' + os.path.join(self.dirname, '*kent*.doc')]
+            include_docs_pattern = os.path.join(self.dirname, '*.doc')
+            exclude_docs_pattern = os.path.join(self.dirname, '*kent*.doc')
+            patterns=[include_docs_pattern, '!' + exclude_docs_pattern]
             if reverse:
                 patterns.reverse()
+                num_added_files = len(glob.glob(include_docs_pattern))
+            else:
+                num_added_files = len(glob.glob(include_docs_pattern)) - len(glob.glob(exclude_docs_pattern))
+
+               
             p.reset()
             invoice_program.impl_init(
                 patterns=patterns,
@@ -440,12 +451,15 @@ KNTCRK01G01H663X 2014      5
             )
 
             p.reset()
-            validation_result, invoice_collection = invoice_program.impl_scan(
+            validation_result, scan_events, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                 error_mode=(ValidationResult.ERROR_ACTION_RAISE,),
             )
             self.assertEqual(validation_result.num_errors(), 0)
             self.assertEqual(validation_result.num_warnings(), 0)
+            self.assertEqual(scan_events['added'], num_added_files)
+            self.assertEqual(scan_events['modified'], 0)
+            self.assertEqual(scan_events['removed'], 0)
 
             p.reset()
             invoice_program.impl_list(
@@ -874,7 +888,7 @@ KNTCRK01G01H663X 2014      5
                 remove_orphaned=True,
             )
 
-            validation_result, invoice_collection = invoice_program.impl_scan(
+            validation_result, scan_events, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                 error_mode=None,
                 partial_update=None,
@@ -906,7 +920,7 @@ KNTCRK01G01H663X 2014      5
                 remove_orphaned=True,
             )
 
-            validation_result, invoice_collection = invoice_program.impl_scan(
+            validation_result, scan_events, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                 error_mode=None,
                 partial_update=None,
@@ -954,7 +968,7 @@ KNTCRK01G01H663X 2014      5
                 partial_update=True,
             )
 
-            validation_result, invoice_collection = invoice_program.impl_scan(
+            validation_result, scan_events, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                 error_mode=None,
                 partial_update=None,
@@ -967,7 +981,7 @@ KNTCRK01G01H663X 2014      5
                 staged_doc_filenames.append(staged_doc_filename)
                 shutil.copy(doc_filename, staged_doc_filename)
 
-            validation_result, invoice_collection = invoice_program.impl_scan(
+            validation_result, scan_events, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                 error_mode=None,
                 partial_update=None,
@@ -1001,7 +1015,7 @@ KNTCRK01G01H663X 2014      5
                 remove_orphaned=remove_orphaned,
             )
 
-            validation_result, invoice_collection = invoice_program.impl_scan(
+            validation_result, scan_events, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                 error_mode=None,
                 partial_update=None,
@@ -1009,6 +1023,9 @@ KNTCRK01G01H663X 2014      5
             )
             self.assertEqual(validation_result.num_warnings(), 0)
             self.assertEqual(validation_result.num_errors(), 0)
+            self.assertEqual(scan_events['added'], 5)
+            self.assertEqual(scan_events['modified'], 0)
+            self.assertEqual(scan_events['removed'], 0)
 
             p.reset()
             invoice_program.impl_dump(
@@ -1020,11 +1037,13 @@ KNTCRK01G01H663X 2014      5
             invoice_program.impl_report()
             self.assertEqual(p.string(), self.REPORT_OUTPUT)
 
+            num_removed = 0
             for staged_doc_filename in staged_doc_filenames:
                 os.remove(staged_doc_filename)
+                num_removed += 1
             os.rmdir(example_dirname)
 
-            validation_result, invoice_collection = invoice_program.impl_scan(
+            validation_result, scan_events, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                 error_mode=None,
                 partial_update=None,
@@ -1032,6 +1051,12 @@ KNTCRK01G01H663X 2014      5
             )
             self.assertEqual(validation_result.num_warnings(), 0)
             self.assertEqual(validation_result.num_errors(), 0)
+            self.assertEqual(scan_events['added'], 0)
+            self.assertEqual(scan_events['modified'], 0)
+            if remove_orphaned:
+                self.assertEqual(scan_events['removed'], num_removed)
+            else:
+                self.assertEqual(scan_events['removed'], 0)
 
             p.reset()
             invoice_program.impl_dump(

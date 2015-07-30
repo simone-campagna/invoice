@@ -53,13 +53,6 @@ if HAS_WATCHDOG: # pragma: no cover
             self.event_queue.append(event)
     
     def observe(dirdata, function, logger=None, spy_delay=1, spy_notify_level=None):
-#        if spy_notify_level is None:
-#            spy_notify_level = conf.DEFAULT_SPY_NOTIFY_LEVEL
-#        spy_notify_level_index = conf.SPY_NOTIFY_LEVEL_INDEX[spy_notify_level]
-#        if spy_notify_level_index == conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_INFO]:
-#            initial_spy_notify_level = conf.SPY_NOTIFY_LEVEL_WARNING
-#        else:
-#            initial_spy_notify_level = spy_notify_level
         observer = Observer()
         event_queue = []
         for dirname, filepatterns in dirdata.items():
@@ -68,13 +61,14 @@ if HAS_WATCHDOG: # pragma: no cover
                 event_handler = InvoiceDocEventHandler(logger=logger, event_queue=event_queue, patterns=filepatterns)
                 observer.schedule(event_handler, dirname,
                                   recursive=True)
-        function(event_queue=event_queue, spy_notify_level=spy_notify_level, initial=True)
+        function(event_queue=event_queue, spy_notify_level=spy_notify_level)
         observer.start()
         try:
             while True:
                 if event_queue:
-                    function(event_queue=event_queue, spy_notify_level=spy_notify_level, initial=False)
-                    del event_queue[:]
+                    copy_event_queue = event_queue[:]
+                    del event_queue[:len(copy_event_queue)]
+                    function(event_queue=copy_event_queue, spy_notify_level=spy_notify_level)
                 time.sleep(spy_delay)
         except KeyboardInterrupt:
             observer.stop()

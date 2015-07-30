@@ -197,6 +197,21 @@ anno numero città         data       codice_fiscale   nome                incas
                 logger=self.logger,
                 args=['-d', db_filename.name, 'list'],
             )
+            #self.assertEqual(p.string(), self.LIST_SHORT)
+#
+#            p.reset()
+#            invoice_main(
+#                printer=p,
+#                logger=self.logger,
+#                args=['-d', db_filename.name, 'scan', '--force-refresh'],
+#            )
+#
+#            p.reset()
+#            invoice_main(
+#                printer=p,
+#                logger=self.logger,
+#                args=['-d', db_filename.name, 'list'],
+#            )
             self.assertEqual(p.string(), self.LIST_FULL)
 
     def test_invoice_main_validators_import_export(self):

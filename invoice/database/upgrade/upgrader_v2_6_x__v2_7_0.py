@@ -21,6 +21,7 @@ __all__ = [
 ]
 
 import collections
+import sqlite3
 
 from ..db_types import Bool, Str, StrTuple, Int, Float
 from ..db_table import DbTable
@@ -66,6 +67,11 @@ class Upgrader_v2_6_x__v2_7_0(MajorMinorUpgrader):
             ('spy_delay', Float()),
         ),
     )
+    INTERNAL_OPTIONS_TABLE_v2_7_0 = DbTable(
+        fields=(
+            ('needs_refresh', Bool()),
+        ),
+    )
 
     def impl_downgrade(self, db, version_from, version_to, connection=None):
         def new_to_old(new_data):
@@ -82,6 +88,12 @@ class Upgrader_v2_6_x__v2_7_0(MajorMinorUpgrader):
             version_to=version_to,
             connection=connection
         )
+        with db.connect() as connection:
+            cursor = connection.cursor()
+            db.execute(cursor, "DROP TABLE internal_options;")
+            db.execute(cursor, "DROP TRIGGER insert_on_validators;")
+            db.execute(cursor, "DROP TRIGGER update_on_validators;")
+            db.execute(cursor, "DROP TRIGGER delete_on_validators;")
 
     def impl_upgrade(self, db, version_from, version_to, connection=None):
         def old_to_new(old_data):
@@ -89,7 +101,7 @@ class Upgrader_v2_6_x__v2_7_0(MajorMinorUpgrader):
                 'spy_notify_level': conf.DEFAULT_SPY_NOTIFY_LEVEL,
                 'spy_delay': conf.DEFAULT_SPY_DELAY,
             }
-        return self.do_upgrade(
+        self.do_upgrade(
             old_table=self.CONFIGURATION_TABLE_v2_6_x,
             new_table=self.CONFIGURATION_TABLE_v2_7_0,
             old_to_new=old_to_new,
@@ -98,4 +110,27 @@ class Upgrader_v2_6_x__v2_7_0(MajorMinorUpgrader):
             version_to=version_to,
             connection=connection
         )
+        with db.connect() as connection:
+            cursor = connection.cursor()
+            # internal options
+            try:
+                db.create_table('internal_options', self.INTERNAL_OPTIONS_TABLE_v2_7_0.fields, connection=connection)
+            except sqlite3.OperationalError:
+                pass
+            # validators triggers
+            sql = """CREATE TRIGGER insert_on_validators BEFORE INSERT ON validators
+BEGIN
+UPDATE internal_options SET needs_refresh = 1 WHERE NOT needs_refresh;
+END"""
+            db.execute(cursor, sql)
+            sql = """CREATE TRIGGER update_on_validators BEFORE UPDATE ON validators
+BEGIN
+UPDATE internal_options SET needs_refresh = 1 WHERE NOT needs_refresh;
+END"""
+            db.execute(cursor, sql)
+            sql = """CREATE TRIGGER delete_on_validators BEFORE DELETE ON validators
+BEGIN
+UPDATE internal_options SET needs_refresh = 1 WHERE NOT needs_refresh;
+END"""
+            db.execute(cursor, sql)
 

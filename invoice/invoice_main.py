@@ -590,7 +590,7 @@ Questa rimozione di fatture già scansionate può avvenire in due casi:
     )
     scan_parser.set_defaults(
         function_name="program_scan",
-        function_arguments=('warning_mode', 'error_mode',
+        function_arguments=('warning_mode', 'error_mode', 'force_refresh',
                             'remove_orphaned', 'partial_update', 'show_scan_report',
                             'table_mode', 'output_filename'),
     )
@@ -981,6 +981,11 @@ e validati.
             default=default_show_scan_report,
             nargs='?',
             help="abilita/disabilita la stampa dell'ultima fattura per ciascun anno")
+
+    scan_parser.add_argument("--force-refresh",
+            action="store_true",
+            default=False,
+            help="forza un refresh di tutte le fatture")
 
     ### patterns option
     for parser in init_parser, legacy_parser:

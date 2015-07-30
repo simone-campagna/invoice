@@ -208,11 +208,12 @@ class InvoiceProgram(object):
         self.impl_spy(action=action, spy_notify_level=spy_notify_level, spy_delay=spy_delay)
         return 0
 
-    def program_scan(self, *, warning_mode, error_mode,
+    def program_scan(self, *, warning_mode, error_mode, force_refresh=None,
                               partial_update=True, remove_orphaned=True, show_scan_report=True, table_mode=None, output_filename=None):
-        validation_result, invoice_collection = self.impl_scan(
+        validation_result, scan_events, invoice_collection = self.impl_scan(
             warning_mode=warning_mode,
             error_mode=error_mode,
+            force_refresh=force_refresh,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
             show_scan_report=show_scan_report,
@@ -849,7 +850,7 @@ class InvoiceProgram(object):
             for dirname in glob.glob(p_dirname):
                 dirdata.setdefault(dirname, []).append(p_filename)
 
-        function = lambda event_queue, spy_notify_level, initial: self.spy_function(event_queue=event_queue, spy_notify_level=spy_notify_level, initial=initial)
+        function = lambda event_queue, spy_notify_level: self.spy_function(event_queue=event_queue, spy_notify_level=spy_notify_level)
         doc_observer = DocObserver(dirdata=dirdata,
                                    function=function,
                                    logger=self.logger,
@@ -861,21 +862,15 @@ class InvoiceProgram(object):
             result = doc_observer.apply_action(action)
             self.printer("spy {} -> {}".format(action, result))
         
-    def spy_function(self, event_queue, spy_notify_level=None, initial=False): # pragma: no cover
-        print("spy_function0: initial={}, level={}".format(initial, spy_notify_level))
-        result, updated_invoice_collection = self.impl_scan()
+    def spy_function(self, event_queue, spy_notify_level=None): # pragma: no cover
+        result, scan_events, updated_invoice_collection = self.impl_scan()
         self.logger.info("result: {}".format(result))
         lines = []
         detailed_lines = []
         popup_type = 'info'
         self.db.reset_config_cache()
         spy_notify_level = self.db.get_config_option('spy_notify_level', spy_notify_level)
-        print("spy_function2: initial={}, level={}".format(initial, spy_notify_level))
         spy_notify_level_index = conf.SPY_NOTIFY_LEVEL_INDEX[spy_notify_level]
-        if initial and spy_notify_level_index == conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_INFO]:
-            spy_notify_level = conf.SPY_NOTIFY_LEVEL_WARNING
-            spy_notify_level_index = conf.SPY_NOTIFY_LEVEL_INDEX[spy_notify_level]
-        print("spy_function2: initial={}, level={}".format(initial, spy_notify_level))
 
         max_warnings = 3
         max_errors = 3
@@ -890,8 +885,14 @@ class InvoiceProgram(object):
             return ls
             
         if result.num_errors() + result.num_warnings() == 0:
-            if spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_INFO]:
-                lines.append("Success!")
+            if updated_invoice_collection and spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_INFO]:
+                rl = []
+                for scan_event_type in 'added', 'modified', 'removed':
+                    num_invoices = scan_events[scan_event_type]
+                    if num_invoices > 0:
+                        rl.append("{}={}".format(scan_event_type, num_invoices))
+                if rl:
+                    lines.append("Successful scan: {}".format(', '.join(rl)))
         else:
             wes = []
             if result.num_warnings() > 0 and spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_WARNING]:
@@ -914,18 +915,21 @@ class InvoiceProgram(object):
                 detailed_text = None
             popup(kind=popup_type, title="Invoice Spy", text=text, detailed_text=detailed_text)
 
-    def impl_scan(self, warning_mode=None, error_mode=None,
+    def impl_scan(self, warning_mode=None, error_mode=None, force_refresh=None,
                         partial_update=None, remove_orphaned=None, show_scan_report=None, table_mode=None, output_filename=None):
         self.db.check()
         warning_mode = self.db.get_config_option('warning_mode', warning_mode)
         error_mode = self.db.get_config_option('error_mode', error_mode)
         show_scan_report = self.db.get_config_option('show_scan_report', show_scan_report)
+        internal_options = self.db.load_internal_options()
+        force_refresh = force_refresh or internal_options.needs_refresh
         found_doc_filenames = set()
         db = self.db
         file_date_times = FileDateTimes()
         updated_invoice_collection = InvoiceCollection()
         removed_invoices = []
         validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
+        scan_events = {'removed': 0, 'added': 0, 'modified': 0}
         with db.connect() as connection:
             configuration = db.load_configuration(connection)
             user_validators = self.compile_user_validators(connection)
@@ -990,6 +994,7 @@ class InvoiceProgram(object):
                     for invoice in db.read('invoices', where=where, connection=connection):
                         discarded_doc_filenames.add(invoice.doc_filename)
                     db.delete('invoices', where=where, connection=connection)
+                    scan_events['removed'] += len(discarded_doc_filenames)
                 # force rescan
                 for doc_filename in discarded_doc_filenames:
                     existing_doc_filenames[doc_filename] = False
@@ -1011,8 +1016,10 @@ class InvoiceProgram(object):
                     updated_invoice_collection.add(invoice)
                     if existing:
                         old_invoices.append(invoice)
+                        scan_events['modified'] += 1
                     else:
                         new_invoices.append(invoice)
+                        scan_events['added'] += 1
                     scan_date_times[invoice.doc_filename] = db.ScanDateTime(
                         doc_filename=invoice.doc_filename,
                         scan_date_time=file_date_times[invoice.doc_filename])
@@ -1065,12 +1072,17 @@ class InvoiceProgram(object):
                     last_invoice_of_the_year[invoice.year] = invoice
                 if validation_result.num_errors():
                     self.printer("")
+                self.printer("#fatture aggiunte: {}".format(scan_events['added']))
+                self.printer("#fatture modificate: {}".format(scan_events['modified']))
+                self.printer("#fatture rimosse: {}".format(scan_events['removed']))
                 self.printer("ultima fattura inserita per ciascun anno:")
                 self.printer("-----------------------------------------")
                 self.list_invoice_collection(InvoiceCollection(last_invoice_of_the_year.values()), list_field_names=None, header=None, order_field_names=None,
                     table_mode=table_mode, output_filename=output_filename)
 
-        return validation_result, updated_invoice_collection
+        if internal_options.needs_refresh and force_refresh:
+            self.db.store_internal_options(self.db.DEFAULT_INTERNAL_OPTIONS)
+        return validation_result, scan_events, updated_invoice_collection
 
     def delete_failing_invoices(self, validation_result, connection=None):
         db = self.db
