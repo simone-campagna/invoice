@@ -65,9 +65,9 @@ def main():
             'invoice.ee',
             'invoice.spy',
         ],
+        package_data = {'invoice.spy': ['icons/*.jpg']},
         data_files=data_files,
         scripts = scripts,
-        package_data = {},
     )
 
 if __name__ == "__main__":

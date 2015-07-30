@@ -17,19 +17,19 @@
 
 __author__ = "Simone Campagna"
 __all__ = [
-    'has_popup'
-    'popup',
+    'available'
+    'notify',
 ]
 
-from . import popup_pyqt4
-from . import popup_logger
+from . import notify_pyqt4
+from . import notify_logger
 
-if popup_pyqt4.has_popup():
-    popup = popup_pyqt4.popup
-elif popup_logger.has_popup():
-    popup = popup_logger.popup
+if notify_pyqt4.available():
+    notify = notify_pyqt4.notify
+elif notify_logger.available():
+    notify = notify_logger.notify
 else:
-    popup = None
+    notify = None
 
-def has_popup():
-    return popup is not None
+def available():
+    return notify is not None

@@ -17,14 +17,14 @@
 
 __author__ = "Simone Campagna"
 __all__ = [
-    'has_popup'
-    'popup',
+    'available'
+    'notify',
 ]
 
-def has_popup(): # pragma: no cover
+def available(): # pragma: no cover
     return True
 
-def popup(logger, kind, title, text, detailed_text=None): # pragma: no cover
+def notify(logger, kind, title, text, detailed_text=None): # pragma: no cover
     if kind == 'info':
         log_function = logger.info
     elif kind == 'warning':

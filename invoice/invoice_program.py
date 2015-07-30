@@ -49,8 +49,8 @@ from .invoice_collection_reader import InvoiceCollectionReader
 from .invoice_reader import InvoiceReader
 from .invoice_db import InvoiceDb
 from .invoice import Invoice
-from .spy.observe import has_observe, observe, DocObserver
-from .spy.popup import has_popup, popup
+from .spy import observe
+from .spy import notify_osd
 from .spy.spy_function import spy_function
 from .validation_result import ValidationResult
 from .week import WeekManager
@@ -839,10 +839,10 @@ class InvoiceProgram(object):
         return user_validators
     
     def impl_spy(self, *, action=None, spy_notify_level=None, spy_delay=None): # pragma: no cover
-        if not has_observe():
+        if not observe.available():
             raise NotImplementedError("funzione non disponibile; probabilmente devi installare watchdog ('sudo pip3 install watchdog')")
-        if not has_popup():
-            raise NotImplementedError("funzione non disponibile; probabilmente devi installare python3-pyqt4 ('sudo apt-get install python3-pyqt4')")
+        if not notify_osd.available():
+            raise NotImplementedError("funzione non disponibile; probabilmente devi installare python3-notify2 ('sudo apt-get install python3-notify2')")
         self.db.check()
         spy_delay = self.db.get_config_option('spy_delay', spy_delay)
         dirdata = {}
@@ -852,7 +852,7 @@ class InvoiceProgram(object):
                 dirdata.setdefault(dirname, []).append(p_filename)
 
         function = lambda event_queue, spy_notify_level: spy_function(program=self, event_queue=event_queue, spy_notify_level=spy_notify_level)
-        doc_observer = DocObserver(dirdata=dirdata,
+        doc_observer = observe.DocObserver(dirdata=dirdata,
                                    function=function,
                                    logger=self.logger,
                                    spy_delay=spy_delay,
@@ -1000,7 +1000,7 @@ class InvoiceProgram(object):
                 self.logger.error("=" * 72)
                 if max_errors > 0:
                     if max_errors == 1:
-                        self.logger.error("la prima {} fattura contenente errori è:".format(max_errors))
+                        self.logger.error("la prima fattura contenente errori è:")
                     else:
                         self.logger.error("le prime {} fatture contenenti errori sono:".format(max_errors))
                     failing_invoices.sort()

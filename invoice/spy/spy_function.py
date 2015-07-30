@@ -21,26 +21,26 @@ __all__ = [
 ]
 
 from .. import conf
-from . import popup_pyqt4
-from . import popup_logger
+from . import notify_osd
+from . import notify_logger
 
 def spy_function(program, event_queue, spy_notify_level=None): # pragma: no cover
     result, scan_events, updated_invoice_collection = program.impl_scan()
     program.logger.info("result: {}".format(result))
     lines = []
     detailed_lines = []
-    popup_type = 'info'
+    kind = 'info'
     program.db.reset_config_cache()
     spy_notify_level = program.db.get_config_option('spy_notify_level', spy_notify_level)
     spy_notify_level_index = conf.SPY_NOTIFY_LEVEL_INDEX[spy_notify_level]
 
+    notify_l = []
+    for notify in notify_osd, notify_logger:
+        if notify.available():
+            notify_l.append(notify_osd)
+
     max_warnings = 3
     max_errors = 3
-
-    popups = []
-    for popup_module in popup_logger, popup_pyqt4:
-        if popup_module.has_popup():
-            popups.append(popup_module.popup)
 
     def welines(max, items):
         count = 0
@@ -70,7 +70,7 @@ def spy_function(program, event_queue, spy_notify_level=None): # pragma: no cove
     else:
         wes = []
         if result.num_warnings() > 0 and spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_WARNING]:
-            popup_type = 'warning'
+            kind = 'warning'
             wes.append("#{} warning".format(result.num_warnings()))
             detailed_lines.append("=== warning:")
             detailed_lines.extend(welines(max_warnings, result.warnings().items()))
@@ -78,14 +78,14 @@ def spy_function(program, event_queue, spy_notify_level=None): # pragma: no cove
             wes.append("#{} errori".format(result.num_errors()))
             detailed_lines.append("=== errori:")
             detailed_lines.extend(welines(max_errors, result.errors().items()))
-            popup_type = 'error'
+            kind = 'error'
         if wes:
-            lines.append("Trovati {}".format(', '.join(wes)))
+            lines.append("Scansione eseguita con {}".format(', '.join(wes)))
     if lines or detailed_lines:
         text = '\n'.join(lines)
         if detailed_lines:
             detailed_text = '\n'.join(detailed_lines)
         else:
             detailed_text = None
-        for popup in popups:
-            popup(logger=program.logger, kind=popup_type, title="Invoice Spy", text=text, detailed_text=detailed_text)
+        for notify in notify_l:
+            notify.notify(logger=program.logger, kind=kind, title="Invoice Spy", text=text, detailed_text=detailed_text)

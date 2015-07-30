@@ -17,7 +17,7 @@
 
 __author__ = "Simone Campagna"
 __all__ = [
-    'has_observe',
+    'available',
     'observe',
     'DocObserver',
 ]
@@ -34,7 +34,7 @@ import time
 from .. import conf
 from ..daemon import Daemon
 
-def has_observe(): # pragma: no cover
+def available(): # pragma: no cover
     return HAS_WATCHDOG
 
 if HAS_WATCHDOG: # pragma: no cover

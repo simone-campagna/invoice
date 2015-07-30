@@ -17,8 +17,8 @@
 
 __author__ = "Simone Campagna"
 __all__ = [
-    'has_popup'
-    'popup',
+    'available'
+    'notify',
 ]
 
 try: # pragma: no cover
@@ -31,11 +31,11 @@ import sys
 
 _APP = None
 
-def has_popup(): # pragma: no cover
+def available(): # pragma: no cover
     return HAS_PYQT4
 
 if HAS_PYQT4: # pragma: no cover
-    def popup(logger, kind, title, text, detailed_text=None):
+    def notify(logger, kind, title, text, detailed_text=None):
         if kind == 'info':
             qtfunction = QtGui.QMessageBox.information
             icon = QtGui.QMessageBox.Information
@@ -58,4 +58,4 @@ if HAS_PYQT4: # pragma: no cover
         mb.setWindowModality(Qt.WindowModal)
         mb.exec_()
 else:
-    popup = None
+    notify = None
