@@ -25,7 +25,6 @@ import os
 import fcntl
 import time
 import errno
-import atexit
 import signal
 import sys
 import io
