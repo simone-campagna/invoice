@@ -21,15 +21,19 @@ __all__ = [
     'popup',
 ]
 
-from . import popup_pyqt4
-from . import popup_logger
+def has_popup(): # pragma: no cover
+    return True
 
-if popup_pyqt4.has_popup():
-    popup = popup_pyqt4.popup
-elif popup_logger.has_popup():
-    popup = popup_logger.popup
-else:
-    popup = None
-
-def has_popup():
-    return popup is not None
+def popup(logger, kind, title, text, detailed_text=None): # pragma: no cover
+    if kind == 'info':
+        log_function = logger.info
+    elif kind == 'warning':
+        log_function = logger.warning
+    elif kind == 'error':
+        log_function = logger.error
+    log_function("=== {} ===".format(title))
+    for s in text, detailed_text:
+        if s:
+            for l in s.split('\n'):
+                log_function("  # {}".format(l))
+            log_function("  #")

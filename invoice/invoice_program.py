@@ -51,6 +51,7 @@ from .invoice_db import InvoiceDb
 from .invoice import Invoice
 from .spy.observe import has_observe, observe, DocObserver
 from .spy.popup import has_popup, popup
+from .spy.spy_function import spy_function
 from .validation_result import ValidationResult
 from .week import WeekManager
 from .database.db_types import Path
@@ -850,7 +851,7 @@ class InvoiceProgram(object):
             for dirname in glob.glob(p_dirname):
                 dirdata.setdefault(dirname, []).append(p_filename)
 
-        function = lambda event_queue, spy_notify_level: self.spy_function(event_queue=event_queue, spy_notify_level=spy_notify_level)
+        function = lambda event_queue, spy_notify_level: spy_function(program=self, event_queue=event_queue, spy_notify_level=spy_notify_level)
         doc_observer = DocObserver(dirdata=dirdata,
                                    function=function,
                                    logger=self.logger,
@@ -862,65 +863,6 @@ class InvoiceProgram(object):
             result = doc_observer.apply_action(action)
             self.printer("spy {} -> {}".format(action, result))
         
-    def spy_function(self, event_queue, spy_notify_level=None): # pragma: no cover
-        result, scan_events, updated_invoice_collection = self.impl_scan()
-        self.logger.info("result: {}".format(result))
-        lines = []
-        detailed_lines = []
-        popup_type = 'info'
-        self.db.reset_config_cache()
-        spy_notify_level = self.db.get_config_option('spy_notify_level', spy_notify_level)
-        spy_notify_level_index = conf.SPY_NOTIFY_LEVEL_INDEX[spy_notify_level]
-
-        max_warnings = 3
-        max_errors = 3
-        def welines(max, items):
-            count = 0
-            ls = []
-            for doc_filename, entries in items:
-                for entry in entries:
-                    if count < max:
-                        ls.append("+ {}".format(entry.message))
-                    count += 1
-            return ls
-            
-        if result.num_errors() + result.num_warnings() == 0:
-            if updated_invoice_collection and spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_INFO]:
-                rl = []
-                trd = {
-                    'added': 'aggiunte',
-                    'modified': 'modificate',
-                    'removed': 'rimosse',
-                }
-                for scan_event_type in 'added', 'modified', 'removed':
-                    num_invoices = scan_events[scan_event_type]
-                    if num_invoices > 0:
-                        rl.append("{}: {}".format(trd[scan_event_type], num_invoices))
-                if rl:
-                    lines.append("Scansione eseguita con successo!")
-                    lines.append("Fatture {}".format(', '.join(rl)))
-        else:
-            wes = []
-            if result.num_warnings() > 0 and spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_WARNING]:
-                popup_type = 'warning'
-                wes.append("#{} warnings".format(result.num_warnings()))
-                detailed_lines.append("=== First {} warnings:".format(max_warnings))
-                detailed_lines.extend(welines(max_warnings, result.warnings().items()))
-            if result.num_errors() > 0 and spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_ERROR]:
-                wes.append("#{} errors".format(result.num_errors()))
-                detailed_lines.append("=== First {} errors:".format(max_errors))
-                detailed_lines.extend(welines(max_errors, result.errors().items()))
-                popup_type = 'error'
-            if wes:
-                lines.append("Found {}".format(', '.join(wes)))
-        if lines or detailed_lines:
-            text = '\n'.join(lines)
-            if detailed_lines:
-                detailed_text = '\n'.join(detailed_lines)
-            else:
-                detailed_text = None
-            popup(kind=popup_type, title="Invoice Spy", text=text, detailed_text=detailed_text)
-
     def impl_scan(self, warning_mode=None, error_mode=None, force_refresh=None,
                         partial_update=None, remove_orphaned=None, show_scan_report=None, table_mode=None, output_filename=None):
         self.db.check()

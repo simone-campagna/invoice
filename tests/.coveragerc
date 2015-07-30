@@ -1,7 +1,7 @@
 [run]
 source = "invoice", "invoice.database"
 
-omit = "invoice/ee/*.py", "invoicer/spy/*.py", "invoice/daemon.py", "invoice/lock_file.py"
+#omit = "invoice/ee/*.py", "invoicer/spy/*.py", "invoice/daemon.py", "invoice/lock_file.py"
 
 
 [report]
@@ -12,7 +12,7 @@ exclude_lines =
     raise NotImplementedError
     if __name__ == .__main__.:
 
-omit = "invoice/ee/*.py", "invoicer/spy/*.py", "invoice/daemon.py", "invoice/lock_file.py"
+#omit = "invoice/ee/*.py", "invoicer/spy/*.py", "invoice/daemon.py", "invoice/lock_file.py"
 
 [html]
 directory = htmlcov
