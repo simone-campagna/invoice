@@ -29,7 +29,8 @@ try: # pragma: no cover
 except ImportError:
     HAS_NOTIFY2 = False
 
-#from . import notify_pyqt4
+from . import text_formatter
+
 
 _NOTIFICATION = None
 
@@ -44,26 +45,36 @@ _ICONS = {
 }
 
 if HAS_NOTIFY2: # pragma: no cover
-    def notify(logger, kind, title, text, detailed_text=None):
-        global _NOTIFICATION
-        summary = title + ' [{}]'.format(kind.upper())
-        message = text
-        if detailed_text:
-            message += '\n\n' + detailed_text
-        icon = _ICONS[kind]
-        if _NOTIFICATION is None:
-            notify2.init("Invoice spy")
-            _NOTIFICATION = notify2.Notification(summary=summary, message=message, icon=icon)
-        urgency_d = {
-            'info': notify2.URGENCY_LOW,
-            'warning': notify2.URGENCY_NORMAL,
-            'error': notify2.URGENCY_CRITICAL,
-        }
-        _NOTIFICATION.update(summary=summary, message=message, icon=icon)
-        _NOTIFICATION.set_urgency(urgency_d[kind])
-        #if notify_pyqt4.available():
-        #    callback = lambda : notify_pyqt4.notify(logger, kind, title, text, detailed_text)
-        #    _NOTIFICATION.add_action("fai qualcosa", "qualcosa", callback, user_data=None)
-        _NOTIFICATION.show()
+    def notify(logger, validation_result, scan_events, updated_invoice_collection, event_queue, spy_notify_level):
+        notification_required, kind, title, text, detailed_text = text_formatter.formatter(
+            validation_result=validation_result,
+            scan_events=scan_events,
+            updated_invoice_collection=updated_invoice_collection,
+            event_queue=event_queue,
+            mode=text_formatter.MODE_SHORT,
+            spy_notify_level=spy_notify_level,
+        )
+        if notification_required:
+            global _NOTIFICATION
+            summary = title + ' [{}]'.format(kind.upper())
+            message = text
+            if detailed_text:
+                message += '\n\n' + detailed_text
+            icon = _ICONS[kind]
+            if _NOTIFICATION is None:
+                notify2.init("Invoice spy [{}]".format(kind.upper()))
+                _NOTIFICATION = notify2.Notification(summary=summary, message=message, icon=icon)
+            notification = _NOTIFICATION
+            urgency_d = {
+                'info': notify2.URGENCY_LOW,
+                'warning': notify2.URGENCY_NORMAL,
+                'error': notify2.URGENCY_CRITICAL,
+            }
+            notification.update(summary=summary, message=message, icon=icon)
+            notification.set_urgency(urgency_d[kind])
+            #if notify_pyqt4.available():
+            #    callback = lambda : notify_pyqt4.notify(logger, kind, title, text, detailed_text)
+            #    notification.add_action("fai qualcosa", "qualcosa", callback, user_data=None)
+            notification.show()
 else:
     notify = None

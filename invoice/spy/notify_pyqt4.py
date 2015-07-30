@@ -27,7 +27,10 @@ try: # pragma: no cover
     HAS_PYQT4 = True
 except ImportError:
     HAS_PYQT4 = False
+
 import sys
+
+from . import text_formatter
 
 _APP = None
 
@@ -35,27 +38,36 @@ def available(): # pragma: no cover
     return HAS_PYQT4
 
 if HAS_PYQT4: # pragma: no cover
-    def notify(logger, kind, title, text, detailed_text=None):
-        if kind == 'info':
-            qtfunction = QtGui.QMessageBox.information
-            icon = QtGui.QMessageBox.Information
-        elif kind == 'warning':
-            qtfunction = QtGui.QMessageBox.warning
-            icon = QtGui.QMessageBox.Warning
-        elif kind == 'error':
-            qtfunction = QtGui.QMessageBox.critical
-            icon = QtGui.QMessageBox.Critical
-        global _APP
-        if _APP is None:
-            _APP = QtGui.QApplication(sys.argv)
+    def notify(logger, validation_result, scan_events, updated_invoice_collection, event_queue, spy_notify_level):
+        notification_required, kind, title, text, detailed_text = text_formatter.formatter(
+            validation_result=validation_result,
+            scan_events=scan_events,
+            updated_invoice_collection=updated_invoice_collection,
+            event_queue=event_queue,
+            mode=text_formatter.MODE_LONG,
+            spy_notify_level=spy_notify_level,
+        )
+        if notification_required:
+            if kind == 'info':
+                qtfunction = QtGui.QMessageBox.information
+                icon = QtGui.QMessageBox.Information
+            elif kind == 'warning':
+                qtfunction = QtGui.QMessageBox.warning
+                icon = QtGui.QMessageBox.Warning
+            elif kind == 'error':
+                qtfunction = QtGui.QMessageBox.critical
+                icon = QtGui.QMessageBox.Critical
+            global _APP
+            if _APP is None:
+                _APP = QtGui.QApplication(sys.argv)
       
-        mb = QtGui.QMessageBox(icon, title, text)
-        mb.setTextFormat(Qt.LogText)
-        mb.setSizeGripEnabled(True)
-        size_policy = QtGui.QSizePolicy.Expanding
-        mb.setSizePolicy(size_policy, size_policy)
-        mb.setInformativeText(detailed_text)
-        mb.setWindowModality(Qt.WindowModal)
-        mb.exec_()
+            mb = QtGui.QMessageBox(icon, title, text)
+            mb.setTextFormat(Qt.LogText)
+            mb.setSizeGripEnabled(True)
+            size_policy = QtGui.QSizePolicy.Expanding
+            mb.setSizePolicy(size_policy, size_policy)
+            mb.setInformativeText(detailed_text)
+            mb.setWindowModality(Qt.WindowModal)
+            mb.exec_()
 else:
     notify = None
