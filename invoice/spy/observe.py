@@ -94,6 +94,12 @@ if HAS_WATCHDOG: # pragma: no cover
                     logger=self.logger,
                     spy_delay=self.spy_delay,
                     spy_notify_level=self.spy_notify_level)
+
+        def show_log(self, printer=print):
+            with open(conf.SPY_LOG_FILE, "r") as f_log:
+                for line in f_log:
+                    printer(line, end='')
+
 else:
     observe = None
     DocObserver = None

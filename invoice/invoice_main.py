@@ -28,7 +28,6 @@ import sys
 import traceback
 
 from .database.filecopy import tempcopy, nocopy
-from .daemon import Daemon
 from .error import InvoiceSyntaxError, InvoiceVersionError, InvoiceValidationError
 from . import conf
 from .log import get_default_logger, set_verbose_level
@@ -485,11 +484,11 @@ Ad esempio:
         description="""\
 Resta in attesa di modifiche ai documenti (nuove fatture, fatture
 modificate, ...); in caso di modifiche, viene eseguita una scansione.
-L'output della scansione viene mostrato con un popup.
+L'output della scansione viene mostrato con notifiche OSD.
 
 La funzionalità può essere eseguita in interattivo:
 
-$ %(prog)s spy
+$ %(prog)s spy run
 
 in tal caso, può essere interrotto con un Ctrl-C.
 
@@ -508,15 +507,17 @@ spy start -> spy is not running
 $ invoice spy status
 spy status -> spy is not running
 
-L'output di spy è contenuto nel file {wlog}. Le opzioni relative
-alla verbosità influenzano il contenuto di questo file.
+L'output di spy è contenuto nel file {wlog}.
+Le opzioni relative alla verbosità influenzano il contenuto di questo
+file. È possibile accedere al log con l'azione 'log':
+
+$ invoice spy log
+...
 
 """.format(wlog=conf.SPY_LOG_FILE))
     spy_parser.add_argument("action",
-        nargs='?',
-        default=None,
-        choices=Daemon.ACTIONS,
-        help="azione")
+        choices=InvoiceProgram.SPY_ACTIONS,
+        help="azione da eseguire")
 
     for parser in config_parser, init_parser, spy_parser:
         parser.add_argument("--spy-notify-level", "-sl",

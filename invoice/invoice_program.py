@@ -75,6 +75,14 @@ class FileDateTimes(object):
         return self._date_times[filename]
 
 class InvoiceProgram(object):
+    if observe.available():
+        SPY_DAEMON_ACTIONS = tuple(observe.DocObserver.ACTIONS)
+    else:
+        SPY_DAEMON_ACTIONS = ()
+    SPY_ACTION_RUN = 'run'
+    SPY_ACTION_LOG = 'log'
+    SPY_NON_DAEMON_ACTIONS = (SPY_ACTION_RUN, SPY_ACTION_LOG)
+    SPY_ACTIONS = SPY_NON_DAEMON_ACTIONS + SPY_DAEMON_ACTIONS
     def __init__(self, db_filename, logger, printer=print, trace=False):
         self.db_filename = db_filename
         self.logger = logger
@@ -857,8 +865,10 @@ class InvoiceProgram(object):
                                    logger=self.logger,
                                    spy_delay=spy_delay,
                                    spy_notify_level=spy_notify_level)
-        if action is None:
+        if action == self.SPY_ACTION_RUN:
             doc_observer.run()
+        elif action == self.SPY_ACTION_LOG:
+            doc_observer.show_log(printer=self.printer)
         else:
             result = doc_observer.apply_action(action)
             self.printer("spy {} -> {}".format(action, result))
