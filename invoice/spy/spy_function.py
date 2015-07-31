@@ -33,7 +33,7 @@ def spy_function(program, event_queue, spy_notify_level=None): # pragma: no cove
     notify_l = []
     for notify in notify_osd, notify_logger:
         if notify.available():
-            notify_l.append(notify_osd)
+            notify_l.append(notify)
 
     for notify in notify_l:
         notify.notify(logger=program.logger,

@@ -68,7 +68,7 @@ def formatter(validation_result, scan_events, updated_invoice_collection, event_
     detailed_lines = []
 
     if validation_result.num_errors() + validation_result.num_warnings() == 0:
-        if updated_invoice_collection and spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_INFO]:
+        if spy_notify_level_index <= conf.SPY_NOTIFY_LEVEL_INDEX[conf.SPY_NOTIFY_LEVEL_INFO]:
             rl = []
             trd = {
                 'added': 'aggiunte',

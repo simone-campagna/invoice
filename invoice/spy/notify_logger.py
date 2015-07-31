@@ -43,9 +43,9 @@ def notify(logger, validation_result, scan_events, updated_invoice_collection, e
             log_function = logger.warning
         elif kind == 'error':
             log_function = logger.error
-        log_function("=== {} ===".format(title))
+        log_function("SPY> {} ===".format(title))
         for s in text, detailed_text:
             if s:
                 for l in s.split('\n'):
-                    log_function("  # {}".format(l))
-                log_function("  #")
+                    log_function("SPY> {}".format(l))
+                log_function("SPY>")
