@@ -31,5 +31,5 @@ elif notify_logger.available():
 else:
     notify = None
 
-def available():
+def available(): # pragma: no cover
     return notify is not None

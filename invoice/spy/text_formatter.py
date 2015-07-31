@@ -30,7 +30,7 @@ MODE_LONG = 'long'
 MODE_SHORT = 'short'
 
 
-def we_long(max, items):
+def we_long(max, items): # pragma: no cover
     count = 0
     ls = []
     for doc_filename, entries in items:
@@ -40,7 +40,7 @@ def we_long(max, items):
             count += 1
     return ls
 
-def we_short(max, items):
+def we_short(max, items): # pragma: no cover
     count = 0
     ls = []
     maxlen = 30
