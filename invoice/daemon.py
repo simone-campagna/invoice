@@ -16,12 +16,17 @@
 #  limitations under the License.
 #
 
+"""
+Daemon class - daemonize execution
+"""
+
 __author__ = 'Simone Campagna'
 __copyright__ = 'Copyright (c) 2013 Simone Campagna'
 __license__ = 'Apache License Version 2.0'
 __version__ = '1.0'
 
 import collections
+import contextlib
 import os
 import fcntl
 import time
@@ -43,7 +48,37 @@ class DaemonError(Exception):
 
 LockInfo = collections.namedtuple('LockInfo', ('locked', 'host', 'pid'))
 
+DaemonRestoreStatus = collections.namedtuple('DaemonRestoreStatus', ('should_run', 'is_running', 'executed_action'))
+
 class Daemon(object): # pragma: no cover
+    """Daemonized execution of a task
+
+       Parameters
+       ----------
+       lock_file: str
+           the lock file name
+       name: str, optional
+           the daemon's name
+       stdin: str, optional
+           the stdin file name
+       stdout: str, optional
+           the stdout file name
+       stdout_mode: str, optional
+           the stdout file mode (defaults to 'ab+')
+       stderr: str, optional
+           the stderr file name
+       stderr_mode: str, optional
+           the stderr file mode (defaults to 'ab+')
+       daemonize_immediately: bool, optional
+           if True, lock is acquired inside the daemonized process
+           (defaults to False)
+       lock_blocking: bool, optional
+           blocking lock acquisition
+       lock_timeout: bool, optional
+           timeout for non-blocking lock acquisition
+       interactive: bool, optional
+           interactive mode (no daemonization)
+    """
     INTERACTIVE_ACTIONS = ['start', 'restart', 'restore']
     ACTIONS = ['start', 'stop', 'abort', 'status', 'restart', 'restore', 'is_running', 'is_locked', 'lock_info', 'lock_wait']
     ACTION_MAP = {}
@@ -55,6 +90,7 @@ class Daemon(object): # pragma: no cover
     			stderr=None,
     			stderr_mode='ab+',
     			name=None,
+    			daemonize_immediately=False,
     			lock_blocking=None,
     			lock_timeout=None,
     			interactive=False
@@ -80,12 +116,24 @@ class Daemon(object): # pragma: no cover
         self.stderr = stderr
         self.stdout_mode = stdout_mode
         self.stderr_mode = stderr_mode
+        self.daemonize_immediately = daemonize_immediately
   
+    @contextlib.contextmanager
+    def locked(self):
+        with self.lock_file as lock:
+            self._write_lock_data()
+            yield self
+            self._clear_lock_file()
+        
     def daemonize(self):
-        """
-        do the UNIX double-fork magic, see Stevens' "Advanced
+        """Does the UNIX double-fork magic, see Stevens' "Advanced
         Programming in the UNIX Environment" for details (ISBN 0201563177)
         http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
+
+        Raises
+        ------
+        DaemonError
+            fork failed
         """
         if self.interactive:
             return
@@ -142,29 +190,41 @@ class Daemon(object): # pragma: no cover
                 pass
                 
         # write lock
-        atexit.register(self._release_lock)
-        self.lock_file.acquire(blocking=self.lock_blocking, timeout=self.lock_timeout)
-        self._write_lock_data()
+        #atexit.register(self._release_lock)
+        #self.lock_file.acquire(blocking=self.lock_blocking, timeout=self.lock_timeout)
+        #self._write_lock_data()
   
     def _hostname(self):
+        """Returns the host name."""
         return os.uname()[1]
   
     def _pid(self):
+        """Returns the process id."""
         return os.getpid()
   
     def _data(self):
+        """Returns (hostnane, process_id)."""
         return self._hostname(), self._pid()
   
     def get_lock_info(self):
+        """Returns string information about lock.
+
+           Returns
+           -------
+           str
+               lock information: "<hostname>:<pid>"
+        """
         hostname, pid = self._data()
         return "{0}:{1}".format(hostname, pid)
   
     def _write_lock_data(self):
-        self._empty_lock_file()
+        """Writes lock data to lockfile."""
+        self._clear_lock_file()
         self.lock_file.write(bytes("{0}\n".format(self.get_lock_info()), 'utf-8'))
         self.lock_file.flush()
   
     def _read_lock_data(self):
+        """Reads lock data from lockfile."""
         try:
             self.lock_file.seek(0)
             content = str(self.lock_file.readline(), 'utf-8').strip()
@@ -181,6 +241,7 @@ class Daemon(object): # pragma: no cover
         return l_hostname, l_pid
   
     def _check_same_node(self, ignore_errors=False):
+        """Checks if this process is run on the same node where lock was created."""
         l_hostname, l_pid = self._read_lock_data()
         hostname, pid = self._data()
         result = True
@@ -190,77 +251,80 @@ class Daemon(object): # pragma: no cover
                 raise DaemonError("locked on different node (lock: '{0}', current: '{0}')".format(l_hostname, hostname))
         return result, l_hostname, l_pid, hostname, pid
   
-    def _empty_lock_file(self):
+    def _clear_lock_file(self):
+        """Clears lock file."""
         self.lock_file.seek(0)
         self.lock_file.truncate()
         self.lock_file.flush()
   
     def is_locked(self):
+        """Tells if the lock file is locked.
+
+           Returns
+           -------
+           bool
+               the lock status
+        """
         return self.lock_file.is_locked()
   
     def lock_wait(self):
+        """Waits as far as the lock is locked."""
         while self.lock_file.is_locked():
             time.sleep(1)
         return True
   
     def lock_info(self):
+        """Returns lock info.
+
+           Returns
+           -------
+           LockInfo
+               the lock information
+        """
         locked = self.lock_file.is_locked()
         l_hostname, l_pid = self._read_lock_data()
         return LockInfo(locked, l_hostname, l_pid)
   
-    def _release_lock(self):
-        #l_hostname, l_pid = self._read_lock_data()
-        #hostname, pid = self._data()
-        #if l_hostname != hostname:
-        #  raise DaemonError, "Cannot release lock acquired by {0}:{1} from {2}".format(l_hostname, l_pid, hostname)
-        self.lock_file.release()
-        self._empty_lock_file()
-        self.lock_file.close()
+#    def _release_lock(self):
+#        """Releases the lock."""
+#        self.lock_file.release()
+#        self._clear_lock_file()
+#        self.lock_file.close()
   
     def start(self):
+        """Starts the daemon and calls the run() method."""
         if self.interactive:
+            self._check_same_node(ignore_errors=False)
+            #acquired = self.lock_file.acquire(blocking=self.lock_blocking, timeout=self.lock_timeout)
+            with self.locked():
+                self.run()
+            return True
+        else:
             try:
                 self._check_same_node(ignore_errors=False)
-                acquired = self.lock_file.acquire(blocking=self.lock_blocking, timeout=self.lock_timeout)
-                if not acquired:
-                    raise DaemonError("Lock failed")
-                self.run()
-            finally:
-                self.lock_file.release()
-            return True
-        try:
-            self._check_same_node(ignore_errors=False)
-            acquired = self.lock_file.acquire(blocking=self.lock_blocking, timeout=self.lock_timeout)
-            if not acquired:
-                raise DaemonError("Lock failed")
-            #print "P: acquire", os.getpid(), acquired
-            child_pid = os.fork() 
-            if child_pid > 0:
-                # exit first parent
-                self.lock_file.release()
-                #print "P: released", child_pid
-                os.waitpid(child_pid, 0)
-                return self.status()
-                return True
-            else:
-                self._check_same_node(ignore_errors=False)
-                acquired = self.lock_file.acquire(blocking=self.lock_blocking, timeout=self.lock_timeout)
-                #print "C: acquire", os.getpid(), acquired
-                if not acquired:
-                    raise DaemonError("Lock failed")
-                self.lock_file.release()
-                #print "C: released"
-                self.daemonize()
-                self.run()
-                sys.exit(0)
-        except OSError as e:
-            sys.stderr.write("fork #1 failed: {0:d} ({1})\n".format(e.errno, e.strerror))
-            raise DaemonError("Fork #1 failed")
+                if not self.daemonize_immediately:
+                    with self.locked():
+                        pass
+                child_pid = os.fork() 
+                if child_pid > 0:
+                    # exit first parent
+                    os.waitpid(child_pid, 0)
+                    return self.status()
+                else:
+                    self.daemonize()
+                    with self.locked():
+                        self.run()
+                    sys.exit(0)
+            except OSError as e:
+                sys.stderr.write("fork #1 failed: {0:d} ({1})\n".format(e.errno, e.strerror))
+                raise DaemonError("Fork #1 failed")
   
     def run(self):
+        """Runs the daemon tasks."""
         pass
   
     def soft_stop(self):
+        """Stops gracefully the daemon."""
         result, l_hostname, l_pid, hostname, pid = self._check_same_node(ignore_errors=False)
         try:
             os.kill(l_pid, signal.SIGTERM)
@@ -268,6 +332,8 @@ class Daemon(object): # pragma: no cover
             pass
   
     def hard_stop(self):
+        """Stops gracelessly the daemon."""
+        result, l_hostname, l_pid, hostname, pid = self._check_same_node(ignore_errors=False)
         result, l_hostname, l_pid, hostname, pid = self._check_same_node(ignore_errors=False)
         try:
             os.kill(l_pid, signal.SIGKILL)
@@ -275,6 +341,19 @@ class Daemon(object): # pragma: no cover
             pass
   
     def stop(self, soft_timeout_seconds=20, soft_interval=0.2, hard_timeout_seconds=5, hard_interval=0.2):
+        """Stops the daemon.
+
+           Parameters
+           ----------
+           soft_timeout_seconds: float,optional
+               soft timeout
+           soft_interval: float,optional
+               soft interval
+           hard_timeout_seconds: float,optional
+               hard timeout
+           hard_interval: float,optional
+               hard interval
+        """
         i_time = time.time()
         mode_data = {
   	    'soft':	(soft_timeout_seconds, soft_interval, self.soft_stop),
@@ -283,13 +362,13 @@ class Daemon(object): # pragma: no cover
         modes = ['soft', 'hard']
         for mode in modes:
             if not self.lock_file.is_locked():
-                self._empty_lock_file()
+                self._clear_lock_file()
                 return self.status()
             timeout_seconds, interval, stop_function = mode_data[mode]
             stop_function()
             while True:
                 if not self.lock_file.is_locked():
-                    self._empty_lock_file()
+                    self._clear_lock_file()
                     return self.status()
                 if (time.time() - i_time) > timeout_seconds:
                     break
@@ -298,18 +377,35 @@ class Daemon(object): # pragma: no cover
         return self.status()
   
     def abort(self):
+        """Aborts the daemon process."""
         return self.stop(soft_timeout_seconds=0, soft_interval=0.1, hard_timeout_seconds=0.0, hard_interval=0.1)
   
     def restart(self):
+        """Restarts the daemon process."""
         result, l_hostname, l_pid, hostname, pid = self._check_same_node(ignore_errors=False)
         self.stop()
         return self.start()
   
     def is_running(self):
+        """Tells if the daemon is running.
+
+        Returns
+        -------
+        bool
+            the running status
+        """
+        result, l_hostname, l_pid, hostname, pid = self._check_same_node(ignore_errors=False)
         result, l_hostname, l_pid, hostname, pid = self._check_same_node(ignore_errors=False)
         return self.lock_file.is_locked()
   
     def status(self):
+        """Returns the daemon's status as string.
+
+        Returns
+        -------
+        str
+            the daemon's status
+        """
         result, l_hostname, l_pid, hostname, pid = self._check_same_node(ignore_errors=True)
         locked = self.lock_file.is_locked()
         if result:
@@ -324,26 +420,45 @@ class Daemon(object): # pragma: no cover
   
   
     def restore(self):
+        """Restarts the daemon process if it was interrupted abnormally.
+
+           Returns
+           -------
+           tuple
+               a 2-tuple containing (restarted, action) where restarted is a bool
+               (True if daemon should be running) and action is the executed action.
+        """
         result, l_hostname, l_pid, hostname, pid = self._check_same_node(ignore_errors=True)
         locked = self.lock_file.is_locked()
         if locked:
             # running
-            return (True, None)
+            return DaemonRestoreStatus(True, True, None)
         else:
             l_hostname, l_pid = self._read_lock_data()
             if l_hostname is None and l_pid is None:
                 # should not be running
-                return (False, None)
+                return DaemonRestoreStatus(False, False, None)
             else:
                 # should be running, but it isn't
                 if not result:
                     # empty lock file, since it has been created on a different node
-                    print("empty lock_file")
-                    self._empty_lock_file()
+                    self._clear_lock_file()
                 self.start()
-                return (True, 'start')
+                return DaemonRestoreStatus(True, True, 'start')
     
     def apply_action(self, action):
+        """Apolies an action to the running daemon.
+
+           Parameters
+           ----------
+           action: str
+               the action name
+
+           Returns
+           -------
+           any
+               the action result
+        """
         if not action in self.ACTIONS:
             raise DaemonError("invalid action {0}".format(action))
         if self.interactive and not action in self.INTERACTIVE_ACTIONS:

@@ -16,6 +16,9 @@
 #  limitations under the License.
 #
 
+"""
+LockFile class - opens and locks a file.
+"""
 __author__ = 'Simone Campagna'
 __copyright__ = 'Copyright (c) 2013 Simone Campagna'
 __license__ = 'Apache License Version 2.0'
@@ -32,17 +35,45 @@ import io
 
 __author__ = "Simone Campagna"
 
+class LockError(Exception): # pragma: no cover
+    """Lock error"""
+    pass
+
+
 class LockFile(io.FileIO): # pragma: no cover
-    def __init__(self, name, mode='w'):
+    """Open and locks a file.
+
+       Parameters
+       ----------
+       name: str
+           the file name
+       mode: str, optional
+           the open mode (defaults to 'w')
+       blocking: bool, optional
+           enables blocking acquisition
+       timeout: float, optional
+           timeout for non-blocking acquisition
+    """
+    def __init__(self, name, mode='w', blocking=True, timeout=10.0):
       super().__init__(name, mode)
+      self.blocking = blocking
+      self.timeout = timeout
   
     def acquire(self, blocking=None, timeout=None):
-        #sys.stderr.write("LockFile::ACQUIRE\n")
+        """Acquires the lock.
+
+           Parameters
+           ----------
+           blocking: bool, optional
+               if True blocks until lock can be acquired
+           timeout: float, optional
+               timeout used when blocking == False
+        """
+
         if blocking is None:
-            if timeout is None:
-                blocking = True
-            else:
-                blocking = False
+            blocking = self.blocking
+        if timeout is None:
+            timeout = self.timeout
     
         lock_op = fcntl.LOCK_EX
         if not blocking:
@@ -63,6 +94,8 @@ class LockFile(io.FileIO): # pragma: no cover
                     if timeout:
                         time.sleep(interval)
                     continue
+            except (KeyboardInterrupt, SystemExit):
+                raise
             except:
                 import traceback
                 traceback.print_exc()
@@ -70,10 +103,16 @@ class LockFile(io.FileIO): # pragma: no cover
         return False
   
     def release(self):
+        """Releases the lock."""
         fcntl.lockf(self, fcntl.LOCK_UN)
-        pass
   
     def is_locked(self):
+        """Tells if file is locked.
+           Returns
+           -------
+           bool
+               True if file is locked
+        """
         try:
             fcntl.lockf(self.fileno(), fcntl.LOCK_EX + fcntl.LOCK_NB)
             return False
@@ -82,15 +121,12 @@ class LockFile(io.FileIO): # pragma: no cover
               return True
   
     def close(self):
+        """Closes the file."""
         self.release()
         super(LockFile, self).close()
   
-    def __del__(self):
-        try:
-            self.release()
-        except:
-            pass
-        try:
-            super(LockFile, self).__del__()
-        except:
-            pass
+    def __enter__(self):
+        self.acquire()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.release()
