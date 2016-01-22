@@ -134,7 +134,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -142,7 +142,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'version'],
+                args=['version', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), self.VERSION_OUTPUT)
 
@@ -154,7 +154,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -162,7 +162,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '-werror', '-eraise'],
+                args=['config', '-d', db_filename.name, '-werror', '-eraise'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_WERROR_ERAISE)
 
@@ -174,7 +174,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -182,7 +182,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '-wignore', '-eignore'],
+                args=['config', '-d', db_filename.name, '-wignore', '-eignore'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_WIGNORE_EIGNORE)
 
@@ -194,7 +194,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -202,7 +202,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update=on'],
+                args=['config', '-d', db_filename.name, '--partial-update=on'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
@@ -214,7 +214,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -222,7 +222,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update=off'],
+                args=['config', '-d', db_filename.name, '--partial-update=off'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_OFF)
 
@@ -234,7 +234,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -242,7 +242,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update'],
+                args=['config', '-d', db_filename.name, '--partial-update'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
@@ -254,7 +254,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc'), '-gweek', '-s'],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc'), '-gweek', '-s'],
             )
             self.assertEqual(p.string(), '')
 
@@ -262,7 +262,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b', '-I', '361', '-w', 'error:*', 'log:005', '-e', 'raise:009', '-sl', 'info', '-sd','0.32'],
+                args=['config', '-d', db_filename.name, '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b', '-I', '361', '-w', 'error:*', 'log:005', '-e', 'raise:009', '-sl', 'info', '-sd','0.32'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_MIX)
 
@@ -270,23 +270,23 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
+                args=['scan', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), """\
-#fatture aggiunte: 5
+#fatture aggiunte: 6
 #fatture modificate: 0
 #fatture rimosse: 0
 ultima fattura inserita per ciascun anno:
 -----------------------------------------
 codice_fiscale   città      numero incasso
-KNTCRK01G01H663X Smallville      5  152.50
+KNTCRK01G01H663X Smallville      6  216.66
 """)
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number'],
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -295,12 +295,13 @@ PRKPRT01G01H663M 2014      2
 BNNBRC01G01H663S 2014      3
 WNYBRC01G01H663S 2014      4
 KNTCRK01G01H663X 2014      5
+KNTCRK01G01H663X 2014      6
 """)
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list'],
+                args=['list', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   città         numero incasso
@@ -308,7 +309,8 @@ WNYBRC01G01H663S Gotham City        1   51.00
 PRKPRT01G01H663M New York City      2   76.50
 BNNBRC01G01H663S Greenville         3  102.00
 WNYBRC01G01H663S Gotham City        4   51.00
-KNTCRK01G01H663X Smallville         5  152.50
+KNTCRK01G01H663X Smallville         5  153.00
+KNTCRK01G01H663X Smallville         6  216.66
 """)
 
     def test_invoice_main_config(self):
@@ -319,7 +321,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -327,7 +329,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config'],
+                args=['config', '-d', db_filename.name],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
@@ -339,7 +341,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -347,14 +349,14 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update=off'],
+                args=['config', '-d', db_filename.name, '--partial-update=off'],
             )
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--reset'],
+                args=['config', '-d', db_filename.name, '--reset'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
@@ -366,7 +368,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )   
             self.assertEqual(p.string(), '') 
 
@@ -374,7 +376,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update=on'],
+                args=['config', '-d', db_filename.name, '--partial-update=on'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
@@ -382,7 +384,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--export', p_file.name],
+                args=['config', '-d', db_filename.name, '--export', p_file.name],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
             p_file.flush()
@@ -391,7 +393,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update=off'],
+                args=['config', '-d', db_filename.name, '--partial-update=off'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_OFF)
 
@@ -399,7 +401,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--import', p_file.name],
+                args=['config', '-d', db_filename.name, '--import', p_file.name],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
@@ -411,7 +413,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )   
             self.assertEqual(p.string(), '') 
 
@@ -419,7 +421,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--partial-update=on'],
+                args=['config', '-d', db_filename.name, '--partial-update=on'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
@@ -427,7 +429,7 @@ KNTCRK01G01H663X Smallville         5  152.50
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'config', '--edit', '--editor', 'sed "s/partial_update *= *True/partial_update = False/g" -i'],
+                args=['config', '-d', db_filename.name, '--edit', '--editor', 'sed "s/partial_update *= *True/partial_update = False/g" -i'],
             )   
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_OFF)
 

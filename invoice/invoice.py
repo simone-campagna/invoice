@@ -28,6 +28,10 @@ from .error import InvoiceUndefinedFieldError, \
                    InvoiceYearError, \
                    InvoiceTaxCodeError, \
                    InvoiceMalformedTaxCodeError, \
+                   InvoiceInconsistentIncomeError, \
+                   InvoiceInconsistentCpaError, \
+                   InvoiceInconsistentVatError, \
+                   InvoiceInconsistentDeductionError, \
                    InvoiceSyntaxError
 
 from .validation_result import ValidationResult
@@ -119,6 +123,47 @@ class Invoice(InvoiceNamedTuple):
                     invoice=self,
                     exc_type=InvoiceYearError,
                     message="fattura {}: data {} e anno {} sono incompatibili".format(self.doc_filename, self.date, self.year))
+        income_parts = ["fee", "cpa", "vat", "deduction"]
+        income_values = [getattr(self, part) for part in income_parts]
+        expected_income = sum(v for v in income_values if v is not None)
+        if expected_income != self.income:
+            parts = " ".join("{}:{}".format(part, income) for part, income in zip(income_parts, income_values))
+            validation_result.add_error(
+                    invoice=self,
+                    exc_type=InvoiceInconsistentIncomeError,
+                    message="fattura {}: incasso non coerente: {} - totale:{} - atteso:{}".format(self.doc_filename, parts, self.income, expected_income))
+        ndecimals = 1
+        for key in "cpa", "vat", "deduction":
+            p_key = "p_" + key
+            percentage = getattr(self, p_key)
+            if percentage is not None:
+                val = round(getattr(self, key), ndecimals)
+                if key == "vat":
+                    source_fields = ["fee", "cpa"]
+                    error_class = InvoiceInconsistentVatError
+                else:
+                    if key == "cpa":
+                       error_class = InvoiceInconsistentCpaError
+                    elif key == "deduction":
+                       error_class = InvoiceInconsistentDeductionError
+                    source_fields = ["fee"]
+                source_vals = [getattr(self, source_field) for source_field in source_fields]
+                source_val = round(sum(v for v in source_vals if v is not None), ndecimals)
+                expected_val = round(source_val * percentage / 100.0, ndecimals)
+                if expected_val != val:
+                    source_text = " + ".join("{}[{}]".format(v, self.get_field_translation(f)) for v, f in zip(source_vals, source_fields))
+                    validation_result.add_error(
+                            invoice=self,
+                            exc_type=error_class,
+                            message="fattura {d}: {f} {v} non corretto: sorgente: {s} = {t} - percentuale: {p}% - atteso:{e}".format(
+                                d=self.doc_filename,
+                                f=self.get_field_translation(key),
+                                v=val,
+                                s=source_text,
+                                t=source_val,
+                                p=percentage,
+                                e=expected_val))
+            
 
         tax_code = self.tax_code
         if tax_code:

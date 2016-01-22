@@ -69,7 +69,7 @@ WNYBRC01G01H663S 2014-01-03 2014-01-03 Bruce Wayne [---] 1 51.00 100.00%
             p = StringPrinter()
 
             p.reset()
-            args = ['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'test_wayne_continuation', '*.doc')]
+            args = ['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'test_wayne_continuation', '*.doc')]
             if max_interruption_days is not None:
                 args.append('--max-interruption-days={}'.format(max_interruption_days))
             invoice_main(
@@ -83,12 +83,12 @@ WNYBRC01G01H663S 2014-01-03 2014-01-03 Bruce Wayne [---] 1 51.00 100.00%
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
+                args=['scan', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), '')
 
-            #args=['-d', db_filename.name, 'stats', '-S', '2014-01-10', '-E', '2014-01-27']
-            args=['-d', db_filename.name, 'stats', '-gclient', '--total=off', '--header=off', '-C', 'WNYBRC01G01H663S']
+            #args=['stats', '-d', db_filename.name, '-S', '2014-01-10', '-E', '2014-01-27']
+            args=['stats', '-d', db_filename.name, '-gclient', '--total=off', '--header=off', '-C', 'WNYBRC01G01H663S']
             if options:
                 args.extend(options)
             invoice_main(

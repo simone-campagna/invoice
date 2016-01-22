@@ -66,55 +66,67 @@ fattura:                   '<DIRNAME>/2014_005_clark_kent.doc'
   città/data:              Smallville/2014-01-29
   nome:                    Clark Kent
   codice fiscale:          KNTCRK01G01H663X
-  incasso:                 152.50 [euro]
+  incasso:                 153.00 [euro]
+fattura:                   '<DIRNAME>/2014_006_clark_kent.doc'
+  anno/numero:             2014/6
+  città/data:              Smallville/2014-02-28
+  nome:                    Clark Kent
+  codice fiscale:          KNTCRK01G01H663X
+  incasso:                 216.66 [euro]
 """
     REPORT_OUTPUT = """\
 anno                       2014
-  * incasso totale:        433.00
-  * numero di fatture:     5
+  * incasso totale:        650.16
+  * numero di fatture:     6
   * numero di clienti:     4
     + cliente:             WNYBRC01G01H663S (Bruce Wayne):
       numero di fatture:   2
       incasso totale:      102.00
-      incasso percentuale: 23.56%
+      incasso percentuale: 15.69%
       settimane:           1, 4
 
     + cliente:             PRKPRT01G01H663M (Peter B. Parker):
       numero di fatture:   1
       incasso totale:      76.50
-      incasso percentuale: 17.67%
+      incasso percentuale: 11.77%
       settimane:           1
 
     + cliente:             BNNBRC01G01H663S (Robert Bruce Banner):
       numero di fatture:   1
       incasso totale:      102.00
-      incasso percentuale: 23.56%
+      incasso percentuale: 15.69%
       settimane:           4
 
     + cliente:             KNTCRK01G01H663X (Clark Kent):
-      numero di fatture:   1
-      incasso totale:      152.50
-      incasso percentuale: 35.22%
-      settimane:           5
+      numero di fatture:   2
+      incasso totale:      369.66
+      incasso percentuale: 56.86%
+      settimane:           5, 9
 
-  * numero di settimane:   3
+  * numero di settimane:   4
     + settimana:           1 [2014-01-01 -> 2014-01-05]:
       numero di fatture:   2
       giorni:              2014-01-03 VE[2]
       incasso totale:      127.50
-      incasso percentuale: 29.45%
+      incasso percentuale: 19.61%
 
     + settimana:           4 [2014-01-20 -> 2014-01-26]:
       numero di fatture:   2
       giorni:              2014-01-22 ME[1], 2014-01-25 SA[1]
       incasso totale:      153.00
-      incasso percentuale: 35.33%
+      incasso percentuale: 23.53%
 
     + settimana:           5 [2014-01-27 -> 2014-02-02]:
       numero di fatture:   1
       giorni:              2014-01-29 ME[1]
-      incasso totale:      152.50
-      incasso percentuale: 35.22%
+      incasso totale:      153.00
+      incasso percentuale: 23.53%
+
+    + settimana:           9 [2014-02-24 -> 2014-03-02]:
+      numero di fatture:   1
+      giorni:              2014-02-28 VE[1]
+      incasso totale:      216.66
+      incasso percentuale: 33.32%
 
 """
 
@@ -131,7 +143,7 @@ anno                       2014
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -139,7 +151,7 @@ anno                       2014
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
+                args=['scan', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), '')
 
@@ -147,7 +159,7 @@ anno                       2014
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
+                args=['scan', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), '')
 
@@ -155,7 +167,7 @@ anno                       2014
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number'],
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -164,13 +176,14 @@ PRKPRT01G01H663M 2014      2
 BNNBRC01G01H663S 2014      3
 WNYBRC01G01H663S 2014      4
 KNTCRK01G01H663X 2014      5
+KNTCRK01G01H663X 2014      6
 """)
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'dump'],
+                args=['dump', '-d', db_filename.name],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.DUMP_OUTPUT)
 
@@ -178,7 +191,7 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'report', '-y', '2014'],
+                args=['report', '-d', db_filename.name, '-y', '2014'],
             )
             self.assertEqual(p.string(), self.REPORT_OUTPUT)
 
@@ -186,7 +199,7 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'report', '-y', '2014,2015'],
+                args=['report', '-d', db_filename.name, '-y', '2014,2015'],
             )
             self.assertEqual(p.string(), self.REPORT_OUTPUT)
 
@@ -194,7 +207,7 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--filter', 'number % 2 == 0', '--filter=tax_code.startswith("P")'],
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--filter', 'number % 2 == 0', '--filter=tax_code.startswith("P")'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -205,7 +218,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validate'],
+                args=['validate', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), '')
 
@@ -214,7 +227,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'clear'],
+                args=['clear', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), '')
 
@@ -222,7 +235,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--header=off'],
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--header=off'],
             )
             self.assertEqual(p.string(), '')
 
@@ -230,7 +243,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--header=off', '--filter', 'città == Rome'], # InvoiceSyntaxError
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--header=off', '--filter', 'città == Rome'], # InvoiceSyntaxError
             )
             self.assertEqual(p.string(), '')
 
@@ -242,7 +255,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -250,7 +263,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
+                args=['scan', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), '')
 
@@ -258,7 +271,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'date, city,tax_code,year,number', '--filter', 'città != "Gotham City"', '-S', '2014-01-10', '-E', '2014-01-27'],
+                args=['list', '-d', db_filename.name, '--fields', 'date, city,tax_code,year,number', '--filter', 'città != "Gotham City"', '-S', '2014-01-10', '-E', '2014-01-27'],
             )
             self.assertEqual(p.string(), """\
 data       città      codice_fiscale   anno numero
@@ -275,7 +288,7 @@ data       città      codice_fiscale   anno numero
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--client', 'WNYBRC01G01H663S'],
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--client', 'WNYBRC01G01H663S'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -287,7 +300,7 @@ WNYBRC01G01H663S 2014      4
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--client', 'PRKPRT01G01H663M,WNYBRC01G01H663S'],
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--client', 'PRKPRT01G01H663M,WNYBRC01G01H663S'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -300,7 +313,7 @@ WNYBRC01G01H663S 2014      4
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--client', 'PRKPRT01G01H663M,WNYBRC01G01H663S',
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--client', 'PRKPRT01G01H663M,WNYBRC01G01H663S',
                       '--order', 'tax_code' ],
             )
             self.assertEqual(p.string(), """\
@@ -314,12 +327,13 @@ WNYBRC01G01H663S 2014      4
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--order', 'tax_code'],
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--order', 'tax_code'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
 BNNBRC01G01H663S 2014      3
 KNTCRK01G01H663X 2014      5
+KNTCRK01G01H663X 2014      6
 PRKPRT01G01H663M 2014      2
 WNYBRC01G01H663S 2014      1
 WNYBRC01G01H663S 2014      4
@@ -329,11 +343,12 @@ WNYBRC01G01H663S 2014      4
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--order', 'tax_code,!date'],
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--order', 'tax_code,!date'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
 BNNBRC01G01H663S 2014      3
+KNTCRK01G01H663X 2014      6
 KNTCRK01G01H663X 2014      5
 PRKPRT01G01H663M 2014      2
 WNYBRC01G01H663S 2014      4
@@ -345,7 +360,7 @@ WNYBRC01G01H663S 2014      1
                 invoice_main(
                     printer=p,
                     logger=self.logger,
-                    args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--order', 'tax_code,!date', '--output', o_file.name],
+                    args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--order', 'tax_code,!date', '--output', o_file.name],
                 )
                 self.assertEqual(p.string(), "")
                 o_file.flush()
@@ -354,6 +369,7 @@ WNYBRC01G01H663S 2014      1
                 self.assertEqual(o_content, """\
 codice_fiscale   anno numero
 BNNBRC01G01H663S 2014      3
+KNTCRK01G01H663X 2014      6
 KNTCRK01G01H663X 2014      5
 PRKPRT01G01H663M 2014      2
 WNYBRC01G01H663S 2014      4
@@ -371,7 +387,7 @@ WNYBRC01G01H663S 2014      1
                 invoice_main(
                     printer=p,
                     logger=self.logger,
-                    args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--order', 'tax_code,!date', '--output', o_filename_template, '--table-mode', conf.TABLE_MODE_XLSX],
+                    args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--order', 'tax_code,!date', '--output', o_filename_template, '--table-mode', conf.TABLE_MODE_XLSX],
                 )
                 try:
                     self.assertEqual(p.string(), "")
@@ -387,7 +403,7 @@ WNYBRC01G01H663S 2014      1
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -395,7 +411,7 @@ WNYBRC01G01H663S 2014      1
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--header=off'],
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--header=off'],
             )
             self.assertEqual(p.string(), "")
 
@@ -403,14 +419,14 @@ WNYBRC01G01H663S 2014      1
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan', '--dry-run'],
+                args=['scan', '-d', db_filename.name, '--dry-run'],
             )
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--header=off'],
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--header=off'],
             )
             self.assertEqual(p.string(), "")
 
@@ -418,7 +434,7 @@ WNYBRC01G01H663S 2014      1
         with tempfile.NamedTemporaryFile() as db_filename:
             p = StringPrinter()
 
-            args = list(global_options) + ['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')]
+            args = ['init'] + list(global_options) + ['-d', db_filename.name, os.path.join(self.dirname, '*.doc')]
             p.reset()
             invoice_main(
                 printer=p,
@@ -521,6 +537,10 @@ WNYBRC01G01H663S 2014      1
 [013] un campo obbligatorio non è definito
 [014] la data non è corretta
 [015] l'anno non è corretto
+[016] l'incasso non corrisponde alla somma delle singole componenti
+[017] la CPA non è consistente con quanto dichiarato
+[018] l'IVA non è consistente con quanto dichiarato
+[019] la ritenuta d'acconto non è consistente con quanto dichiarato
 """)
 
     def test_invoice_main_missing_subcommand(self):

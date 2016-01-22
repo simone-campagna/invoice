@@ -39,7 +39,11 @@ from invoice.error import InvoiceDuplicatedNumberError, \
                           InvoiceMultipleInvoicesPerDayError, \
                           InvoiceMalformedTaxCodeError, \
                           InvoiceVersionError, \
-                          InvoiceArgumentError
+                          InvoiceArgumentError, \
+                          InvoiceInconsistentIncomeError, \
+                          InvoiceInconsistentVatError, \
+                          InvoiceInconsistentCpaError, \
+                          InvoiceInconsistentDeductionError
 
 from invoice.invoice_program import InvoiceProgram
 from invoice.invoice_collection import InvoiceCollection
@@ -82,56 +86,68 @@ fattura:                   '<DIRNAME>/2014_005_clark_kent.doc'
   città/data:              Smallville/2014-01-29
   nome:                    Clark Kent
   codice fiscale:          KNTCRK01G01H663X
-  incasso:                 152.50 [euro]
+  incasso:                 153.00 [euro]
+fattura:                   '<DIRNAME>/2014_006_clark_kent.doc'
+  anno/numero:             2014/6
+  città/data:              Smallville/2014-02-28
+  nome:                    Clark Kent
+  codice fiscale:          KNTCRK01G01H663X
+  incasso:                 216.66 [euro]
 """
 
     REPORT_OUTPUT = """\
 anno                       2014
-  * incasso totale:        433.00
-  * numero di fatture:     5
+  * incasso totale:        650.16
+  * numero di fatture:     6
   * numero di clienti:     4
     + cliente:             WNYBRC01G01H663S (Bruce Wayne):
       numero di fatture:   2
       incasso totale:      102.00
-      incasso percentuale: 23.56%
+      incasso percentuale: 15.69%
       settimane:           1, 4
 
     + cliente:             PRKPRT01G01H663M (Peter B. Parker):
       numero di fatture:   1
       incasso totale:      76.50
-      incasso percentuale: 17.67%
+      incasso percentuale: 11.77%
       settimane:           1
 
     + cliente:             BNNBRC01G01H663S (Robert Bruce Banner):
       numero di fatture:   1
       incasso totale:      102.00
-      incasso percentuale: 23.56%
+      incasso percentuale: 15.69%
       settimane:           4
 
     + cliente:             KNTCRK01G01H663X (Clark Kent):
-      numero di fatture:   1
-      incasso totale:      152.50
-      incasso percentuale: 35.22%
-      settimane:           5
+      numero di fatture:   2
+      incasso totale:      369.66
+      incasso percentuale: 56.86%
+      settimane:           5, 9
 
-  * numero di settimane:   3
+  * numero di settimane:   4
     + settimana:           1 [2014-01-01 -> 2014-01-05]:
       numero di fatture:   2
       giorni:              2014-01-03 VE[2]
       incasso totale:      127.50
-      incasso percentuale: 29.45%
+      incasso percentuale: 19.61%
 
     + settimana:           4 [2014-01-20 -> 2014-01-26]:
       numero di fatture:   2
       giorni:              2014-01-22 ME[1], 2014-01-25 SA[1]
       incasso totale:      153.00
-      incasso percentuale: 35.33%
+      incasso percentuale: 23.53%
 
     + settimana:           5 [2014-01-27 -> 2014-02-02]:
       numero di fatture:   1
       giorni:              2014-01-29 ME[1]
-      incasso totale:      152.50
-      incasso percentuale: 35.22%
+      incasso totale:      153.00
+      incasso percentuale: 23.53%
+
+    + settimana:           9 [2014-02-24 -> 2014-03-02]:
+      numero di fatture:   1
+      giorni:              2014-02-28 VE[1]
+      incasso totale:      216.66
+      incasso percentuale: 33.32%
 
 """
 
@@ -157,43 +173,46 @@ anno                       2012
 
     STATS_OUTPUT_YEAR = """\
 anno        da:         a: clienti fatture incasso %incasso
-2014 2014-01-01 2014-12-31       4       5  433.00  100.00%
+2014 2014-01-01 2014-12-31       4       6  650.16  100.00%
 """
 
     STATS_OUTPUT_YEAR_TOTAL = """\
 anno          da:         a: clienti fatture incasso %incasso
-2014   2014-01-01 2014-12-31       4       5  433.00  100.00%
-TOTALE                             4       5  433.00  100.00%
+2014   2014-01-01 2014-12-31       4       6  650.16  100.00%
+TOTALE                             4       6  650.16  100.00%
 """
     STATS_OUTPUT_MONTH = """\
 mese           da:         a: clienti fatture incasso %incasso
-2014-01 2014-01-01 2014-01-31       4       5  433.00  100.00%
+2014-01 2014-01-01 2014-01-31       4       5  433.50   66.68%
+2014-02 2014-02-01 2014-02-28       1       1  216.66   33.32%
 """
 
     STATS_OUTPUT_MONTH_TOTAL = STATS_OUTPUT_MONTH + """\
-TOTALE                              4       5  433.00  100.00%
+TOTALE                              4       6  650.16  100.00%
 """
 
     STATS_OUTPUT_WEEK = """\
 settimana        da:         a: clienti fatture incasso %incasso
-2014:01   2014-01-01 2014-01-05       2       2  127.50   29.45%
-2014:04   2014-01-20 2014-01-26       2       2  153.00   35.33%
-2014:05   2014-01-27 2014-02-02       1       1  152.50   35.22%
+2014:01   2014-01-01 2014-01-05       2       2  127.50   19.61%
+2014:04   2014-01-20 2014-01-26       2       2  153.00   23.53%
+2014:05   2014-01-27 2014-02-02       1       1  153.00   23.53%
+2014:09   2014-02-24 2014-03-02       1       1  216.66   33.32%
 """
 
     STATS_OUTPUT_WEEK_TOTAL = STATS_OUTPUT_WEEK + """\
-TOTALE                                4       5  433.00  100.00%
+TOTALE                                4       6  650.16  100.00%
 """
 
     STATS_OUTPUT_DAY = """\
 giorno            da:         a: clienti fatture incasso %incasso
-2014-01-03 2014-01-03 2014-01-03       2       2  127.50   29.45%
-2014-01-22 2014-01-22 2014-01-22       1       1  102.00   23.56%
-2014-01-25 2014-01-25 2014-01-25       1       1   51.00   11.78%
-2014-01-29 2014-01-29 2014-01-29       1       1  152.50   35.22%
+2014-01-03 2014-01-03 2014-01-03       2       2  127.50   19.61%
+2014-01-22 2014-01-22 2014-01-22       1       1  102.00   15.69%
+2014-01-25 2014-01-25 2014-01-25       1       1   51.00    7.84%
+2014-01-29 2014-01-29 2014-01-29       1       1  153.00   23.53%
+2014-02-28 2014-02-28 2014-02-28       1       1  216.66   33.32%
 """
     STATS_OUTPUT_DAY_TOTAL = STATS_OUTPUT_DAY + """\
-TOTALE                                 4       5  433.00  100.00%
+TOTALE                                 4       6  650.16  100.00%
 """
 
     def setUp(self):
@@ -205,6 +224,7 @@ TOTALE                                 4       5  433.00  100.00%
             name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 1),
             service='therapy A',
+            fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
             income=200.0, currency='euro')
         self._invoice_002_peter_parker = Invoice(
             doc_filename='2015_002_peter_parker.doc',
@@ -212,6 +232,7 @@ TOTALE                                 4       5  433.00  100.00%
             name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 2),
             service='therapy B',
+            fee=100.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
             income=100.0, currency='euro')
         self._invoice_003_peter_parker = Invoice(
             doc_filename='2015_003_peter_parser.doc',
@@ -219,6 +240,7 @@ TOTALE                                 4       5  433.00  100.00%
             name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 3),
             service='therapy A',
+            fee=150.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
             income=150.0, currency='euro')
         self._invoices = [
             self._invoice_001_peter_parker,
@@ -231,6 +253,7 @@ TOTALE                                 4       5  433.00  100.00%
             name='Parker B. Peter', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 4),
             service='therapy A',
+            fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
             income=200.0, currency='euro')
         self._invoice_004_peter_parker_wrong_date = Invoice(
             doc_filename='2015_004_peter_parker.doc',
@@ -238,6 +261,7 @@ TOTALE                                 4       5  433.00  100.00%
             name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 2),
             service='therapy B',
+            fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
             income=200.0, currency='euro')
         self._invoice_004_peter_parker_wrong_number = Invoice(
             doc_filename='2015_004_peter_parker.doc',
@@ -245,6 +269,7 @@ TOTALE                                 4       5  433.00  100.00%
             name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 5),
             service='therapy B',
+            fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
             income=200.0, currency='euro')
         self._invoice_004_peter_parker_duplicated_number = Invoice(
             doc_filename='2015_004_peter_parker.doc',
@@ -252,6 +277,7 @@ TOTALE                                 4       5  433.00  100.00%
             name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
             city='New York', date=datetime.date(2015, 1, 5),
             service='therapy A',
+            fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
             income=200.0, currency='euro')
 
     def test_InvoiceProgram(self):
@@ -293,12 +319,14 @@ PRKPRT01G01H663M 2014      2
 BNNBRC01G01H663S 2014      3
 WNYBRC01G01H663S 2014      4
 KNTCRK01G01H663X 2014      5
+KNTCRK01G01H663X 2014      6
 """)
 
             p.reset()
             invoice_program.impl_dump(
                 filters=(),
             )
+            self.maxDiff = None
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.DUMP_OUTPUT)
             p.reset()
             invoice_program.impl_report()
@@ -477,6 +505,7 @@ WNYBRC01G01H663S 2014      4
             if reverse:
                 cmp_text += """\
 KNTCRK01G01H663X 2014      5
+KNTCRK01G01H663X 2014      6
 """
             self.assertEqual(p.string(), cmp_text)
 
@@ -650,6 +679,7 @@ KNTCRK01G01H663X 2014      5
                 name='Peter B. Parker', tax_code='WNYBRC01G01H663S', 
                 city='New York', date=datetime.date(2015, 1, 4),
                 service='therapy',
+                fee=None, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
                 income=None, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
         
@@ -661,9 +691,11 @@ KNTCRK01G01H663X 2014      5
             expected_errors = []
             expected_warnings = []
 
+            expected_errors.append(InvoiceInconsistentIncomeError)
             if esuppress:
                 error_mode.append("{}:{}".format(ValidationResult.ERROR_ACTION_IGNORE, InvoiceUndefinedFieldError.exc_code()))
             else:
+                expected_errors.append(InvoiceUndefinedFieldError)
                 expected_errors.append(InvoiceUndefinedFieldError)
 
             if wsuppress:
@@ -679,23 +711,23 @@ KNTCRK01G01H663X 2014      5
             validation_result = invoice_program.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
             invoice_program.validate_invoice_collection(validation_result, invoice_collection)
 
-            #print("warning_action={}, wsuppress={}, esuppress={}, warning_mode={}, error_mode={}, expected_warnings={}, expected_errors={}".format(
-            #    warning_action,
-            #    wsuppress,
-            #    esuppress,
-            #    warning_mode,
-            #    error_mode,
-            #    expected_warnings,
-            #    expected_errors,
-            #))
-            #for c, entries in enumerate(validation_result.warnings().values()):
-            #    for entry in entries:
-            #        exc = entry.exc_type
-            #        print(" w {:2d} {} {}".format(c, exc.exc_code(), exc.__name__))
-            #for c, entries in enumerate(validation_result.errors().values()):
-            #    for entry in entries:
-            #        exc = entry.exc_type
-            #        print(" e {:2d} {} {}".format(c, exc.exc_code(), exc.__name__))
+            print("warning_action={}, wsuppress={}, esuppress={}, warning_mode={}, error_mode={}, expected_warnings={}, expected_errors={}".format(
+                warning_action,
+                wsuppress,
+                esuppress,
+                warning_mode,
+                error_mode,
+                expected_warnings,
+                expected_errors,
+            ))
+            for c, entries in enumerate(validation_result.warnings().values()):
+                for entry in entries:
+                    exc = entry.exc_type
+                    print(" w {:2d} {} {}".format(c, exc.exc_code(), exc.__name__))
+            for c, entries in enumerate(validation_result.errors().values()):
+                for entry in entries:
+                    exc = entry.exc_type
+                    print(" e {:2d} {} {}".format(c, exc.exc_code(), exc.__name__))
 
             self.assertEqual(validation_result.num_errors(), len(expected_errors))
             for doc_filename, errors in validation_result.errors().items():
@@ -765,6 +797,7 @@ KNTCRK01G01H663X 2014      5
                 name='Parker B. Peter', tax_code='PRKPRT01G01H663M', 
                 city='New York', date=datetime.date(2015, 1, 4),
                 service='therapy',
+                fee=None, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
                 income=None, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
         
@@ -774,6 +807,8 @@ KNTCRK01G01H663X 2014      5
             expected_errors = []
             expected_warnings = []
             expected_errors.append(InvoiceUndefinedFieldError)
+            expected_errors.append(InvoiceUndefinedFieldError)
+            expected_errors.append(InvoiceInconsistentIncomeError)
             if warning_action == ValidationResult.DEFAULT_WARNING_ACTION:
                 expected_warnings.append(InvoiceMultipleNamesError)
             elif warning_action == ValidationResult.WARNING_ACTION_ERROR:
@@ -822,6 +857,7 @@ KNTCRK01G01H663X 2014      5
                 name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
                 city='New York', date=datetime.date(2015, 1, 4),
                 service='therapy',
+                fee=20.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
                 income=20.0, currency='euro')
             invoice_b = Invoice(
                 doc_filename='2015_005_parker_peter.doc',
@@ -829,6 +865,7 @@ KNTCRK01G01H663X 2014      5
                 name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
                 city='New York', date=datetime.date(2015, 1, 4),
                 service='therapy',
+                fee=20.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
                 income=20.0, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a, invoice_b], logger=self.logger)
         
@@ -935,6 +972,7 @@ KNTCRK01G01H663X 2014      5
                 name='Peter B. Parker', tax_code='PRKPRT01A01B123M',
                 city='New York', date=datetime.date(2015, 1, 4),
                 service='therapy',
+                fee=0.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
                 income=0.0, currency='euro'))
 
             p.reset()
@@ -1023,7 +1061,7 @@ KNTCRK01G01H663X 2014      5
             )
             self.assertEqual(validation_result.num_warnings(), 0)
             self.assertEqual(validation_result.num_errors(), 0)
-            self.assertEqual(scan_events['added'], 5)
+            self.assertEqual(scan_events['added'], 6)
             self.assertEqual(scan_events['modified'], 0)
             self.assertEqual(scan_events['removed'], 0)
 
@@ -1103,6 +1141,7 @@ KNTCRK01G01H663X 2014      5
                 total=total,
             )
             self.maxDiff = None
+            print(p.string())
             self.assertEqual(p.string(), expected_output)
 
     def test_InvoiceProgram_stats_YEAR(self):
@@ -1188,9 +1227,70 @@ KNTCRK01G01H663X 2014      5
                 name='Peter B. Parker', tax_code='WNYBRC01G01H663S', 
                 city='New York', date=datetime.date(2015, 1, 4),
                 service='therapy',
+                fee=80.0, p_cpa=0.0, cpa=0.0, p_vat=25.0, vat=0.0, p_deduction=0.0, deduction=0.0,
                 income=100, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
         
             validation_result = invoice_program.create_validation_result(warning_mode=(ValidationResult.WARNING_ACTION_RAISE,))
             with self.assertRaises(InvoiceMultipleTaxCodesError):
                 invoice_program.validate_invoice_collection(validation_result, invoice_collection)
+
+    def _test_InvoiceProgram_inconsistency_errors(self, invoice, error_type):
+        with tempfile.NamedTemporaryFile() as db_file:
+            p = StringPrinter()
+            invoice_program = InvoiceProgram(
+                db_filename=db_file.name,
+                logger=self.logger,
+                trace=False,
+                printer=p,
+            )
+    
+            invoice_collection = InvoiceCollection(self._invoices + [invoice], logger=self.logger)
+        
+            validation_result = invoice_program.create_validation_result(error_mode=(ValidationResult.ERROR_ACTION_RAISE,))
+            with self.assertRaises(error_type):
+                invoice_program.validate_invoice_collection(validation_result, invoice_collection)
+
+    def test_InvoiceProgram_InvoiceInconsistentIncomeError(self):
+        invoice = Invoice(
+            doc_filename='2015_004_parker_peter.doc',
+            year=2015, number=4,
+            name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
+            city='New York', date=datetime.date(2015, 1, 4),
+            service='therapy',
+            fee=80.0, p_cpa=0.0, cpa=0.0, p_vat=10.0, vat=8.0, p_deduction=0.0, deduction=0.0,
+            income=100, currency='euro')
+        self._test_InvoiceProgram_inconsistency_errors(invoice, InvoiceInconsistentIncomeError)
+
+    def test_InvoiceProgram_InvoiceInconsistentVatError(self):
+        invoice = Invoice(
+            doc_filename='2015_004_parker_peter.doc',
+            year=2015, number=4,
+            name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
+            city='New York', date=datetime.date(2015, 1, 4),
+            service='therapy',
+            fee=80.0, p_cpa=0.0, cpa=0.0, p_vat=10.0, vat=20.0, p_deduction=0.0, deduction=0.0,
+            income=100, currency='euro')
+        self._test_InvoiceProgram_inconsistency_errors(invoice, InvoiceInconsistentVatError)
+
+    def test_InvoiceProgram_InvoiceInconsistentCpaError(self):
+        invoice = Invoice(
+            doc_filename='2015_004_parker_peter.doc',
+            year=2015, number=4,
+            name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
+            city='New York', date=datetime.date(2015, 1, 4),
+            service='therapy',
+            fee=80.0, p_cpa=5.0, cpa=20.0, p_vat=25.0, vat=25.0, p_deduction=0.0, deduction=0.0,
+            income=125, currency='euro')
+        self._test_InvoiceProgram_inconsistency_errors(invoice, InvoiceInconsistentCpaError)
+
+    def test_InvoiceProgram_InvoiceInconsistentDeductionError(self):
+        invoice = Invoice(
+            doc_filename='2015_004_parker_peter.doc',
+            year=2015, number=4,
+            name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
+            city='New York', date=datetime.date(2015, 1, 4),
+            service='therapy',
+            fee=80.0, p_cpa=25.0, cpa=20.0, p_vat=25.0, vat=25.0, p_deduction=10.0, deduction=7.0,
+            income=132, currency='euro')
+        self._test_InvoiceProgram_inconsistency_errors(invoice, InvoiceInconsistentDeductionError)

@@ -244,7 +244,7 @@ TOTALE                                                                          
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -252,11 +252,11 @@ TOTALE                                                                          
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
+                args=['scan', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), '')
 
-            args=['-d', db_filename.name, 'stats', '-S', '2014-01-10', '-E', '2014-01-27']
+            args=['stats', '-d', db_filename.name, '-S', '2014-01-10', '-E', '2014-01-27']
             if stats_group:
                 args.append('-g{}'.format(stats_group))
             if total is not None:

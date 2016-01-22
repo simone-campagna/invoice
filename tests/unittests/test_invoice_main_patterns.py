@@ -63,7 +63,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -71,7 +71,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
+                args=['patterns', '-d', db_filename.name, '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
 
@@ -79,7 +79,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '-x', '!example/*.Doc', '-x', 'example/*.DOC'],
+                args=['patterns', '-d', db_filename.name, '-x', '!example/*.Doc', '-x', 'example/*.DOC'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_DEFAULT)
 
@@ -88,7 +88,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '-a', 'example/*.doc'],
+                args=['patterns', '-d', db_filename.name, '-a', 'example/*.doc'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_DEFAULT)
 
@@ -100,7 +100,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -108,7 +108,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '--clear'],
+                args=['patterns', '-d', db_filename.name, '--clear'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_CLEAR)
 
@@ -120,7 +120,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init'] + list(glob.glob(os.path.join(self.dirname, '*.doc'))),
+                args=['init', '-d', db_filename.name] + list(glob.glob(os.path.join(self.dirname, '*.doc'))),
             )
             self.assertEqual(p.string(), '')
 
@@ -128,7 +128,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '--clear'],
+                args=['patterns', '-d', db_filename.name, '--clear'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_CLEAR)
 
@@ -140,7 +140,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )   
             self.assertEqual(p.string(), '') 
 
@@ -148,7 +148,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
+                args=['patterns', '-d', db_filename.name, '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
             )   
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
 
@@ -156,7 +156,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns'],
+                args=['patterns', '-d', db_filename.name],
             )   
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
 
@@ -164,7 +164,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '--export', p_file.name],
+                args=['patterns', '-d', db_filename.name, '--export', p_file.name],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
             p_file.flush()
@@ -173,7 +173,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '--clear'],
+                args=['patterns', '-d', db_filename.name, '--clear'],
             )
             self.assertEqual(p.string(), self.PATTERNS_CLEAR)
 
@@ -181,7 +181,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '--import', p_file.name],
+                args=['patterns', '-d', db_filename.name, '--import', p_file.name],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
 
@@ -193,7 +193,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )   
             self.assertEqual(p.string(), '') 
 
@@ -201,7 +201,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
+                args=['patterns', '-d', db_filename.name, '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
             )   
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
 
@@ -209,7 +209,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'patterns', '--edit', '--editor', 'sed "s/DOC/docx/g" -i'],
+                args=['patterns', '-d', db_filename.name, '--edit', '--editor', 'sed "s/DOC/docx/g" -i'],
             )   
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE.replace('DOC', 'docx'))
 

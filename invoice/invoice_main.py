@@ -121,11 +121,16 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
         if n != field_name:
             all_field_names.append(n)
 
+    defaults = {
+        'verbose_level': 0,
+        'dry_run': False,
+        'rc_dir': None,
+        'db_file': None,
+        'trace': type_onoff(os.environ.get("INVOICE_TRACE", "off")),
+    }
     top_level_parser_name = 'main'
     default_validate = True
     default_filters = []
-    default_dry_run = False
-    default_trace = type_onoff(os.environ.get("INVOICE_TRACE", "off"))
     default_order_field_names = None
 
     # configuration
@@ -157,26 +162,26 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     common_parser.add_argument("--db", "-d",
         metavar="F",
         dest="db_file",
-        default=None,
+        default=defaults["db_file"],
         help="file contenente il database")
 
     common_parser.add_argument("--rc-dir", "-R",
         metavar="D",
         dest="rc_dir",
-        default=None,
+        default=defaults["rc_dir"],
         help="directory di configurazione")
 
     common_parser.add_argument("--verbose", "-v",
         dest="verbose_level",
         action="count",
-        default=0,
+        default=defaults["verbose_level"],
         help="aumenta il livello di verbosità")
 
     common_parser.add_argument("--dry-run", "-D",
         metavar="on/off",
         type=type_onoff,
         const=switch_onoff(False),
-        default=default_dry_run,
+        default=defaults["dry_run"],
         nargs='?',
         help="abilita/disabilita la modalità 'dry run' (il database non viene modificato)")
 
@@ -189,7 +194,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
         metavar="on/off",
         type=type_onoff,
         const=switch_onoff(False),
-        default=default_trace,
+        default=defaults["trace"],
         nargs='?',
         help="abilita/disabilita il traceback in caso di errori (per debug)")
 
@@ -257,7 +262,7 @@ fattura:                   '/home/simone/Programs/Programming/invoice/example/20
            rc_dir_expr=conf.RC_DIR_EXPR,
            version=conf.VERSION),
         epilog="",
-        parents=(common_parser, ),
+        parents=(),
         add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -1073,6 +1078,9 @@ e validati.
 
 
     args = top_level_parser.parse_args(args)
+    for key, default in defaults.items():
+        if not hasattr(args, key):
+            setattr(args, key, default)
 
     set_verbose_level(logger, args.verbose_level)
 

@@ -53,7 +53,8 @@ anno numero città         data       codice_fiscale   nome                incas
 """
     LIST_FULL = LIST_SHORT + """\
 2014      4 Gotham City   2014-01-25 WNYBRC01G01H663S Bruce Wayne           51.00 euro  
-2014      5 Smallville    2014-01-29 KNTCRK01G01H663X Clark Kent           152.50 euro  
+2014      5 Smallville    2014-01-29 KNTCRK01G01H663X Clark Kent           153.00 euro  
+2014      6 Smallville    2014-02-28 KNTCRK01G01H663X Clark Kent           216.66 euro  
 """
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
@@ -68,7 +69,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -76,7 +77,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validators'],
+                args=['validators', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EMPTY)
 
@@ -84,7 +85,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validators', '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
+                args=['validators', '-d', db_filename.name, '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -92,7 +93,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validators']
+                args=['validators', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -100,14 +101,14 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan']
+                args=['scan', '-d', db_filename.name]
             )
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list']
+                args=['list', '-d', db_filename.name]
             )
             self.assertEqual(p.string(), self.LIST_SHORT)
 
@@ -119,7 +120,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -127,14 +128,14 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
+                args=['scan', '-d', db_filename.name],
             )
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list'],
+                args=['list', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), self.LIST_FULL)
 
@@ -142,7 +143,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validators', '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
+                args=['validators', '-d', db_filename.name, '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -150,29 +151,14 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validate'],
+                args=['validate', '-d', db_filename.name],
             )
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list'],
-            )
-            self.assertEqual(p.string(), self.LIST_SHORT)
-
-            p.reset()
-            invoice_main(
-                printer=p,
-                logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
-            )
-
-            p.reset()
-            invoice_main(
-                printer=p,
-                logger=self.logger,
-                args=['-d', db_filename.name, 'list'],
+                args=['list', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), self.LIST_SHORT)
 
@@ -180,7 +166,22 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validators', '--clear'],
+                args=['scan', '-d', db_filename.name],
+            )
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['list', '-d', db_filename.name],
+            )
+            self.assertEqual(p.string(), self.LIST_SHORT)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['validators', '-d', db_filename.name, '--clear'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EMPTY)
 
@@ -188,14 +189,14 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
+                args=['scan', '-d', db_filename.name],
             )
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list'],
+                args=['list', '-d', db_filename.name],
             )
             #self.assertEqual(p.string(), self.LIST_SHORT)
 #
@@ -203,14 +204,14 @@ anno numero città         data       codice_fiscale   nome                incas
 #            invoice_main(
 #                printer=p,
 #                logger=self.logger,
-#                args=['-d', db_filename.name, 'scan', '--force-refresh'],
+#                args=['scan', '-d', db_filename.name, '--force-refresh'],
 #            )
 #
 #            p.reset()
 #            invoice_main(
 #                printer=p,
 #                logger=self.logger,
-#                args=['-d', db_filename.name, 'list'],
+#                args=['list', '-d', db_filename.name],
 #            )
             self.assertEqual(p.string(), self.LIST_FULL)
 
@@ -222,7 +223,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -230,7 +231,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validators', '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
+                args=['validators', '-d', db_filename.name, '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -238,7 +239,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validators'],
+                args=['validators', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -246,7 +247,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validators', '--export', v_filename.name],
+                args=['validators', '-d', db_filename.name, '--export', v_filename.name],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -254,7 +255,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validators', '--clear'],
+                args=['validators', '-d', db_filename.name, '--clear'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EMPTY)
 
@@ -262,7 +263,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validators', '--import', v_filename.name],
+                args=['validators', '-d', db_filename.name, '--import', v_filename.name],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -274,7 +275,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -282,7 +283,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validators', '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
+                args=['validators', '-d', db_filename.name, '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -290,7 +291,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validators'],
+                args=['validators', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -298,7 +299,7 @@ anno numero città         data       codice_fiscale   nome                incas
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'validators', '--edit', '--editor', 'sed "s/2014/2028/g" -i'],
+                args=['validators', '-d', db_filename.name, '--edit', '--editor', 'sed "s/2014/2028/g" -i'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE.replace('2014', '2028'))
 

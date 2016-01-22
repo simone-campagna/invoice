@@ -37,12 +37,14 @@ class TestInvoice(unittest.TestCase):
     # invoice
     def test_Invoice(self):
         invoice = Invoice(doc_filename='x.doc', year=2015, number=1, name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
-            city='New York', date=datetime.date(2015, 1, 1), income=200.0, currency='euro',
+            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=200.0, currency='euro',
+            p_vat=0.0, p_cpa=0.0, p_deduction=0.0,
             service='therapy')
 
     def test_InvoiceValidateOk(self):
         invoice = Invoice(doc_filename='x.doc', year=2015, number=1, name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
-            city='New York', date=datetime.date(2015, 1, 1), income=200.0, currency='euro',
+            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=200.0, currency='euro',
+            p_vat=0.0, p_cpa=0.0, p_deduction=0.0,
             service='therapy')
         validation_result = ValidationResult(logger=get_null_logger(), error_mode=(ValidationResult.ERROR_ACTION_RAISE, ))
         invoice.validate(validation_result)
@@ -51,7 +53,8 @@ class TestInvoice(unittest.TestCase):
 
     def test_InvoiceValidateUndefinedField(self):
         invoice = Invoice(doc_filename='x.doc', year=None, number=1, name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
-            city='New York', date=datetime.date(2015, 1, 1), income=200.0, currency='euro',
+            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=200.0, currency='euro',
+            p_vat=0.0, p_cpa=0.0, p_deduction=0.0,
             service='therapy')
         validation_result = ValidationResult(logger=get_null_logger(), error_mode=(ValidationResult.ERROR_ACTION_RAISE, ))
         with self.assertRaises(InvoiceUndefinedFieldError):
@@ -59,7 +62,8 @@ class TestInvoice(unittest.TestCase):
 
     def test_InvoiceValidateYearError(self):
         invoice = Invoice(doc_filename='x.doc', year=2013, number=1, name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
-            city='New York', date=datetime.date(2015, 1, 1), income=200.0, currency='euro',
+            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=200.0, currency='euro',
+            p_vat=0.0, p_cpa=0.0, p_deduction=0.0,
             service='therapy')
         validation_result = ValidationResult(logger=get_null_logger(), error_mode=(ValidationResult.ERROR_ACTION_RAISE, ))
         with self.assertRaises(InvoiceYearError):
@@ -67,7 +71,8 @@ class TestInvoice(unittest.TestCase):
 
     def _test_InvoiceValidateMalformedTaxCode(self, tax_code):
         invoice = Invoice(doc_filename='x.doc', year=2015, number=1, name='Peter B. Parker', tax_code=tax_code, 
-            city='New York', date=datetime.date(2015, 1, 1), income=200.0, currency='euro',
+            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=200.0, currency='euro',
+            p_vat=0.0, p_cpa=0.0, p_deduction=0.0,
             service='therapy')
         validation_result = ValidationResult(logger=get_null_logger(), error_mode=(ValidationResult.ERROR_ACTION_RAISE, ))
         with self.assertRaises(InvoiceMalformedTaxCodeError):

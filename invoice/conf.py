@@ -90,6 +90,13 @@ FIELD_TRANSLATION = collections.OrderedDict((
     ('city',		'città'),
     ('date',		'data'),
     ('service',		'prestazione'),
+    ('fee',		'compenso'),
+    ('p_cpa',		'percentuale_cpa'),
+    ('cpa',		'cpa'),
+    ('p_vat',		'percentuale_iva'),
+    ('vat',		'iva'),
+    ('p_deduction',	'percentuale_ritenuta'),
+    ('deduction',	'ritenuta'),
     ('income',		'incasso'),
     ('currency',	'valuta'),
 ))
@@ -117,7 +124,7 @@ REV_FIELD_TRANSLATION = dict(
 )
 LIST_FIELD_NAMES = FIELD_NAMES + tuple(REV_FIELD_TRANSLATION.keys())
 
-LIST_FIELD_NAMES_SHORT = ('year', 'number', 'date', 'tax_code', 'income', 'currency')
+LIST_FIELD_NAMES_SHORT = ('year', 'number', 'date', 'tax_code', 'fee', 'cpa', 'income', 'currency')
 LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
 LIST_FIELD_NAMES_FULL = FIELD_NAMES
 

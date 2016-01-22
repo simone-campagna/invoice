@@ -115,11 +115,21 @@ label = codice fiscale
 [città e data]
 regexpr = ^\s*(?P<city>[^,]+)(?:,|\s)\s*(?P<date>\d{1,2}/\d{1,2}/\d\d\d\d)\s*$
 
-[importo e valuta]
+[incasso e valuta]
 regexpr = Totale\s+fattura\s+(?P<income>[\d,\.]*)\s+(?P<currency>\w+)\s*$
 
-[prestazione]
-regexpr = \s*(?:N\s*°\s*\d+|[Pp]restazione\s*:)\s*(?P<service>[^\d]*)(?:\s+[Pp][Ee][Rr]\s+)?\s*
+[prestazione e compenso]
+regexpr = \s*(?:N\s*°\s*\d+|[Pp]restazione\s*:)\s*(?P<service>[^\d]*)(?:\s+[Pp][Ee][Rr]\s+)?\s*(?P<fee>[\d,\.]*)
+
+[iva]
+regexpr = \s*IVA\s+(?P<p_vat>[\d,\.]+)%\s+(?P<vat>[\d,\.]*)\s+(?:\w+)
+
+[ritenuta]
+regexpr = \s*Ritenuta d'acconto\s+(?P<p_deduction>[\d,\.]+)%\s+(?P<deduction>[\d,\.]*)\s+(?:\w+)
+
+[cpa]
+regexpr = \s*Contributo\s+previdenziale\s+(?P<p_cpa>[\d,\.]+)%\s+(?P<cpa>[\d,\.]*)\s+(?:\w+)
+
 """
 
 def load_scanner(scanner_config_filename):
@@ -128,7 +138,7 @@ def load_scanner(scanner_config_filename):
         with open(scanner_config_filename, "w") as f_out:
             f_out.write(_DEFAULT_SCANNER_CONFIG)
 
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(interpolation=None)
     config.read(scanner_config_filename)
     scanner = Scanner()
     for section_name in config.sections():

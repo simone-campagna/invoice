@@ -39,6 +39,8 @@ class TestInvoiceCollection(unittest.TestCase):
             name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
             city='New York', date=datetime.date(2015, 1, 1),
             service='therapy',
+            fee=200.0, vat=0.0, cpa=0.0, deduction=0.0,
+            p_vat=0.0, p_deduction=0.0, p_cpa=0.0,
             income=200.0, currency='euro')
         self._invoice_002_peter_parker = Invoice(
             doc_filename='2015_002_peter_parker.doc',
@@ -46,6 +48,8 @@ class TestInvoiceCollection(unittest.TestCase):
             name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
             city='New York', date=datetime.date(2015, 1, 2),
             service='therapy',
+            fee=100.0, vat=0.0, cpa=0.0, deduction=0.0,
+            p_vat=0.0, p_deduction=0.0, p_cpa=0.0,
             income=100.0, currency='euro')
         self._invoice_003_peter_parker = Invoice(
             doc_filename='2015_003_peter_parser.doc',
@@ -53,6 +57,8 @@ class TestInvoiceCollection(unittest.TestCase):
             name='Peter B. Parker', tax_code='PRKPRT01A01B123C', 
             city='New York', date=datetime.date(2015, 1, 3),
             service='therapy',
+            fee=150.0, vat=0.0, cpa=0.0, deduction=0.0,
+            p_vat=0.0, p_deduction=0.0, p_cpa=0.0,
             income=150.0, currency='euro')
         self._invoices = [
             self._invoice_001_peter_parker,

@@ -29,6 +29,11 @@ __all__ = [
     'InvoiceMultipleTaxCodesError',
     'InvoiceMultipleInvoicesPerDayError',
     'InvoiceUndefinedFieldError',
+    'InvoiceInconsistentIncomeError',
+    'InvoiceInconsistentCpaError',
+    'InvoiceInconsistentVatError',
+    'InvoiceInconsistentDeductionError',
+    'InvoicePartialUpdateError',
     'InvoiceYearError',
     'InvoiceDateError',
     'InvoiceNumberingError',
@@ -146,4 +151,20 @@ class InvoiceDateError(InvoiceValidationError):
 class InvoiceYearError(InvoiceDateError):
     EXC_CODE = '015'
     EXC_DESCRIPTION = "l'anno non è corretto"
+
+class InvoiceInconsistentIncomeError(InvoiceValidationError):
+    EXC_CODE = '016'
+    EXC_DESCRIPTION = "l'incasso non corrisponde alla somma delle singole componenti"
+
+class InvoiceInconsistentCpaError(InvoiceValidationError):
+    EXC_CODE = '017'
+    EXC_DESCRIPTION = "la CPA non è consistente con quanto dichiarato"
+
+class InvoiceInconsistentVatError(InvoiceValidationError):
+    EXC_CODE = '018'
+    EXC_DESCRIPTION = "l'IVA non è consistente con quanto dichiarato"
+
+class InvoiceInconsistentDeductionError(InvoiceValidationError):
+    EXC_CODE = '019'
+    EXC_DESCRIPTION = "la ritenuta d'acconto non è consistente con quanto dichiarato"
 

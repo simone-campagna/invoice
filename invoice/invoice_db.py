@@ -148,6 +148,13 @@ class InvoiceDb(Db):
                 ('city', Str()),
                 ('date', Date()),
                 ('service', Str()),
+                ('fee', Float()),
+                ('p_cpa', Float()),
+                ('cpa', Float()),
+                ('p_vat', Float()),
+                ('vat', Float()),
+                ('p_deduction', Float()),
+                ('deduction', Float()),
                 ('income', Float()),
                 ('currency', Str()),
             ),
@@ -384,7 +391,7 @@ END"""
 
     def export_table(self, table_name, filename, connection=None):
         records = self.read(table_name, connection=connection)
-        config = configparser.ConfigParser()
+        config = configparser.ConfigParser(interpolation=None)
         table_info = self.TABLES[table_name]
         fields = table_info.fields
         for c, record in enumerate(records):
@@ -397,7 +404,7 @@ END"""
             config.write(f_out)
 
     def import_table(self, table_name, filename, connection=None):
-        config = configparser.ConfigParser()
+        config = configparser.ConfigParser(interpolation=None)
         config.read(filename)
         table_info = self.TABLES[table_name]
         fields = table_info.fields

@@ -47,6 +47,7 @@ class InvoiceReader(object):
     DATE_FORMATS = (
         "%d/%m/%Y",
     )
+    NULLABLE_FLOAT_FIELDS = ("p_vat", "vat", "p_deduction", "deduction")
     def __init__(self, logger=None):
         if logger is None:
             logger = get_default_logger()
@@ -65,11 +66,21 @@ class InvoiceReader(object):
                 'city': str,
                 'date': self.convert_date,
                 'service': self.convert_service,
-                'income': self.convert_income,
+                'fee': self.convert_money,
+                'income': self.convert_money,
+                'p_cpa': float,
+                'cpa': self.convert_money,
+                'p_vat': float,
+                'vat': self.convert_nullable_money,
+                'p_deduction': float,
+                'deduction': self.convert_nullable_money,
                 'currency': str,
             }
             scanner = get_scanner()
             lines_dict, values_dict = scanner.scan(self.read_text(doc_filename))
+            for key in self.NULLABLE_FLOAT_FIELDS:
+                if key not in values_dict:
+                    values_dict[key] = "0.0"
             for label, lines in lines_dict.items():
                 if len(lines) > 1:
                     message = "fattura {}: linee {!r} duplicate".format(doc_filename, label)
@@ -98,7 +109,11 @@ class InvoiceReader(object):
         return income_s.strip()
 
     @classmethod
-    def convert_income(cls, income_s):
+    def convert_money(cls, income_s):
+        return float(income_s.replace('.', '').replace(',', '.'))
+
+    @classmethod
+    def convert_nullable_money(cls, income_s):
         return float(income_s.replace('.', '').replace(',', '.'))
 
     @classmethod

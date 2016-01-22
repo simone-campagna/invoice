@@ -49,7 +49,7 @@ class Test_invoice_main_scan_error(unittest.TestCase):
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -57,7 +57,7 @@ class Test_invoice_main_scan_error(unittest.TestCase):
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
+                args=['scan', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), '')
 
@@ -65,7 +65,7 @@ class Test_invoice_main_scan_error(unittest.TestCase):
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number'],
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -74,6 +74,7 @@ PRKPRT01G01H663M 2014      2
 BNNBRC01G01H663S 2014      3
 WNYBRC01G01H663S 2014      4
 KNTCRK01G01H663X 2014      5
+KNTCRK01G01H663X 2014      6
 """)
 
     def test_invoice_main_err_partial_update_off(self):
@@ -84,7 +85,7 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', '--partial-update=off', os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
+                args=['init', '-d', db_filename.name, '--partial-update=off', os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -92,7 +93,7 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'scan'],
+                args=['scan', '-d', db_filename.name],
             )
             self.assertEqual(p.string(), '')
 
@@ -100,7 +101,7 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--fields', 'tax_code,year,number', '--header=off'],
+                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--header=off'],
             )
             self.assertEqual(p.string(), '')
 
@@ -121,7 +122,7 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-R', rc_dir, 'init', os.path.join(data_dir, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(data_dir, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -129,7 +130,7 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-R', rc_dir, 'scan'],
+                args=['scan', '-R', rc_dir],
             )
             self.assertEqual(p.string(), '')
 
@@ -137,7 +138,7 @@ KNTCRK01G01H663X 2014      5
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-R', rc_dir, 'list', '--fields', 'tax_code,year,number,date'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number,date'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero data      
@@ -146,6 +147,7 @@ PRKPRT01G01H663M 2014      2 2014-01-03
 BNNBRC01G01H663S 2014      3 2014-01-22
 WNYBRC01G01H663S 2014      4 2014-01-25
 KNTCRK01G01H663X 2014      5 2014-01-29
+KNTCRK01G01H663X 2014      6 2014-02-28
 """)
 
             for f in glob.glob(os.path.join(self.dirname, subdir, '*.doc')):
@@ -178,7 +180,7 @@ PRKPRT01G01H663M 2014      2 2014-12-03
 
             p = StringPrinter()
 
-            args = ['-R', rc_dir, 'init', os.path.join(data_dir, '*.doc')]
+            args = ['init', '-R', rc_dir, os.path.join(data_dir, '*.doc')]
             if remove_orphaned:
                 args.append("--remove-orphaned=on")
             else:
@@ -195,7 +197,7 @@ PRKPRT01G01H663M 2014      2 2014-12-03
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-R', rc_dir, 'scan'],
+                args=['scan', '-R', rc_dir],
             )
             self.assertEqual(p.string(), '')
 
@@ -208,13 +210,14 @@ PRKPRT01G01H663M 2014      2 2014-01-03
 BNNBRC01G01H663S 2014      3 2014-01-22
 WNYBRC01G01H663S 2014      4 2014-01-25
 KNTCRK01G01H663X 2014      5 2014-01-29
+KNTCRK01G01H663X 2014      6 2014-02-28
 """
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-R', rc_dir, 'list', '--fields', 'tax_code,year,number,date'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number,date'],
             )
             self.assertEqual(p.string(), out_a + out_b)
 
@@ -226,7 +229,7 @@ KNTCRK01G01H663X 2014      5 2014-01-29
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-R', rc_dir, 'scan'],
+                args=['scan', '-R', rc_dir],
             )
             self.assertEqual(p.string(), '')
 
@@ -239,7 +242,7 @@ KNTCRK01G01H663X 2014      5 2014-01-29
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-R', rc_dir, 'list', '--fields', 'tax_code,year,number,date'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number,date'],
             )
             self.assertEqual(p.string(), out)
 

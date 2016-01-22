@@ -48,7 +48,7 @@ class Test_invoice_main(unittest.TestCase):
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -57,7 +57,7 @@ class Test_invoice_main(unittest.TestCase):
                 invoice_main(
                     printer=p,
                     logger=self.logger,
-                    args=['-d', db_filename.name, 'list', '--fields', 'tax_code,missing_field'],
+                    args=['list', '-d', db_filename.name, '--fields', 'tax_code,missing_field'],
                 )
 
     def test_invoice_main_invalid_onoff(self):
@@ -69,7 +69,7 @@ class Test_invoice_main(unittest.TestCase):
                 invoice_main(
                     printer=p,
                     logger=self.logger,
-                    args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc'), '--partial-update=disabled'],
+                    args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc'), '--partial-update=disabled'],
                 )
 
     def test_invoice_main_invalid_filter(self):
@@ -80,7 +80,7 @@ class Test_invoice_main(unittest.TestCase):
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'init', os.path.join(self.dirname, '*.doc')],
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -88,5 +88,5 @@ class Test_invoice_main(unittest.TestCase):
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['-d', db_filename.name, 'list', '--filter', 'città = "Rome"'],
+                args=['list', '-d', db_filename.name, '--filter', 'città = "Rome"'],
             )
