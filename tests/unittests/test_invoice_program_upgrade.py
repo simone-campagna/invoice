@@ -65,16 +65,21 @@ class TestInvoiceProgramUpgrade(unittest.TestCase):
                 remove_orphaned=True,
             )
 
+            if VERSION.minor == 0 and  VERSION.patch == 0:
+                # no check is possible
+                return
+
             Upgrader.full_downgrade(db=invoice_program.db)
             
             p.reset()
             invoice_program.impl_version(
                 upgrade=False,
             )
+            print(p.string())
             self.assertEqual(p.string(), """\
 versione del programma: {}
 versione del database:  {}
-""".format(VERSION, Version(2, 0, 0)))
+""".format(VERSION, Version(3, 0, 0)))
 
             p.reset()
             with self.assertRaises(InvoiceVersionError) as cm:
@@ -89,7 +94,7 @@ versione del programma: {}
 versione del database:  {}
 upgrade...
 versione del database:  {}
-""".format(VERSION, Version(2, 0, 0), VERSION))
+""".format(VERSION, Version(3, 0, 0), VERSION))
 
             final_version = Version(VERSION.major, VERSION.minor, VERSION.patch + 100)
             Upgrader.full_upgrade(db=invoice_program.db, final_version=final_version)
