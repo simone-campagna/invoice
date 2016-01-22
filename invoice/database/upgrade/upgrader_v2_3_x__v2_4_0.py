@@ -62,6 +62,7 @@ class Upgrader_v2_3_x__v2_4_0(MajorMinorUpgrader):
     )
     def impl_downgrade(self, db, version_from, version_to, connection=None):
         return self.do_downgrade(
+            table_name="configuration",
             old_table=self.CONFIGURATION_TABLE_v2_3_x,
             new_table=self.CONFIGURATION_TABLE_v2_4_0,
             new_to_old=lambda x: {},
@@ -73,6 +74,7 @@ class Upgrader_v2_3_x__v2_4_0(MajorMinorUpgrader):
         
     def impl_upgrade(self, db, version_from, version_to, connection=None):
         return self.do_upgrade(
+            table_name="configuration",
             old_table=self.CONFIGURATION_TABLE_v2_3_x,
             new_table=self.CONFIGURATION_TABLE_v2_4_0,
             old_to_new=lambda x: {'table_mode': conf.DEFAULT_TABLE_MODE},

@@ -72,6 +72,7 @@ class Upgrader_v2_4_x__v2_5_0(MajorMinorUpgrader):
                 'error_mode': ValidationResult.DEFAULT_ERROR_MODE,
             }
         return self.do_downgrade(
+            table_name="configuration",
             old_table=self.CONFIGURATION_TABLE_v2_4_x,
             new_table=self.CONFIGURATION_TABLE_v2_5_0,
             new_to_old=new_to_old,
@@ -89,6 +90,7 @@ class Upgrader_v2_4_x__v2_5_0(MajorMinorUpgrader):
                 'error_mode': ("{}:*".format(old_data['error_mode']), ),
             }
         return self.do_upgrade(
+            table_name="configuration",
             old_table=self.CONFIGURATION_TABLE_v2_4_x,
             new_table=self.CONFIGURATION_TABLE_v2_5_0,
             old_to_new=old_to_new,

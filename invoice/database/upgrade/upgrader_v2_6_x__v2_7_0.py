@@ -80,6 +80,7 @@ class Upgrader_v2_6_x__v2_7_0(MajorMinorUpgrader):
                 'spy_delay': conf.DEFAULT_SPY_DELAY,
             }
         return self.do_downgrade(
+            table_name="configuration",
             old_table=self.CONFIGURATION_TABLE_v2_6_x,
             new_table=self.CONFIGURATION_TABLE_v2_7_0,
             new_to_old=new_to_old,
@@ -102,6 +103,7 @@ class Upgrader_v2_6_x__v2_7_0(MajorMinorUpgrader):
                 'spy_delay': conf.DEFAULT_SPY_DELAY,
             }
         self.do_upgrade(
+            table_name="configuration",
             old_table=self.CONFIGURATION_TABLE_v2_6_x,
             new_table=self.CONFIGURATION_TABLE_v2_7_0,
             old_to_new=old_to_new,

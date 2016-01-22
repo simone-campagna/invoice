@@ -28,6 +28,7 @@ __all__ = [
     'Upgrader_v2_4_x__v2_5_0',
     'Upgrader_v2_5_x__v2_6_0',
     'Upgrader_v2_6_x__v2_7_0',
+    'Upgrader_v2_7_x__v3_0_0',
 ]
 
 from .upgrader import UpgraderMeta, Upgrader, MajorMinorUpgrader
@@ -39,3 +40,4 @@ from .upgrader_v2_3_x__v2_4_0 import Upgrader_v2_3_x__v2_4_0
 from .upgrader_v2_4_x__v2_5_0 import Upgrader_v2_4_x__v2_5_0
 from .upgrader_v2_5_x__v2_6_0 import Upgrader_v2_5_x__v2_6_0
 from .upgrader_v2_6_x__v2_7_0 import Upgrader_v2_6_x__v2_7_0
+from .upgrader_v2_7_x__v3_0_0 import Upgrader_v2_7_x__v3_0_0
