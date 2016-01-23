@@ -537,8 +537,8 @@ class InvoiceProgram(object):
         #"number", "fee", "cpa", "taxable_income", "vat", "empty", "deduction", "income"
         header = ["N.DOC.", "COMPENSO", "C.P.A.", "IMPONIBILE IVA", "IVA 22%", "ES.IVA ART.10", "R.A.", "TOTALE"]
         total_keys = 'fee', 'cpa', 'taxable_income', 'vat', 'deduction', 'income'
-        with document(file=self.get_doc_file(output_filename), mode=table_mode) as doc:
-            page_template = doc.create_page_template(field_names=all_field_names, header=header, logger=self.logger)
+        with document(file=self.get_doc_file(output_filename), mode=table_mode, logger=self.logger) as doc:
+            page_template = doc.create_page_template(field_names=all_field_names, header=header)
             for month in range(1, 12 + 1):
                 m_filter = lambda i: i.date.month == month
                 invoices = self.filter_invoice_collection(invoice_collection, filters=[m_filter])
