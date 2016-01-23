@@ -55,12 +55,17 @@ from .spy.spy_function import spy_function
 from .validation_result import ValidationResult
 from .week import WeekManager
 from .database.db_types import Path
+# TODO remove start
 from .table import Table
+# TODO remove end
+from .document import document, item_getter
 from . import conf
 from .scanner import load_scanner
 from .version import VERSION
 from .ee import snow
 
+
+MReport = collections.namedtuple("MReport", ["number", "fee", "cpa", "taxable_income", "vat", "empty", "deduction", "income"])
 
 class FileDateTimes(object):
     def __init__(self):
@@ -253,6 +258,10 @@ class InvoiceProgram(object):
 
     def program_report(self, *, filters=None):
         self.impl_report(filters=filters)
+        return 0
+
+    def program_yreport(self, *, year=None, table_mode=None, output_filename=None, header=None):
+        self.impl_yreport(year=year, table_mode=table_mode, output_filename=output_filename, header=header)
         return 0
 
     def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, header=None, table_mode=None, output_filename=None):
@@ -515,6 +524,64 @@ class InvoiceProgram(object):
             filters = ()
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters)
         self.report_invoice_collection(invoice_collection)
+
+    def impl_yreport(self, *, year=None, table_mode=None, output_filename=None, header=None):
+        table_mode = self.db.get_config_option('table_mode', table_mode)
+        header = self.db.get_config_option('header', table_mode)
+        self.db.check()
+        filters = []
+        if year is None:
+            year = datetime.datetime.now().year
+        filters.append(lambda i: i.year == year)
+        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters)
+        
+        all_field_names = MReport._fields
+
+        #"number", "fee", "cpa", "taxable_income", "vat", "empty", "deduction", "income"
+        header = ["N.DOC.", "COMPENSO", "C.P.A.", "IMPONIBILE IVA", "IVA 22%", "ES.IVA ART.10", "R.A.", "TOTALE"]
+        total_keys = 'fee', 'cpa', 'taxable_income', 'vat', 'deduction', 'income'
+        with document(file=self.get_doc_file(output_filename), mode=table_mode) as doc:
+            page_template = doc.create_page_template(field_names=all_field_names, header=header, logger=self.logger)
+            for month in range(1, 12 + 1):
+                m_filter = lambda i: i.date.month == month
+                invoices = self.filter_invoice_collection(invoice_collection, filters=[m_filter])
+                rows = []
+                total = {}
+                for key in total_keys:
+                    total[key] = 0.0
+                for invoice in invoices:
+                    mreport = MReport(
+                        number=invoice.number,
+                        fee=invoice.fee,
+                        cpa=invoice.cpa,
+                        taxable_income=invoice.fee + invoice.cpa,
+                        vat=invoice.vat,
+                        empty="",
+                        deduction=invoice.deduction,
+                        income=invoice.income,
+                    )
+                    rows.append(mreport)
+                    for key in total_keys:
+                        val = getattr(mreport, key)
+                        if val is not None:
+                            total[key] += val
+                total["number"] = ""
+                total["empty"] = ""
+                rows.append(MReport(**total))
+    
+                # TODO remove
+                # table = Table(
+                #     field_names=all_field_names,
+                #     mode=table_mode,
+                #     header=header,
+                #     #align=align,
+                #     #convert=convert,
+                #     #getter=Table.ITEM_GETTER,
+                #     logger=self.logger,
+                # )
+                # print(month)
+                # self.write_table(table=table, data=rows, output_filename=output_filename)
+                doc.add_page(page_template=page_template, data=rows, title=str(month))
 
     def _get_year_group_value(self, invoices, year):
         return (year,
@@ -790,16 +857,27 @@ class InvoiceProgram(object):
                 row['invoice_count_bar'] = bar(row['invoice_count'], max_invoice_count)
             if total:
                 rows.append(total_row)
-            table = Table(
-                field_names=all_field_names,
-                mode=table_mode,
-                header=header,
-                align=align,
-                convert=convert,
-                getter=Table.ITEM_GETTER,
-                logger=self.logger,
-            )
-            self.write_table(table=table, data=rows, output_filename=output_filename)
+            with document(file=self.get_doc_file(output_filename), mode=table_mode) as doc:
+                page_template = doc.create_page_template(
+                    field_names=all_field_names,
+                    header=header,
+                    align=align,
+                    convert=convert,
+                    getter=item_getter,
+                    logger=self.logger)
+                doc.add_page(page_template, rows)
+# TODO remove start
+#            table = Table(
+#                field_names=all_field_names,
+#                mode=table_mode,
+#                header=header,
+#                align=align,
+#                convert=convert,
+#                getter=Table.ITEM_GETTER,
+#                logger=self.logger,
+#            )
+#            self.write_table(table=table, data=rows, output_filename=output_filename)
+# TODO remove start
 
 
     def impl_legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode):
@@ -1168,13 +1246,19 @@ class InvoiceProgram(object):
             validation_result.num_warnings()))
         return validation_result
 
-    def write_table(self, table, data, output_filename=None):
-        if output_filename is not None:
-            table.write(data=data, to=output_filename)
+    def get_doc_file(self, output_filename):
+        if output_filename is None:
+            return self.printer.stream
         else:
-            if table.mode == conf.TABLE_MODE_XLSX:
-                raise InvoiceArgumentError("non è possibile produrre una tabella in formato {} su terminale; utilizzare --output/-o".format(table.mode))
-            table.write(data=data, to=self.printer)
+            return output_filename
+
+# TODO remove    def write_table(self, table, data, output_filename=None):
+# TODO remove        if output_filename is not None:
+# TODO remove            table.write(data=data, to=output_filename)
+# TODO remove        else:
+# TODO remove            if table.mode == conf.TABLE_MODE_XLSX:
+# TODO remove                raise InvoiceArgumentError("non è possibile produrre una tabella in formato {} su terminale; utilizzare --output/-o".format(table.mode))
+# TODO remove            table.write(data=data, to=self.printer)
 
     def list_invoice_collection(self, invoice_collection, list_field_names=None, header=None, order_field_names=None, table_mode=None, output_filename=None):
         list_field_names = self.db.get_config_option('list_field_names', list_field_names)
@@ -1190,21 +1274,38 @@ class InvoiceProgram(object):
         if header:
             header = [Invoice.get_field_translation(field_name) for field_name in list_field_names]
         digits = 1 + int(math.log10(max(1, len(invoices))))
-        table = Table(
-            field_names=list_field_names,
-            mode=table_mode,
-            header=header,
-            convert={
-                'number': lambda n: "{n:0{digits}d}".format(n=n, digits=digits),
-                'income': lambda i: "{:.2f}".format(i),
-            },
-            align={
-                'number': '>',
-                'income': '>',
-            },
-            logger=self.logger,
-        )
-        self.write_table(table=table, data=invoices, output_filename=output_filename)
+        with document(file=self.get_doc_file(output_filename), mode=table_mode) as doc:
+            page_template = doc.create_page_template(
+                field_names=list_field_names,
+                header=header,
+                convert={
+                    'number': lambda n: "{n:0{digits}d}".format(n=n, digits=digits),
+                    'income': lambda i: "{:.2f}".format(i),
+                },
+                align={
+                    'number': '>',
+                    'income': '>',
+                },
+                logger=self.logger,
+            )
+            doc.add_page(page_template, invoices)
+# TODO remove start
+#        table = Table(
+#            field_names=list_field_names,
+#            mode=table_mode,
+#            header=header,
+#            convert={
+#                'number': lambda n: "{n:0{digits}d}".format(n=n, digits=digits),
+#                'income': lambda i: "{:.2f}".format(i),
+#            },
+#            align={
+#                'number': '>',
+#                'income': '>',
+#            },
+#            logger=self.logger,
+#        )
+#        self.write_table(table=table, data=invoices, output_filename=output_filename)
+# TODO remove start
 
     def dump_invoice_collection(self, invoice_collection):
         invoice_collection.sort()

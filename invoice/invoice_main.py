@@ -693,6 +693,20 @@ Per ciascun anno, vengono mostrate le seguenti informazioni:
         function_arguments=('filters', ),
     )
 
+    ### report_parser ###
+    yreport_parser = add_subparser(subparsers,
+        "yreport",
+        parents=(common_parser, ),
+        add_help=False,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""\
+Mostra un report per anno""",
+    )
+    yreport_parser.set_defaults(
+        function_name="program_yreport",
+        function_arguments=('year', 'output_filename', 'table_mode'),
+    )
+
     ### stats_parser ###
     stats_parser = add_subparser(subparsers,
         "stats",
@@ -820,7 +834,7 @@ e validati.
             default=default_list_field_names,
             help="selezione manuale dei campi, ad esempio 'anno,codice_fiscale,città' [{}]".format('|'.join(all_field_names)))
 
-    for parser in init_parser, config_parser, list_parser, scan_parser:
+    for parser in init_parser, config_parser, list_parser, scan_parser, yreport_parser:
         parser.add_argument("--table-mode", "-m",
             dest="table_mode",
             choices=conf.TABLE_MODES,
@@ -835,7 +849,7 @@ e validati.
             default=default_max_interruption_days,
             help="numero di giorni massimo di interruzione di un incarico")
 
-    for parser in list_parser, scan_parser:
+    for parser in list_parser, scan_parser, yreport_parser:
         parser.add_argument("--output",
             dest="output_filename",
             type=str,
@@ -873,6 +887,14 @@ e validati.
             type=type_years_filter,
             action="append",
             default=default_filters,
+            help="filtra le fatture in base all'anno")
+
+    for parser in (yreport_parser,):
+        parser.add_argument("--year", "-y",
+            metavar="Y",
+            dest="year",
+            type=int,
+            default=None,
             help="filtra le fatture in base all'anno")
 
     ### filter options
