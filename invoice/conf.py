@@ -62,6 +62,9 @@ __all__ = [
     'WEEKDAY_TRANSLATION',
     'WEEKDAY_TRANSLATION_DICT',
     'WEEKDAY_NUMBER',
+    'MONTH_TRANSLATION_DICT',
+    'MONTH',
+    'MONTH_TRANSLATION',
     'setup',
     'get_rc_dir',
     'get_db_file',
@@ -117,6 +120,24 @@ WEEKDAY_NUMBER = {}
 for c, (weekday, weekday_translation) in enumerate(WEEKDAY_TRANSLATION_DICT.items()):
     WEEKDAY_NUMBER[weekday] = c
     WEEKDAY_NUMBER[weekday_translation] = c
+
+MONTH_TRANSLATION_DICT = collections.OrderedDict((
+    ('January',		'Gennaio'),
+    ('February',	'Febbraio'),
+    ('March',		'Marzo'),
+    ('April',		'Aprile'),
+    ('May',		'Maggio'),
+    ('June',		'Giugno'),
+    ('July',		'Luglio'),
+    ('August',		'Agosto'),
+    ('September',	'Settembre'),
+    ('October',		'Ottobre'),
+    ('November',	'Novembre'),
+    ('December',	'Dicembre'),
+))
+
+MONTH = tuple(MONTH_TRANSLATION_DICT.keys())
+MONTH_TRANSLATION = tuple(MONTH_TRANSLATION_DICT.values())
 
 FIELD_NAMES = tuple(FIELD_TRANSLATION.keys())
 REV_FIELD_TRANSLATION = dict(

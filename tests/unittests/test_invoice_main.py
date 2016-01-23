@@ -247,6 +247,78 @@ PRKPRT01G01H663M 2014      2
             )
             self.assertEqual(p.string(), '')
 
+    def test_invoice_main_summary(self):
+        with tempfile.NamedTemporaryFile() as db_filename:
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['scan', '-d', db_filename.name],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['summary', '-d', db_filename.name, '--year', '2014'],
+            )
+            print(p.string())
+            self.assertEqual(p.string(), """\
+=== Gennaio ===
+N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
+1      50.0     1.0    51.0           0.0                   0.0  51.0  
+2      75.0     1.5    76.5           0.0                   0.0  76.5  
+3      100.0    2.0    102.0          0.0                   0.0  102.0 
+4      50.0     1.0    51.0           0.0                   0.0  51.0  
+5      150.0    3.0    153.0          0.0                   0.0  153.0 
+       425.0    8.5    433.5          0.0                   0.0  433.5 
+=== Febbraio ===
+N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
+6      150.0    3.0    153.0          33.66                 30.0 216.66
+       150.0    3.0    153.0          33.66                 30.0 216.66
+=== Marzo ===
+N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
+       0.0      0.0    0.0            0.0                   0.0  0.0   
+=== Aprile ===
+N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
+       0.0      0.0    0.0            0.0                   0.0  0.0   
+=== Maggio ===
+N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
+       0.0      0.0    0.0            0.0                   0.0  0.0   
+=== Giugno ===
+N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
+       0.0      0.0    0.0            0.0                   0.0  0.0   
+=== Luglio ===
+N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
+       0.0      0.0    0.0            0.0                   0.0  0.0   
+=== Agosto ===
+N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
+       0.0      0.0    0.0            0.0                   0.0  0.0   
+=== Settembre ===
+N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
+       0.0      0.0    0.0            0.0                   0.0  0.0   
+=== Ottobre ===
+N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
+       0.0      0.0    0.0            0.0                   0.0  0.0   
+=== Novembre ===
+N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
+       0.0      0.0    0.0            0.0                   0.0  0.0   
+=== Dicembre ===
+N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
+       0.0      0.0    0.0            0.0                   0.0  0.0   
+""")
+
     def test_invoice_main_list(self):
         with tempfile.NamedTemporaryFile() as db_filename:
             p = StringPrinter()

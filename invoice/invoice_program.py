@@ -257,8 +257,8 @@ class InvoiceProgram(object):
         self.impl_report(filters=filters)
         return 0
 
-    def program_yreport(self, *, year=None, table_mode=None, output_filename=None, header=None):
-        self.impl_yreport(year=year, table_mode=table_mode, output_filename=output_filename, header=header)
+    def program_summary(self, *, year=None, table_mode=None, output_filename=None, header=None):
+        self.impl_summary(year=year, table_mode=table_mode, output_filename=output_filename, header=header)
         return 0
 
     def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, header=None, table_mode=None, output_filename=None):
@@ -522,7 +522,7 @@ class InvoiceProgram(object):
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters)
         self.report_invoice_collection(invoice_collection)
 
-    def impl_yreport(self, *, year=None, table_mode=None, output_filename=None, header=None):
+    def impl_summary(self, *, year=None, table_mode=None, output_filename=None, header=None):
         table_mode = self.db.get_config_option('table_mode', table_mode)
         header = self.db.get_config_option('header', table_mode)
         self.db.check()
@@ -566,7 +566,7 @@ class InvoiceProgram(object):
                 total["empty"] = ""
                 rows.append(MReport(**total))
     
-                doc.add_page(page_template=page_template, data=rows, title=str(month))
+                doc.add_page(page_template=page_template, data=rows, title=conf.MONTH_TRANSLATION[month - 1])
 
     def _get_year_group_value(self, invoices, year):
         return (year,
