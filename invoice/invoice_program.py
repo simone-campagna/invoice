@@ -55,9 +55,6 @@ from .spy.spy_function import spy_function
 from .validation_result import ValidationResult
 from .week import WeekManager
 from .database.db_types import Path
-# TODO remove start
-from .table import Table
-# TODO remove end
 from .document import document, item_getter
 from . import conf
 from .scanner import load_scanner
@@ -569,18 +566,6 @@ class InvoiceProgram(object):
                 total["empty"] = ""
                 rows.append(MReport(**total))
     
-                # TODO remove
-                # table = Table(
-                #     field_names=all_field_names,
-                #     mode=table_mode,
-                #     header=header,
-                #     #align=align,
-                #     #convert=convert,
-                #     #getter=Table.ITEM_GETTER,
-                #     logger=self.logger,
-                # )
-                # print(month)
-                # self.write_table(table=table, data=rows, output_filename=output_filename)
                 doc.add_page(page_template=page_template, data=rows, title=str(month))
 
     def _get_year_group_value(self, invoices, year):
@@ -866,19 +851,6 @@ class InvoiceProgram(object):
                     getter=item_getter,
                     logger=self.logger)
                 doc.add_page(page_template, rows)
-# TODO remove start
-#            table = Table(
-#                field_names=all_field_names,
-#                mode=table_mode,
-#                header=header,
-#                align=align,
-#                convert=convert,
-#                getter=Table.ITEM_GETTER,
-#                logger=self.logger,
-#            )
-#            self.write_table(table=table, data=rows, output_filename=output_filename)
-# TODO remove start
-
 
     def impl_legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode):
         invoice_collection_reader = InvoiceCollectionReader(trace=self.trace, logger=self.logger)
@@ -1289,23 +1261,6 @@ class InvoiceProgram(object):
                 logger=self.logger,
             )
             doc.add_page(page_template, invoices)
-# TODO remove start
-#        table = Table(
-#            field_names=list_field_names,
-#            mode=table_mode,
-#            header=header,
-#            convert={
-#                'number': lambda n: "{n:0{digits}d}".format(n=n, digits=digits),
-#                'income': lambda i: "{:.2f}".format(i),
-#            },
-#            align={
-#                'number': '>',
-#                'income': '>',
-#            },
-#            logger=self.logger,
-#        )
-#        self.write_table(table=table, data=invoices, output_filename=output_filename)
-# TODO remove start
 
     def dump_invoice_collection(self, invoice_collection):
         invoice_collection.sort()

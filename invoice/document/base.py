@@ -44,7 +44,7 @@ class BasePageTemplate(metaclass=abc.ABCMeta):
             self.header = None
         else:
             self.show_header = True
-            if header is None:
+            if header is None or header is True:
                 self.header = field_names
             else:
                 self.header = header
@@ -74,8 +74,13 @@ class BaseDocument(metaclass=abc.ABCMeta):
         self.page_options = page_options
 
     @abc.abstractmethod
-    def create_page_template(self, field_names, *, header=None, getter=None, convert=None, align=None):
+    def create_page_template(self, field_names, *, header=None, getter=None, convert=None, align=None, **options):
         raise NotImplementedError()
+
+    def page_template_options(self, options):
+        opts = self.page_options.copy()
+        opts.update(options)
+        return opts
 
     @abc.abstractmethod
     def add_page(self, page_template, data, title=None):

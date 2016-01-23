@@ -45,7 +45,9 @@ class XlsxDocument(BaseDocument):
         super().__init__(logger=logger, page_options=page_options)
 
     def create_page_template(self, field_names, *, header=None, getter=None, convert=None, align=None, **options):
-        return XlsxPageTemplate(document=self, field_names=field_names, header=header, getter=getter, convert=convert, align=align, **options)
+        options = self.page_template_options(options)
+        return XlsxPageTemplate(document=self, field_names=field_names, header=header,
+                                getter=getter, convert=convert, align=align, **options)
 
     def add_page(self, page_template, data, title=None):
         worksheet = self.workbook.add_worksheet(title)

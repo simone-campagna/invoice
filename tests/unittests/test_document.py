@@ -15,21 +15,22 @@
 # limitations under the License.
 #
 
-__author__ = "Simone Campagna"
-__all__ = [
-    'TestTable',
-]
-
 import collections
+import io
 import unittest
 
-from invoice.table import Table
+from invoice.document import document
 from invoice import conf
+
+__author__ = "Simone Campagna"
+__all__ = [
+    'TestDocument',
+]
 
 
 _Invoice = collections.namedtuple("_Invoice", ("name", "income", "tax_code"))
 
-class TestTable(unittest.TestCase):
+class TestDocument(unittest.TestCase):
     def setUp(self):
         self.invoices = [
             _Invoice(name="Peter Parker", income=400.0, tax_code="PRKPRT01A01B001C"),
@@ -37,18 +38,20 @@ class TestTable(unittest.TestCase):
             _Invoice(name="Clark Kent", income=423.122, tax_code="KNTCKR01A01B001C"),
         ]
 
-    def _test_render(self, convert, align, header, output, mode=conf.DEFAULT_TABLE_MODE, field_separator=None, justify=None):
-        t = Table(
-            field_names=_Invoice._fields,
-            convert=convert,
-            align=align,
-            header=header,
-            mode=mode,
-            field_separator=field_separator,
-            justify=justify,
-        )
-        rendering = t.render(self.invoices)
-        self.assertEqual(rendering + '\n', output)
+    def _test_render(self, convert, align, header, output, mode=conf.DEFAULT_TABLE_MODE, options=None):
+        sio = io.StringIO()
+        if options is None:
+            options = {}
+        with document(mode=mode, file=sio) as doc:
+            page_template = doc.create_page_template(
+                field_names=_Invoice._fields,
+                convert=convert,
+                align=align,
+                header=header,
+                **options
+            )
+            doc.add_page(page_template, self.invoices)
+            self.assertEqual(sio.getvalue(), output)
 
     def test_render_0(self):
         self.maxDiff = None
@@ -77,8 +80,7 @@ Clark Kent      423.12 KNTCKR01A01B001C
 
     def test_render_2(self):
         self._test_render(
-            justify=False,
-            field_separator='|',
+            options={'justify': False, 'field_separator': '|'},
             convert={'income': lambda value: '{:.2f}'.format(value)},
             align={'income': '>'},
             header=('nome e cognome', 'incasso', 'codice fiscale'),

@@ -92,10 +92,10 @@ class BaseTCDocument(BaseDocument):
     def page_template_class(cls):
         raise NotImplementedError()
 
-    def create_page_template(self, field_names, *, header=None, getter=None, convert=None, **options):
-        opts = self.page_options.copy()
-        opts.update(options)
-        return self.page_template_class()(document=self, field_names=field_names, header=header, getter=getter, convert=convert, **opts)
+    def create_page_template(self, field_names, *, header=None, getter=None, convert=None, align=None, **options):
+        options = self.page_template_options(options)
+        return self.page_template_class()(document=self, field_names=field_names, header=header,
+                                          getter=getter, convert=convert, align=align, **options)
 
 
 class TextDocument(BaseTCDocument):
