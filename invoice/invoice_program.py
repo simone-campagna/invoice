@@ -842,14 +842,13 @@ class InvoiceProgram(object):
                 row['invoice_count_bar'] = bar(row['invoice_count'], max_invoice_count)
             if total:
                 rows.append(total_row)
-            with document(file=self.get_doc_file(output_filename), mode=table_mode) as doc:
+            with document(file=self.get_doc_file(output_filename), mode=table_mode, logger=self.logger) as doc:
                 page_template = doc.create_page_template(
                     field_names=all_field_names,
                     header=header,
                     align=align,
                     convert=convert,
-                    getter=item_getter,
-                    logger=self.logger)
+                    getter=item_getter)
                 doc.add_page(page_template, rows)
 
     def impl_legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode):
@@ -1246,7 +1245,7 @@ class InvoiceProgram(object):
         if header:
             header = [Invoice.get_field_translation(field_name) for field_name in list_field_names]
         digits = 1 + int(math.log10(max(1, len(invoices))))
-        with document(file=self.get_doc_file(output_filename), mode=table_mode) as doc:
+        with document(file=self.get_doc_file(output_filename), mode=table_mode, logger=self.logger) as doc:
             page_template = doc.create_page_template(
                 field_names=list_field_names,
                 header=header,
@@ -1258,7 +1257,6 @@ class InvoiceProgram(object):
                     'number': '>',
                     'income': '>',
                 },
-                logger=self.logger,
             )
             doc.add_page(page_template, invoices)
 

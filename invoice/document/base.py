@@ -36,7 +36,7 @@ def attr_getter(row, field_name):
 # Page template
 
 class BasePageTemplate(metaclass=abc.ABCMeta):
-    def __init__(self, document, field_names, *, header=None, getter=None, convert=None, align=None):
+    def __init__(self, document, field_names, *, header=None, getter=None, convert=None, align=None, **options):
         self.document = document
         self.field_names = field_names
         if header is False:

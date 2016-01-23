@@ -185,11 +185,6 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
         nargs='?',
         help="abilita/disabilita la modalità 'dry run' (il database non viene modificato)")
 
-    common_parser.add_argument('--version',
-        action='version',
-        version='%(prog)s {}'.format(conf.VERSION),
-        help='mostra la versione ed esce')
-
     common_parser.add_argument("--trace", "-t",
         metavar="on/off",
         type=type_onoff,
@@ -278,6 +273,12 @@ fattura:                   '/home/simone/Programs/Programming/invoice/example/20
         parser = subparsers.add_parser(name, prog=prog, *n_args, **p_args)
         parser_dict[name] = parser
         return parser
+
+    for parser in common_parser, top_level_parser:
+        parser.add_argument('--version',
+            action='version',
+            version='%(prog)s {}'.format(conf.VERSION),
+            help='mostra la versione ed esce')
 
     ### help_parser ###
     help_parser = add_subparser(subparsers,
