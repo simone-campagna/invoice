@@ -26,7 +26,8 @@ import os
 import re
 import subprocess
 
-from .error import InvoiceDuplicatedLineError, InvoiceMissingDocFileError
+from .error import InvoiceDuplicatedLineError, InvoiceMissingDocFileError, \
+    InvoiceKeyConversionError
 from .invoice import Invoice
 from .log import get_default_logger
 from .scanner import Scanner, load_scanner
@@ -47,7 +48,7 @@ class InvoiceReader(object):
     DATE_FORMATS = (
         "%d/%m/%Y",
     )
-    NULLABLE_FLOAT_FIELDS = ("p_vat", "vat", "p_deduction", "deduction")
+    NULLABLE_FLOAT_FIELDS = ("p_vat", "vat", "p_deduction", "deduction", "extras", "refund")
     def __init__(self, logger=None):
         if logger is None:
             logger = get_default_logger()
@@ -67,7 +68,9 @@ class InvoiceReader(object):
                 'date': self.convert_date,
                 'service': self.convert_service,
                 'fee': self.convert_money,
+                'refund': self.convert_money,
                 'income': self.convert_money,
+                'extras': self.convert_money,
                 'p_cpa': float,
                 'cpa': self.convert_money,
                 'p_vat': float,
@@ -78,6 +81,7 @@ class InvoiceReader(object):
             }
             scanner = get_scanner()
             lines_dict, values_dict = scanner.scan(self.read_text(doc_filename))
+            extra_keys = tuple(filter(lambda key: key.startswith("extra_"), values_dict.keys()))
             for key in self.NULLABLE_FLOAT_FIELDS:
                 if key not in values_dict:
                     values_dict[key] = "0.0"
@@ -90,8 +94,26 @@ class InvoiceReader(object):
                     self.logger.error(message + ':')
                     for line in lines:
                         self.logger.error("  {}: {!r}".format(label, line.strip()))
-                data.update({key: converters[key](val) for key, val in values_dict.items()})
-    
+                edict = {}
+                for key, val in values_dict.items():
+                    if key in extra_keys:
+                        dummy_extra, to_key, extra_sub_key = key.split("_")
+                        edict[key] = to_key
+                    else:
+                        to_key = key
+                    if to_key in converters:
+                        try:
+                            val = converters[to_key](val)
+                        except Exception as err:
+                            message = "fattura {}: {}={!r}: {}: {}".format(
+                                doc_filename, key, values_dict[key], type(err).__name__, err)
+                            postponed_errors.append((InvoiceKeyConversionError, message))
+                    data[key] = val
+                for key in extra_keys:
+                    to_key = edict[key]
+                    data[edict[key]] += data[key]
+                    del data[key]
+                #data.update({key: converters[key](val) for key, val in values_dict.items()})
         else:
             postponed_errors.append((InvoiceMissingDocFileError, "fattura {}: doc file mancante".format(doc_filename)))
         invoice = Invoice(**data)

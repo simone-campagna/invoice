@@ -43,6 +43,7 @@ __all__ = [
     'InvoiceMalformedTaxCodeError',
     'InvoiceUnsupportedCurrencyError',
     'InvoicePartialUpdateError',
+    'InvoiceKeyConversionError',
 ]
 
 class InvoiceError(Exception):
@@ -167,4 +168,8 @@ class InvoiceInconsistentVatError(InvoiceValidationError):
 class InvoiceInconsistentDeductionError(InvoiceValidationError):
     EXC_CODE = '019'
     EXC_DESCRIPTION = "la ritenuta d'acconto non è consistente con quanto dichiarato"
+
+class InvoiceKeyConversionError(InvoiceValidationError):
+    EXC_CODE = '020'
+    EXC_DESCRIPTION = "non è possibile convertire correttamente il valore di un campo della fattura"
 

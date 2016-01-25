@@ -123,7 +123,7 @@ class Invoice(InvoiceNamedTuple):
                     invoice=self,
                     exc_type=InvoiceYearError,
                     message="fattura {}: data {} e anno {} sono incompatibili".format(self.doc_filename, self.date, self.year))
-        income_parts = ["fee", "cpa", "vat", "deduction"]
+        income_parts = ["fee", "refund", "cpa", "vat", "deduction", "extras"]
         income_values = [getattr(self, part) for part in income_parts]
         expected_income = sum(v for v in income_values if v is not None)
         if expected_income != self.income:
@@ -132,21 +132,21 @@ class Invoice(InvoiceNamedTuple):
                     invoice=self,
                     exc_type=InvoiceInconsistentIncomeError,
                     message="fattura {}: incasso non coerente: {} - totale:{} - atteso:{}".format(self.doc_filename, parts, self.income, expected_income))
-        ndecimals = 1
+        ndecimals = 2
         for key in "cpa", "vat", "deduction":
             p_key = "p_" + key
             percentage = getattr(self, p_key)
             if percentage is not None:
                 val = round(getattr(self, key), ndecimals)
                 if key == "vat":
-                    source_fields = ["fee", "cpa"]
+                    source_fields = ["fee", "cpa", "refund"]
                     error_class = InvoiceInconsistentVatError
-                else:
+                elif key == "cpa":
                     if key == "cpa":
                        error_class = InvoiceInconsistentCpaError
                     elif key == "deduction":
                        error_class = InvoiceInconsistentDeductionError
-                    source_fields = ["fee"]
+                    source_fields = ["fee", "refund"]
                 source_vals = [getattr(self, source_field) for source_field in source_fields]
                 source_val = round(sum(v for v in source_vals if v is not None), ndecimals)
                 expected_val = round(source_val * percentage / 100.0, ndecimals)

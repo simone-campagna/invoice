@@ -94,12 +94,14 @@ FIELD_TRANSLATION = collections.OrderedDict((
     ('date',		'data'),
     ('service',		'prestazione'),
     ('fee',		'compenso'),
+    ('refund',		'rimborsi'),
     ('p_cpa',		'percentuale_cpa'),
     ('cpa',		'cpa'),
     ('p_vat',		'percentuale_iva'),
     ('vat',		'iva'),
     ('p_deduction',	'percentuale_ritenuta'),
     ('deduction',	'ritenuta'),
+    ('extras',		'extra'),
     ('income',		'incasso'),
     ('currency',	'valuta'),
 ))
@@ -145,8 +147,8 @@ REV_FIELD_TRANSLATION = dict(
 )
 LIST_FIELD_NAMES = FIELD_NAMES + tuple(REV_FIELD_TRANSLATION.keys())
 
-LIST_FIELD_NAMES_SHORT = ('year', 'number', 'date', 'tax_code', 'fee', 'cpa', 'income', 'currency')
-LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+LIST_FIELD_NAMES_SHORT = ('year', 'number', 'date', 'tax_code', 'fee', 'refund', 'cpa', 'extras', 'income', 'currency')
+LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'fee', 'refund', 'cpa', 'extras', 'income', 'currency')
 LIST_FIELD_NAMES_FULL = FIELD_NAMES
 
 DEFAULT_LIST_FIELD_NAMES = LIST_FIELD_NAMES_LONG
@@ -178,7 +180,7 @@ DEFAULT_TABLE_MODE = TABLE_MODE_TEXT
 DEFAULT_MAX_INTERRUPTION_DAYS = 365
 
 VERSION_MAJOR = 3
-VERSION_MINOR = 0
+VERSION_MINOR = 1
 VERSION_PATCH = 0
 
 VERSION = '{}.{}.{}'.format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
