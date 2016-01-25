@@ -701,7 +701,15 @@ Per ciascun anno, vengono mostrate le seguenti informazioni:
         add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-Mostra un report per anno""",
+Mostra un report per anno.
+
+Se il formato è XLSX, viene generato un documento con un foglio di calcolo per ciascun mese.
+Se è disponibile il file contenente i dati personali
+
+  {pdatafile}
+
+il suo contenuto viene inserito all'inizio di ciascun foglio di calcolo.
+""".format(pdatafile=conf.PERSONAL_DATA_FILE),
     )
     summary_parser.set_defaults(
         function_name="program_summary",

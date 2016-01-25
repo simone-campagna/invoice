@@ -55,7 +55,7 @@ from .spy.spy_function import spy_function
 from .validation_result import ValidationResult
 from .week import WeekManager
 from .database.db_types import Path
-from .document import document, item_getter
+from .document import document, item_getter, Formats
 from . import conf
 from .scanner import load_scanner
 from .version import VERSION
@@ -537,12 +537,37 @@ class InvoiceProgram(object):
         #"number", "fee", "cpa", "taxable_income", "vat", "empty", "deduction", "income"
         header = ["N.DOC.", "COMPENSO", "C.P.A.", "IMPONIBILE IVA", "IVA 22%", "ES.IVA ART.10", "R.A.", "TOTALE"]
         total_keys = 'fee', 'cpa', 'taxable_income', 'vat', 'deduction', 'income'
+
+        personal_data = []
+        if os.path.exists(conf.PERSONAL_DATA_FILE):
+            with open(conf.PERSONAL_DATA_FILE) as f_in:
+                for line in f_in:
+                    personal_data.append(line.rstrip('\n'))
+
         with document(file=self.get_doc_file(output_filename), mode=table_mode, logger=self.logger) as doc:
+            doc.define_format("bold", {"bold": True})
+            doc.define_format("bold_yellow", {"bold": True, "bg_color": "yellow"})
             page_template = doc.create_page_template(field_names=all_field_names, header=header)
             for month in range(1, 12 + 1):
                 m_filter = lambda i: i.date.month == month
                 invoices = self.filter_invoice_collection(invoice_collection, filters=[m_filter])
                 rows = []
+                month_name = conf.MONTH_TRANSLATION[month - 1]
+                prologue = None
+                epilogue = None
+                row_offset = 0
+                doc_formats = Formats()
+                if table_mode == conf.TABLE_MODE_XLSX:
+                    prologue = []
+                    if personal_data:
+                        for line in personal_data:
+                            prologue.append((line,))
+                            doc_formats.add_format("bold", row=len(prologue) - 1, col=None)
+                        prologue.append(('',))
+                    prologue.append(('mese:', month_name))
+                    doc_formats.add_format("bold_yellow", row=len(prologue) - 1, col=None)
+                    prologue.append(('',))
+                    row_offset += len(prologue)
                 total = {}
                 for key in total_keys:
                     total[key] = 0.0
@@ -569,7 +594,13 @@ class InvoiceProgram(object):
                     rows.append(MReport(**separator))
                 rows.append(MReport(**total))
     
-                doc.add_page(page_template=page_template, data=rows, title=conf.MONTH_TRANSLATION[month - 1])
+                doc_formats.add_format("bold", row=0 + row_offset, col=None)
+                doc_formats.add_format("bold", row=None, col=0)
+                last_line = row_offset + len(rows) - 1
+                if header:
+                    last_line += 1
+                doc_formats.add_format("bold_yellow", row=last_line, col=None)
+                doc.add_page(page_template=page_template, data=rows, title=month_name, formats=doc_formats, prologue=prologue, epilogue=epilogue)
 
     def _get_year_group_value(self, invoices, year):
         return (year,

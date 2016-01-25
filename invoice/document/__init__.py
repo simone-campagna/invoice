@@ -17,6 +17,7 @@
 
 from .document import document
 from .base import item_getter, attr_getter
+from .formats import Formats
 
 
 __author__ = "Simone Campagna"
@@ -24,4 +25,5 @@ __all__ = [
     'document',
     'item_getter',
     'attr_getter',
+    'Formats',
 ]

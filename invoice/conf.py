@@ -188,6 +188,8 @@ DB_FILE_VAR = 'INVOICE_DB_FILE'
 
 SCANNER_CONFIG_FILE = ""
 
+PERSONAL_DATA_FILE = ""
+
 def setup(rc_dir=None, db_file=None):
     def expand(p):
         return os.path.expandvars(os.path.expanduser(p))
@@ -196,6 +198,7 @@ def setup(rc_dir=None, db_file=None):
     global RC_DIR
     global DB_FILE
     global SCANNER_CONFIG_FILE
+    global PERSONAL_DATA_FILE
     global SPY_LOCK_FILE
     global SPY_LOG_FILE
     if rc_dir is None:
@@ -215,6 +218,8 @@ def setup(rc_dir=None, db_file=None):
         DB_FILE = os.path.join(RC_DIR, DB_FILE)
 
     SCANNER_CONFIG_FILE = os.path.join(RC_DIR, "scanner.config")
+    PERSONAL_DATA_FILE = os.path.join(RC_DIR, "personal_data.txt")
+    SPY_LOCK_FILE = os.path.join(RC_DIR, ".spy.lock")
     SPY_LOCK_FILE = os.path.join(RC_DIR, ".spy.lock")
     SPY_LOG_FILE = os.path.join(RC_DIR, "spy.log")
 

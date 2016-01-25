@@ -35,6 +35,7 @@ def attr_getter(row, field_name):
 
 # Page template
 
+
 class BasePageTemplate(metaclass=abc.ABCMeta):
     def __init__(self, document, field_names, *, header=None, getter=None, convert=None, align=None, **options):
         self.document = document
@@ -74,6 +75,10 @@ class BaseDocument(metaclass=abc.ABCMeta):
         self.page_options = page_options
 
     @abc.abstractmethod
+    def define_format(self, format_name, format_data):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def create_page_template(self, field_names, *, header=None, getter=None, convert=None, align=None, **options):
         raise NotImplementedError()
 
@@ -83,7 +88,7 @@ class BaseDocument(metaclass=abc.ABCMeta):
         return opts
 
     @abc.abstractmethod
-    def add_page(self, page_template, data, title=None):
+    def add_page(self, page_template, data, *, title=None, formats=None, prologue=None, epilogue=None):
         raise NotImplementedError()
 
     def close(self):

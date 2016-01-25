@@ -81,12 +81,19 @@ class BaseTCDocument(BaseDocument):
     def _show_title(self, title):
         raise NotImplementedError()
 
-    def add_page(self, page_template, data, title=None):
+    def define_format(self, format_name, format_data):
+        pass
+
+    def add_page(self, page_template, data, *, title=None, formats=None, prologue=None, epilogue=None):
+        if prologue:
+            self.file.write(prologue + '\n')
         text = "\n".join(page_template.getlines(data))
         if text:
             text += "\n"
         self._show_title(title)
         self.file.write(text)
+        if epilogue:
+            self.file.write(epilogue + '\n')
 
     @abc.abstractmethod
     def page_template_class(cls):

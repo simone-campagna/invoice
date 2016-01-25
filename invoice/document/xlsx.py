@@ -20,6 +20,7 @@ from .. import conf
 from ..log import get_default_logger
 
 from .base import BasePageTemplate, BaseDocument
+from .formats import Formats
 
 try:
     from xlsxwriter.workbook import Workbook
@@ -42,6 +43,7 @@ class XlsxPageTemplate(BasePageTemplate):
 class XlsxDocument(BaseDocument):
     def __init__(self, logger, filename, page_options=None):
         self.workbook = Workbook(filename)
+        self._formats = {}
         super().__init__(logger=logger, page_options=page_options)
 
     def create_page_template(self, field_names, *, header=None, getter=None, convert=None, align=None, **options):
@@ -49,11 +51,32 @@ class XlsxDocument(BaseDocument):
         return XlsxPageTemplate(document=self, field_names=field_names, header=header,
                                 getter=getter, convert=convert, align=align, **options)
 
-    def add_page(self, page_template, data, title=None):
-        worksheet = self.workbook.add_worksheet(title)
-        for r, row in enumerate(page_template.transform(data)):
+    def define_format(self, format_name, format_data):
+        self._formats[format_name] = self.workbook.add_format(format_data)
+
+    def _add_rows(self, worksheet, rows, *, row_offset=0, formats=None):
+        num_rows = 0
+        for ridx, row in enumerate(rows):
+            r = row_offset + ridx
+            num_rows += 1
             for c, col in enumerate(row):
-                worksheet.write(r, c, col)
+                rc_format = None
+                if formats:
+                    format_name = formats.get_format(r, c)
+                    if format_name:
+                        rc_format = self._formats.get(format_name)
+                worksheet.write(r, c, col, rc_format)
+        return num_rows
+
+    def add_page(self, page_template, data, *, title=None, formats=None, prologue=None, epilogue=None):
+        worksheet = self.workbook.add_worksheet(title)
+        row_offset = 0
+        if prologue:
+            row_offset += self._add_rows(worksheet=worksheet, rows=prologue, formats=formats, row_offset=row_offset)
+        rows = page_template.transform(data)
+        row_offset += self._add_rows(worksheet=worksheet, rows=rows, formats=formats, row_offset=row_offset)
+        if epilogue:
+            row_offset += self._add_rows(worksheet=worksheet, rows=epilogue, formats=formats, row_offset=row_offset)
 
     def close(self):
         self.workbook.close()
