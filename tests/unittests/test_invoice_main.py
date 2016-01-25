@@ -247,15 +247,22 @@ PRKPRT01G01H663M 2014      2
             )
             self.assertEqual(p.string(), '')
 
-    def test_invoice_main_summary(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+    def _test_invoice_main_summary(self, table_mode, pdata):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            if pdata:
+                with open(os.path.join(rc_dir, "personal_data.txt"), "w") as f_out:
+                    f_out.write("dummy personal data 1")
+                    f_out.write("dummy personal data 2")
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -263,7 +270,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-d', db_filename.name],
+                args=['scan', '-R', rc_dir],
             )
             self.assertEqual(p.string(), '')
 
@@ -271,10 +278,10 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['summary', '-d', db_filename.name, '--year', '2014'],
+                args=['summary', '-R', rc_dir, '--year', '2014'],
             )
-            print(p.string())
-            self.assertEqual(p.string(), """\
+            if table_mode == conf.TABLE_MODE_TEXT:
+                self.assertEqual(p.string(), """\
 === Gennaio ===
 N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
 1      50.0     1.0    51.0           0.0                   0.0  51.0  
@@ -318,6 +325,15 @@ TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0
 N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
 TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
 """)
+
+    def test_invoice_main_summary_text(self):
+        self._test_invoice_main_summary(table_mode=conf.TABLE_MODE_TEXT, pdata=False)
+
+    def test_invoice_main_summary_xlsx(self):
+        self._test_invoice_main_summary(table_mode=conf.TABLE_MODE_XLSX, pdata=False)
+
+    def test_invoice_main_summary_xlsx_personal_data(self):
+        self._test_invoice_main_summary(table_mode=conf.TABLE_MODE_XLSX, pdata=True)
 
     def test_invoice_main_list(self):
         with tempfile.NamedTemporaryFile() as db_filename:
