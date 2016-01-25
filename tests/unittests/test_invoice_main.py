@@ -252,10 +252,15 @@ PRKPRT01G01H663M 2014      2
             rc_dir = os.path.join(tmpdir, 'rc_dir')
             os.makedirs(rc_dir)
             if pdata:
-                with open(os.path.join(rc_dir, "personal_data.txt"), "w") as f_out:
-                    f_out.write("dummy personal data 1")
-                    f_out.write("dummy personal data 2")
-
+                with open(os.path.join(rc_dir, "info.config"), "w") as f_out:
+                    f_out.write("""
+[general]
+summary_prologue = test line 0
+    test line 1
+    test line 2
+summary_epilogue = test line 3
+    test line 4
+""")
             p = StringPrinter()
 
             p.reset()

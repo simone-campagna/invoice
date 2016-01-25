@@ -704,12 +704,12 @@ Per ciascun anno, vengono mostrate le seguenti informazioni:
 Mostra un report per anno.
 
 Se il formato è XLSX, viene generato un documento con un foglio di calcolo per ciascun mese.
-Se è disponibile il file contenente i dati personali
+Se summary_prologue e/o summary_epilogue sono definiti nel file di informazioni
 
-  {pdatafile}
+  {infofile}
 
-il suo contenuto viene inserito all'inizio di ciascun foglio di calcolo.
-""".format(pdatafile=conf.PERSONAL_DATA_FILE),
+verranno mostrati rispettivamente all'inizio ed alla fine di ogni foglio.
+""".format(infofile=conf.INFO_CONFIG_FILE),
     )
     summary_parser.set_defaults(
         function_name="program_summary",

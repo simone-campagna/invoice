@@ -44,6 +44,7 @@ from .error import InvoiceSyntaxError, \
                    InvoiceUserValidatorError, \
                    InvoiceArgumentError
 
+from .info import load_info
 from .invoice_collection import InvoiceCollection
 from .invoice_collection_reader import InvoiceCollectionReader
 from .invoice_reader import InvoiceReader
@@ -538,11 +539,9 @@ class InvoiceProgram(object):
         header = ["N.DOC.", "COMPENSO", "C.P.A.", "IMPONIBILE IVA", "IVA 22%", "ES.IVA ART.10", "R.A.", "TOTALE"]
         total_keys = 'fee', 'cpa', 'taxable_income', 'vat', 'deduction', 'income'
 
-        personal_data = []
-        if os.path.exists(conf.PERSONAL_DATA_FILE):
-            with open(conf.PERSONAL_DATA_FILE) as f_in:
-                for line in f_in:
-                    personal_data.append(line.rstrip('\n'))
+        general_info = load_info()['general']
+        summary_prologue = general_info['summary_prologue']
+        summary_epilogue = general_info['summary_epilogue']
 
         with document(file=self.get_doc_file(output_filename), mode=table_mode, logger=self.logger) as doc:
             doc.define_format("bold", {"bold": True})
@@ -559,8 +558,8 @@ class InvoiceProgram(object):
                 doc_formats = Formats()
                 if table_mode == conf.TABLE_MODE_XLSX:
                     prologue = []
-                    if personal_data:
-                        for line in personal_data:
+                    if summary_prologue:
+                        for line in summary_prologue.split('\n'):
                             prologue.append((line,))
                             doc_formats.add_format("bold", row=len(prologue) - 1, col=None)
                         prologue.append(('',))
@@ -596,10 +595,17 @@ class InvoiceProgram(object):
     
                 doc_formats.add_format("bold", row=0 + row_offset, col=None)
                 doc_formats.add_format("bold", row=None, col=0)
-                last_line = row_offset + len(rows) - 1
+                num_rows = row_offset + len(rows)
                 if header:
-                    last_line += 1
-                doc_formats.add_format("bold_yellow", row=last_line, col=None)
+                    num_rows += 1
+                doc_formats.add_format("bold_yellow", row=num_rows - 1, col=None)
+                if table_mode == conf.TABLE_MODE_XLSX:
+                    if summary_epilogue:
+                        epilogue = []
+                        epilogue.insert(0, ('',))
+                        for line in summary_epilogue.split('\n'):
+                            epilogue.append((line,))
+                            doc_formats.add_format("bold", row=num_rows + len(epilogue) - 1, col=None)
                 doc.add_page(page_template=page_template, data=rows, title=month_name, formats=doc_formats, prologue=prologue, epilogue=epilogue)
 
     def _get_year_group_value(self, invoices, year):

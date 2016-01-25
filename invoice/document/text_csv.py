@@ -84,16 +84,24 @@ class BaseTCDocument(BaseDocument):
     def define_format(self, format_name, format_data):
         pass
 
+    def _xxxlogue(self, xxxlogue):
+        if xxxlogue:
+            lines = []
+            for row in xxxlogue:
+                if not isinstance(row, str):
+                    row = ' '.join(row)
+                lines.append(row)
+            if lines:
+                self.file.write('\n'.join(lines) + '\n')
+        
     def add_page(self, page_template, data, *, title=None, formats=None, prologue=None, epilogue=None):
-        if prologue:
-            self.file.write(prologue + '\n')
+        self._xxxlogue(prologue)
         text = "\n".join(page_template.getlines(data))
         if text:
             text += "\n"
         self._show_title(title)
         self.file.write(text)
-        if epilogue:
-            self.file.write(epilogue + '\n')
+        self._xxxlogue(epilogue)
 
     @abc.abstractmethod
     def page_template_class(cls):
