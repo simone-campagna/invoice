@@ -282,41 +282,41 @@ N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
 3      100.0    2.0    102.0          0.0                   0.0  102.0 
 4      50.0     1.0    51.0           0.0                   0.0  51.0  
 5      150.0    3.0    153.0          0.0                   0.0  153.0 
-       425.0    8.5    433.5          0.0                   0.0  433.5 
+TOTALE 425.0    8.5    433.5          0.0                   0.0  433.5 
 === Febbraio ===
 N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
 6      150.0    3.0    153.0          33.66                 30.0 216.66
-       150.0    3.0    153.0          33.66                 30.0 216.66
+TOTALE 150.0    3.0    153.0          33.66                 30.0 216.66
 === Marzo ===
 N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-       0.0      0.0    0.0            0.0                   0.0  0.0   
+TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
 === Aprile ===
 N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-       0.0      0.0    0.0            0.0                   0.0  0.0   
+TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
 === Maggio ===
 N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-       0.0      0.0    0.0            0.0                   0.0  0.0   
+TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
 === Giugno ===
 N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-       0.0      0.0    0.0            0.0                   0.0  0.0   
+TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
 === Luglio ===
 N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-       0.0      0.0    0.0            0.0                   0.0  0.0   
+TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
 === Agosto ===
 N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-       0.0      0.0    0.0            0.0                   0.0  0.0   
+TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
 === Settembre ===
 N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-       0.0      0.0    0.0            0.0                   0.0  0.0   
+TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
 === Ottobre ===
 N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-       0.0      0.0    0.0            0.0                   0.0  0.0   
+TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
 === Novembre ===
 N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-       0.0      0.0    0.0            0.0                   0.0  0.0   
+TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
 === Dicembre ===
 N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-       0.0      0.0    0.0            0.0                   0.0  0.0   
+TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
 """)
 
     def test_invoice_main_list(self):

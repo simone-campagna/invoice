@@ -562,8 +562,11 @@ class InvoiceProgram(object):
                         val = getattr(mreport, key)
                         if val is not None:
                             total[key] += val
-                total["number"] = ""
+                total["number"] = "TOTALE"
                 total["empty"] = ""
+                if table_mode == conf.TABLE_MODE_XLSX:
+                    separator = {key: "" for key in MReport._fields}
+                    rows.append(MReport(**separator))
                 rows.append(MReport(**total))
     
                 doc.add_page(page_template=page_template, data=rows, title=conf.MONTH_TRANSLATION[month - 1])
