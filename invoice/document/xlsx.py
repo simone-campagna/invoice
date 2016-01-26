@@ -68,15 +68,52 @@ class XlsxDocument(BaseDocument):
                 worksheet.write(r, c, col, rc_format)
         return num_rows
 
+    def _add_xxxlogue(self, worksheet, row_offset, xxxlogue, formats, pre, post):
+        if xxxlogue:
+            rrfirst = row_offset
+            row_offset += len(xxxlogue)
+            text = '\n'.join(' '.join(row) for row in xxxlogue)
+            num = 1
+            if pre:
+                if formats:
+                    formats.apply_offset(row_offset, num)
+                rrfirst += num
+                row_offset += num
+            worksheet.merge_range(rrfirst, 0, row_offset - 1, 100, text)
+            if post:
+                if formats:
+                    formats.apply_offset(row_offset, num)
+                row_offset += num
+        return row_offset
+        
+    def _add_prologue(self, worksheet, row_offset, prologue, formats):
+        return self._add_xxxlogue(worksheet, row_offset, prologue, formats, pre=False, post=True)
+
+    def _add_epilogue(self, worksheet, row_offset, prologue, formats):
+        return self._add_xxxlogue(worksheet, row_offset, prologue, formats, pre=True, post=False)
+
     def add_page(self, page_template, data, *, title=None, formats=None, prologue=None, epilogue=None):
         worksheet = self.workbook.add_worksheet(title)
         row_offset = 0
-        if prologue:
-            row_offset += self._add_rows(worksheet=worksheet, rows=prologue, formats=formats, row_offset=row_offset)
-        rows = page_template.transform(data)
+        #if prologue:
+        #    #row_offset += self._add_rows(worksheet=worksheet, rows=prologue, formats=formats, row_offset=row_offset)
+        #    #rrfirst = row_offset
+        #    #row_offset + len(prologue)
+        #    #worksheet.merge_range(rrfirst, row_offset, 0, 100, '\n'.join(" ".join(row) for row in prologue))
+        row_offset = self._add_prologue(worksheet, row_offset, prologue, formats)
+        rows = tuple(page_template.transform(data))
+        if rows:
+            lengths = [max(len(entry[c]) for entry in rows) for c, f in enumerate(page_template.field_names)]
+            for c, length in enumerate(lengths):
+                l = 8.43 * length / 5
+                worksheet.set_column(c, c, l)
         row_offset += self._add_rows(worksheet=worksheet, rows=rows, formats=formats, row_offset=row_offset)
-        if epilogue:
-            row_offset += self._add_rows(worksheet=worksheet, rows=epilogue, formats=formats, row_offset=row_offset)
+        #if epilogue:
+        #    #row_offset += self._add_rows(worksheet=worksheet, rows=epilogue, formats=formats, row_offset=row_offset)
+        #    rrfirst = row_offset
+        #    row_offset + len(epilogue)
+        #    worksheet.merge_range(rrfirst, row_offset, 0, 100, '\n'.join(" ".join(row) for row in epilogue))
+        row_offset = self._add_epilogue(worksheet, row_offset, epilogue, formats)
 
     def close(self):
         self.workbook.close()

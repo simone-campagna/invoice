@@ -43,3 +43,11 @@ class Formats(object):
                     if ckey in row_formats:
                         rc_format_name = row_formats[ckey]
         return rc_format_name
+
+    def apply_offset(self, row, offset):
+        swp = self._formats
+        self._formats = collections.OrderedDict()
+        for key, value in swp.items():
+            if key is not None and key >= row:
+                key += offset
+            self._formats[key] = value

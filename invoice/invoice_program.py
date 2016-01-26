@@ -573,7 +573,7 @@ class InvoiceProgram(object):
                         for line in summary_prologue.split('\n'):
                             prologue.append((line,))
                             doc_formats.add_format("bold", row=len(prologue) - 1, col=None)
-                        prologue.append(('',))
+                        #prologue.append(('',))
                     prologue.append(('mese:', month_name))
                     doc_formats.add_format("bold_yellow", row=len(prologue) - 1, col=None)
                     prologue.append(('',))
@@ -617,7 +617,7 @@ class InvoiceProgram(object):
                 if table_mode == conf.TABLE_MODE_XLSX:
                     if summary_epilogue:
                         epilogue = []
-                        epilogue.insert(0, ('',))
+                        #epilogue.insert(0, ('',))
                         for line in summary_epilogue.split('\n'):
                             epilogue.append((line,))
                             doc_formats.add_format("bold", row=num_rows + len(epilogue) - 1, col=None)
