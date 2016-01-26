@@ -64,7 +64,7 @@ from .version import VERSION
 from .ee import snow
 
 
-MReport = collections.namedtuple("MReport", ["number", "fee", "cpa", "taxable_income", "vat", "empty", "deduction", "income"])
+MReport = collections.namedtuple("MReport", ["number", "fee", "refunds", "cpa", "taxable_income", "vat", "empty", "deduction", "taxes", "income"])
 
 class FileDateTimes(object):
     def __init__(self):
@@ -547,8 +547,8 @@ class InvoiceProgram(object):
         all_field_names = MReport._fields
 
         #"number", "fee", "cpa", "taxable_income", "vat", "empty", "deduction", "income"
-        header = ["N.DOC.", "COMPENSO", "C.P.A.", "IMPONIBILE IVA", "IVA 22%", "ES.IVA ART.10", "R.A.", "TOTALE"]
-        total_keys = 'fee', 'cpa', 'taxable_income', 'vat', 'deduction', 'income'
+        header = ["N.DOC.", "COMPENSO", "RIMBORSI", "C.P.A.", "IMPONIBILE IVA", "IVA 22%", "ES.IVA ART.10", "R.A.", "BOLLI", "TOTALE"]
+        total_keys = 'fee', 'refunds', 'cpa', 'taxable_income', 'vat', 'deduction', 'taxes', 'income'
 
         general_info = load_info()['general']
         summary_prologue = general_info['summary_prologue']
@@ -585,6 +585,8 @@ class InvoiceProgram(object):
                     mreport = MReport(
                         number=invoice.number,
                         fee=invoice.fee,
+                        refunds=invoice.refunds,
+                        taxes=invoice.taxes,
                         cpa=invoice.cpa,
                         taxable_income=invoice.fee + invoice.cpa,
                         vat=invoice.vat,
@@ -602,6 +604,8 @@ class InvoiceProgram(object):
                 if table_mode == conf.TABLE_MODE_XLSX:
                     separator = {key: "" for key in MReport._fields}
                     rows.append(MReport(**separator))
+                for key in total_keys:
+                    total[key] = round(total[key], 2)
                 rows.append(MReport(**total))
     
                 doc_formats.add_format("bold", row=0 + row_offset, col=None)

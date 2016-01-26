@@ -46,7 +46,7 @@ validators:
 """
 
     LIST_SHORT = """\
-anno numero città         data       codice_fiscale   nome                compenso rimborsi cpa tasse incasso valuta
+anno numero città         data       codice_fiscale   nome                compenso rimborsi cpa bolli incasso valuta
 2014      1 Gotham City   2014-01-03 WNYBRC01G01H663S Bruce Wayne         50.0     0.0      1.0 0.0     51.00 euro  
 2014      2 New York City 2014-01-03 PRKPRT01G01H663M Peter B. Parker     75.0     0.0      1.5 0.0     76.50 euro  
 2014      3 Greenville    2014-01-22 BNNBRC01G01H663S Robert Bruce Banner 100.0    0.0      2.0 0.0    102.00 euro  

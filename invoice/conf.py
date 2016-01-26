@@ -103,7 +103,7 @@ FIELD_TRANSLATION = collections.OrderedDict((
     ('vat',		'iva'),
     ('p_deduction',	'percentuale_ritenuta'),
     ('deduction',	'ritenuta'),
-    ('taxes',		'tasse'),
+    ('taxes',		'bolli'),
     ('income',		'incasso'),
     ('currency',	'valuta'),
 ))

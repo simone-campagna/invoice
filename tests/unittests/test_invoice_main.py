@@ -289,49 +289,50 @@ summary_epilogue = test line 3
                 args=['summary', '-R', rc_dir, '--year', '2014'],
             )
             if table_mode == conf.TABLE_MODE_TEXT:
+                print(p.string())
                 self.assertEqual(p.string(), """\
 === Gennaio ===
-N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-1      50.0     1.0    51.0           0.0                   0.0  51.0  
-2      75.0     1.5    76.5           0.0                   0.0  76.5  
-3      100.0    2.0    102.0          0.0                   0.0  102.0 
-4      50.0     1.0    51.0           0.0                   0.0  51.0  
-5      150.0    3.0    153.0          0.0                   0.0  153.0 
-TOTALE 425.0    8.5    433.5          0.0                   0.0  433.5 
+N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+1      50.0     0.0      1.0    51.0           0.0                   0.0  0.0   51.0  
+2      75.0     0.0      1.5    76.5           0.0                   0.0  0.0   76.5  
+3      100.0    0.0      2.0    102.0          0.0                   0.0  0.0   102.0 
+4      50.0     0.0      1.0    51.0           0.0                   0.0  0.0   51.0  
+5      150.0    0.0      3.0    153.0          0.0                   0.0  0.0   153.0 
+TOTALE 425.0    0.0      8.5    433.5          0.0                   0.0  0.0   433.5 
 === Febbraio ===
-N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-6      150.0    3.0    153.0          33.66                 30.0 216.66
-TOTALE 150.0    3.0    153.0          33.66                 30.0 216.66
+N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+6      150.0    0.0      3.0    153.0          33.66                 30.0 0.0   216.66
+TOTALE 150.0    0.0      3.0    153.0          33.66                 30.0 0.0   216.66
 === Marzo ===
-N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
+N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE 0.0      0.0      0.0    0.0            0.0                   0.0  0.0   0.0   
 === Aprile ===
-N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
+N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE 0.0      0.0      0.0    0.0            0.0                   0.0  0.0   0.0   
 === Maggio ===
-N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
+N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE 0.0      0.0      0.0    0.0            0.0                   0.0  0.0   0.0   
 === Giugno ===
-N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
+N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE 0.0      0.0      0.0    0.0            0.0                   0.0  0.0   0.0   
 === Luglio ===
-N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
+N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE 0.0      0.0      0.0    0.0            0.0                   0.0  0.0   0.0   
 === Agosto ===
-N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
+N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE 0.0      0.0      0.0    0.0            0.0                   0.0  0.0   0.0   
 === Settembre ===
-N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
+N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE 0.0      0.0      0.0    0.0            0.0                   0.0  0.0   0.0   
 === Ottobre ===
-N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
+N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE 0.0      0.0      0.0    0.0            0.0                   0.0  0.0   0.0   
 === Novembre ===
-N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
+N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE 0.0      0.0      0.0    0.0            0.0                   0.0  0.0   0.0   
 === Dicembre ===
-N.DOC. COMPENSO C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. TOTALE
-TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0   
+N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE 0.0      0.0      0.0    0.0            0.0                   0.0  0.0   0.0   
 """)
 
     def test_invoice_main_summary_text(self):
