@@ -45,6 +45,13 @@ class XlsxDocument(BaseDocument):
         self.workbook = Workbook(filename)
         self._formats = {}
         super().__init__(logger=logger, page_options=page_options)
+        self._merge_format = self.workbook.add_format({
+            #'bold':     True,
+            'border':   10,
+            #'align':    'center',
+            'valign':   'vcenter',
+            #'fg_color': '#D7E4BC',
+        })
 
     def create_page_template(self, field_names, *, header=None, getter=None, convert=None, align=None, **options):
         options = self.page_template_options(options)
@@ -79,7 +86,7 @@ class XlsxDocument(BaseDocument):
                     formats.apply_offset(row_offset, num)
                 rrfirst += num
                 row_offset += num
-            worksheet.merge_range(rrfirst, 0, row_offset - 1, 100, text)
+            worksheet.merge_range(rrfirst, 0, row_offset - 1, 100, text, self._merge_format)
             if post:
                 if formats:
                     formats.apply_offset(row_offset, num)
