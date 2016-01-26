@@ -58,6 +58,7 @@ __all__ = [
     'RC_DIR',
     'DB_FILE',
     'SCANNER_CONFIG_FILE',
+    'PARSER_CONFIG_FILE',
     'WEEKDAY',
     'WEEKDAY_TRANSLATION',
     'WEEKDAY_TRANSLATION_DICT',
@@ -69,6 +70,7 @@ __all__ = [
     'get_rc_dir',
     'get_db_file',
     'get_scanner_config_file',
+    'get_parser_config_file',
     'DEFAULT_EDITOR',
     'SPY_LOCK_FILE',
     'SPY_LOG_FILE',
@@ -189,6 +191,7 @@ RC_DIR_VAR = 'INVOICE_RC_DIR'
 DB_FILE_VAR = 'INVOICE_DB_FILE'
 
 SCANNER_CONFIG_FILE = ""
+PARSER_CONFIG_FILE = ""
 
 INFO_CONFIG_FILE = ""
 
@@ -200,6 +203,7 @@ def setup(rc_dir=None, db_file=None):
     global RC_DIR
     global DB_FILE
     global SCANNER_CONFIG_FILE
+    global PARSER_CONFIG_FILE
     global INFO_CONFIG_FILE
     global SPY_LOCK_FILE
     global SPY_LOG_FILE
@@ -220,6 +224,7 @@ def setup(rc_dir=None, db_file=None):
         DB_FILE = os.path.join(RC_DIR, DB_FILE)
 
     SCANNER_CONFIG_FILE = os.path.join(RC_DIR, "scanner.config")
+    PARSER_CONFIG_FILE = os.path.join(RC_DIR, "parser.config")
     INFO_CONFIG_FILE = os.path.join(RC_DIR, "info.config")
     SPY_LOCK_FILE = os.path.join(RC_DIR, ".spy.lock")
     SPY_LOCK_FILE = os.path.join(RC_DIR, ".spy.lock")
@@ -233,6 +238,9 @@ def get_db_file():
 
 def get_scanner_config_file():
     return SCANNER_CONFIG_FILE
+
+def get_parser_config_file():
+    return PARSER_CONFIG_FILE
 
 setup()
 

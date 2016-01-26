@@ -59,6 +59,7 @@ from .database.db_types import Path
 from .document import document, item_getter, Formats
 from . import conf
 from .scanner import load_scanner
+from .parser import load_parser
 from .version import VERSION
 from .ee import snow
 
@@ -340,6 +341,7 @@ class InvoiceProgram(object):
         if list_field_names is None:
             lsit_field_names = conf.DEFAULT_LIST_FIELD_NAMES
         scanner_config_file = conf.get_scanner_config_file()
+        parser_config_file = conf.get_parser_config_file()
         if reset:
             if os.path.exists(self.db_filename):
                 self.logger.info("cancellazione del db {!r}...".format(self.db_filename))
@@ -347,6 +349,9 @@ class InvoiceProgram(object):
             if os.path.exists(scanner_config_file):
                 self.logger.info("cancellazione dello scanner config file {!r}...".format(scanner_config_file))
                 os.remove(scanner_config_file)
+            if os.path.exists(parser_config_file):
+                self.logger.info("cancellazione del parser config file {!r}...".format(parser_config_file))
+                os.remove(parser_config_file)
         self.db.initialize()
         configuration = self.db.Configuration(
             warning_mode=warning_mode,
@@ -369,6 +374,7 @@ class InvoiceProgram(object):
         patterns = self.db.store_patterns(patterns)
         #self.show_patterns(patterns)
         load_scanner(scanner_config_file)
+        load_parser(parser_config_file)
 
        
     def impl_version(self, upgrade=False):

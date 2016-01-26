@@ -25,6 +25,8 @@ import collections
 import configparser
 import os
 import re
+
+from . import conf
 from .files import create_file_dir
 
 class ScanLine(object):
@@ -67,10 +69,10 @@ class Scanner(object):
 
     def scan_lines(self, lines):
         self.process()
-        lines_dict = {}
-        values_dict = {}
         lines_label_prio = {}
-        for line in lines:
+        values_dict = {}
+        lines_dict = {}
+        for line_no, line in enumerate(lines):
             for scan_line in self._scan_lines:
                 prio = lines_label_prio.get(scan_line.tag, None)
                 if prio is None or prio < scan_line.priority:
@@ -85,13 +87,15 @@ class Scanner(object):
                 if scan:
                     scan_line_dict = scan_line.scan(line)
                     if scan_line_dict is not None:
-                        if reset:
-                            lines_dict[scan_line.label] = [line]
-                        else:
-                            lines_dict.setdefault(scan_line.label, []).append(line)
-                        values_dict.update(scan_line_dict)
+                        for key, val in scan_line_dict.items():
+                            if reset:
+                                values_dict[key] = [(line_no, val)]
+                            else:
+                                values_dict.setdefault(key, []).append((line_no, val))
+                        lines_dict[line_no] = line
                         lines_label_prio[scan_line.label] = scan_line.priority
-        return lines_dict, values_dict
+        return values_dict, lines_dict
+
 
 _DEFAULT_SCANNER_CONFIG = """\
 [DEFAULT]
@@ -128,17 +132,19 @@ regexpr = \s*IVA\s+(?P<p_vat>[\d,\.]+)%\s+(?P<vat>[\d,\.]*)\s+(?:\w+)
 regexpr = \s*Ritenuta d'acconto\s+(?P<p_deduction>[\d,\.]+)%\s+(?P<deduction>[\d,\.]*)\s+(?:\w+)
 
 [rimborso spese di viaggio]
-regexpr = \s*Rimborso\s+spese\s+di\s+viaggio\s*(?P<extra_refunds_trip>[\d,\.]+)
+regexpr = \s*Rimborso\s+spese\s+di\s+viaggio\s*(?P<refunds>[\d,\.]+)
 
 [cpa]
 regexpr = \s*Contributo\s+previdenziale\s+(?P<p_cpa>[\d,\.]+)%\s+(?P<cpa>[\d,\.]*)\s+(?:\w+)
 
 [bollo]
-regexpr = \s*Bollo\s+\([^\)]*\)\s*(?P<extra_taxes_stamp>[\d,\.]+)
+regexpr = \s*Bollo\s+\([^\)]*\)\s*(?P<taxes>[\d,\.]+)
 
 """
 
-def load_scanner(scanner_config_filename):
+def load_scanner(scanner_config_filename=None):
+    if scanner_config_filename is None:
+        scanner_config_filename = conf.get_scanner_config_file()
     if not os.path.exists(scanner_config_filename):
         create_file_dir(scanner_config_filename)
         with open(scanner_config_filename, "w") as f_out:
