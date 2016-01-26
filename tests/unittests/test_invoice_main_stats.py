@@ -237,14 +237,17 @@ TOTALE                                                                          
         self.maxDiff = None
 
     def _test_invoice_main_stats(self, stats_group, total, output, mode_flag=None):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -252,11 +255,11 @@ TOTALE                                                                          
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-d', db_filename.name],
+                args=['scan', '-R', rc_dir],
             )
             self.assertEqual(p.string(), '')
 
-            args=['stats', '-d', db_filename.name, '-S', '2014-01-10', '-E', '2014-01-27']
+            args=['stats', '-R', rc_dir, '-S', '2014-01-10', '-E', '2014-01-27']
             if stats_group:
                 args.append('-g{}'.format(stats_group))
             if total is not None:

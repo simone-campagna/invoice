@@ -42,14 +42,17 @@ class Test_invoice_main_scan_error(unittest.TestCase):
         self.maxDiff = None
 
     def test_invoice_main_err(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -57,7 +60,7 @@ class Test_invoice_main_scan_error(unittest.TestCase):
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-d', db_filename.name],
+                args=['scan', '-R', rc_dir],
             )
             self.assertEqual(p.string(), '')
 
@@ -65,7 +68,7 @@ class Test_invoice_main_scan_error(unittest.TestCase):
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -78,14 +81,17 @@ KNTCRK01G01H663X 2014      6
 """)
 
     def test_invoice_main_err_partial_update_off(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, '--partial-update=off', os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
+                args=['init', '-R', rc_dir, '--partial-update=off', os.path.join(self.dirname, '*.doc'), os.path.join(self.dirname, 'error_wrong_number', '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -93,7 +99,7 @@ KNTCRK01G01H663X 2014      6
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-d', db_filename.name],
+                args=['scan', '-R', rc_dir],
             )
             self.assertEqual(p.string(), '')
 
@@ -101,7 +107,7 @@ KNTCRK01G01H663X 2014      6
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--header=off'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number', '--header=off'],
             )
             self.assertEqual(p.string(), '')
 

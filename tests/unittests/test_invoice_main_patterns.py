@@ -56,14 +56,17 @@ patterns:
         self.maxDiff = None
 
     def test_invoice_main_patterns_add_remove(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -71,7 +74,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['patterns', '-d', db_filename.name, '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
+                args=['patterns', '-R', rc_dir, '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
 
@@ -79,7 +82,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['patterns', '-d', db_filename.name, '-x', '!example/*.Doc', '-x', 'example/*.DOC'],
+                args=['patterns', '-R', rc_dir, '-x', '!example/*.Doc', '-x', 'example/*.DOC'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_DEFAULT)
 
@@ -88,19 +91,22 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['patterns', '-d', db_filename.name, '-a', 'example/*.doc'],
+                args=['patterns', '-R', rc_dir, '-a', 'example/*.doc'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_DEFAULT)
 
     def test_invoice_main_patterns_clear(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -108,19 +114,22 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['patterns', '-d', db_filename.name, '--clear'],
+                args=['patterns', '-R', rc_dir, '--clear'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_CLEAR)
 
     def test_invoice_main_patterns_warning(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name] + list(glob.glob(os.path.join(self.dirname, '*.doc'))),
+                args=['init', '-R', rc_dir] + list(glob.glob(os.path.join(self.dirname, '*.doc'))),
             )
             self.assertEqual(p.string(), '')
 
@@ -128,19 +137,22 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['patterns', '-d', db_filename.name, '--clear'],
+                args=['patterns', '-R', rc_dir, '--clear'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_CLEAR)
 
     def test_invoice_main_patterns_import_export(self):
-        with tempfile.NamedTemporaryFile() as db_filename, tempfile.NamedTemporaryFile() as p_file:
+        with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile() as p_file:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )   
             self.assertEqual(p.string(), '') 
 
@@ -148,7 +160,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['patterns', '-d', db_filename.name, '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
+                args=['patterns', '-R', rc_dir, '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
             )   
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
 
@@ -156,7 +168,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['patterns', '-d', db_filename.name],
+                args=['patterns', '-R', rc_dir],
             )   
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
 
@@ -164,7 +176,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['patterns', '-d', db_filename.name, '--export', p_file.name],
+                args=['patterns', '-R', rc_dir, '--export', p_file.name],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
             p_file.flush()
@@ -173,7 +185,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['patterns', '-d', db_filename.name, '--clear'],
+                args=['patterns', '-R', rc_dir, '--clear'],
             )
             self.assertEqual(p.string(), self.PATTERNS_CLEAR)
 
@@ -181,19 +193,22 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['patterns', '-d', db_filename.name, '--import', p_file.name],
+                args=['patterns', '-R', rc_dir, '--import', p_file.name],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
 
     def test_invoice_main_patterns_edit(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )   
             self.assertEqual(p.string(), '') 
 
@@ -201,7 +216,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['patterns', '-d', db_filename.name, '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
+                args=['patterns', '-R', rc_dir, '-a', '!example/*.Doc', '-a', 'example/*.DOC'],
             )   
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE)
 
@@ -209,7 +224,7 @@ patterns:
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['patterns', '-d', db_filename.name, '--edit', '--editor', 'sed "s/DOC/docx/g" -i'],
+                args=['patterns', '-R', rc_dir, '--edit', '--editor', 'sed "s/DOC/docx/g" -i'],
             )   
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.PATTERNS_ADD_REMOVE.replace('DOC', 'docx'))
 

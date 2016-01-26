@@ -127,14 +127,17 @@ versione del database:  {}
         self.maxDiff = None
 
     def test_invoice_main_version(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -142,19 +145,22 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['version', '-d', db_filename.name],
+                args=['version', '-R', rc_dir],
             )
             self.assertEqual(p.string(), self.VERSION_OUTPUT)
 
     def test_invoice_main_config_werror_eraise(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -162,19 +168,22 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '-werror', '-eraise'],
+                args=['config', '-R', rc_dir, '-werror', '-eraise'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_WERROR_ERAISE)
 
     def test_invoice_main_config_wignore_eignore(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -182,19 +191,22 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '-wignore', '-eignore'],
+                args=['config', '-R', rc_dir, '-wignore', '-eignore'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_WIGNORE_EIGNORE)
 
     def test_invoice_main_config_partial_update_on(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -202,19 +214,22 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '--partial-update=on'],
+                args=['config', '-R', rc_dir, '--partial-update=on'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
     def test_invoice_main_config_partial_update_off(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -222,19 +237,22 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '--partial-update=off'],
+                args=['config', '-R', rc_dir, '--partial-update=off'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_OFF)
 
     def test_invoice_main_config_partial_update(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -242,19 +260,22 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '--partial-update'],
+                args=['config', '-R', rc_dir, '--partial-update'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
     def test_invoice_main_init_config_var(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc'), '-gweek', '-s'],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc'), '-gweek', '-s'],
             )
             self.assertEqual(p.string(), '')
 
@@ -262,7 +283,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b', '-I', '361', '-w', 'error:*', 'log:005', '-e', 'raise:009', '-sl', 'info', '-sd','0.32'],
+                args=['config', '-R', rc_dir, '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b', '-I', '361', '-w', 'error:*', 'log:005', '-e', 'raise:009', '-sl', 'info', '-sd','0.32'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_MIX)
 
@@ -270,7 +291,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-d', db_filename.name],
+                args=['scan', '-R', rc_dir],
             )
             self.assertEqual(p.string(), """\
 #fatture aggiunte: 6
@@ -286,7 +307,7 @@ KNTCRK01G01H663X Smallville      6  216.66
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -301,7 +322,7 @@ KNTCRK01G01H663X 2014      6
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name],
+                args=['list', '-R', rc_dir],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   città         numero incasso
@@ -314,14 +335,17 @@ KNTCRK01G01H663X Smallville         6  216.66
 """)
 
     def test_invoice_main_config(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -329,19 +353,22 @@ KNTCRK01G01H663X Smallville         6  216.66
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name],
+                args=['config', '-R', rc_dir],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
     def test_invoice_main_config_reset(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -349,26 +376,29 @@ KNTCRK01G01H663X Smallville         6  216.66
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '--partial-update=off'],
+                args=['config', '-R', rc_dir, '--partial-update=off'],
             )
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '--reset'],
+                args=['config', '-R', rc_dir, '--reset'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
     def test_invoice_main_config_import_export(self):
-        with tempfile.NamedTemporaryFile() as db_filename, tempfile.NamedTemporaryFile() as p_file:
+        with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile() as p_file:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )   
             self.assertEqual(p.string(), '') 
 
@@ -376,7 +406,7 @@ KNTCRK01G01H663X Smallville         6  216.66
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '--partial-update=on'],
+                args=['config', '-R', rc_dir, '--partial-update=on'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
@@ -384,7 +414,7 @@ KNTCRK01G01H663X Smallville         6  216.66
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '--export', p_file.name],
+                args=['config', '-R', rc_dir, '--export', p_file.name],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
             p_file.flush()
@@ -393,7 +423,7 @@ KNTCRK01G01H663X Smallville         6  216.66
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '--partial-update=off'],
+                args=['config', '-R', rc_dir, '--partial-update=off'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_OFF)
 
@@ -401,19 +431,22 @@ KNTCRK01G01H663X Smallville         6  216.66
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '--import', p_file.name],
+                args=['config', '-R', rc_dir, '--import', p_file.name],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
     def test_invoice_main_patterns_edit(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )   
             self.assertEqual(p.string(), '') 
 
@@ -421,7 +454,7 @@ KNTCRK01G01H663X Smallville         6  216.66
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '--partial-update=on'],
+                args=['config', '-R', rc_dir, '--partial-update=on'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_ON)
 
@@ -429,7 +462,7 @@ KNTCRK01G01H663X Smallville         6  216.66
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-d', db_filename.name, '--edit', '--editor', 'sed "s/partial_update *= *True/partial_update = False/g" -i'],
+                args=['config', '-R', rc_dir, '--edit', '--editor', 'sed "s/partial_update *= *True/partial_update = False/g" -i'],
             )   
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_PARTIAL_UPDATE_OFF)
 

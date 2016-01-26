@@ -91,6 +91,8 @@ class Parser(metaclass=ParserMeta):
         if e_default != _UNDEFINED:
             value = m_type(e_default)
             self._defaults[entry] = value
+        else:
+            self._defaults[entry] = None
 
     @classmethod
     def type_str(cls, value):

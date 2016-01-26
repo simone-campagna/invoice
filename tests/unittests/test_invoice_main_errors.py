@@ -41,14 +41,17 @@ class Test_invoice_main(unittest.TestCase):
         self.maxDiff = None
 
     def test_invoice_main_invalid_fields(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -57,11 +60,14 @@ class Test_invoice_main(unittest.TestCase):
                 invoice_main(
                     printer=p,
                     logger=self.logger,
-                    args=['list', '-d', db_filename.name, '--fields', 'tax_code,missing_field'],
+                    args=['list', '-R', rc_dir, '--fields', 'tax_code,missing_field'],
                 )
 
     def test_invoice_main_invalid_onoff(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
@@ -69,18 +75,21 @@ class Test_invoice_main(unittest.TestCase):
                 invoice_main(
                     printer=p,
                     logger=self.logger,
-                    args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc'), '--partial-update=disabled'],
+                    args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc'), '--partial-update=disabled'],
                 )
 
     def test_invoice_main_invalid_filter(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -88,5 +97,5 @@ class Test_invoice_main(unittest.TestCase):
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--filter', 'città = "Rome"'],
+                args=['list', '-R', rc_dir, '--filter', 'città = "Rome"'],
             )

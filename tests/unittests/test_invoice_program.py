@@ -288,10 +288,15 @@ TOTALE                                 4       6  650.16  100.00%
             income=200.0, currency='euro')
 
     def test_InvoiceProgram(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
+
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -347,10 +352,15 @@ KNTCRK01G01H663X 2014      6
             )
 
     def test_InvoiceProgramDbNotExists(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
+
             i = 0
             while True:
-                non_existent_filename = "{}.{}".format(db_file, i)
+                non_existent_filename = "{}.{}".format(db_filename, i)
                 if not os.path.exists(non_existent_filename):
                     break
                 i = i + 1
@@ -372,10 +382,14 @@ KNTCRK01G01H663X 2014      6
                 )
 
     def test_InvoiceProgramDbNotInitialized(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -392,11 +406,15 @@ KNTCRK01G01H663X 2014      6
 
 
     def test_InvoiceProgramInvalidVersion(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
 
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -422,11 +440,15 @@ KNTCRK01G01H663X 2014      6
                 )
 
     def test_InvoiceProgramOk(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
 
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -459,11 +481,15 @@ KNTCRK01G01H663X 2014      6
             self.assertEqual(validation_result.num_warnings(), 0)
 
     def _test_InvoiceProgramSkip(self, reverse):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
 
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -523,11 +549,15 @@ KNTCRK01G01H663X 2014      6
         self._test_InvoiceProgramSkip(reverse=True)
 
     def test_InvoiceProgramErrorDuplicatedNumber(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
 
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -547,11 +577,15 @@ KNTCRK01G01H663X 2014      6
                 )
 
     def test_InvoiceProgramErrorDuplicatedLine(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
 
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -571,10 +605,14 @@ KNTCRK01G01H663X 2014      6
                 )
 
     def test_InvoiceProgram_validate_ok(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -587,10 +625,14 @@ KNTCRK01G01H663X 2014      6
             self.assertEqual(validation_result.num_warnings(), 0)
     
     def test_InvoiceProgram_validate_warning_multiple_names(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -605,10 +647,14 @@ KNTCRK01G01H663X 2014      6
                 self.assertEqual(doc_filename, self._invoice_004_parker_peter.doc_filename)
     
     def test_InvoiceProgram_validate_error_wrong_date(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -629,10 +675,14 @@ KNTCRK01G01H663X 2014      6
                     self.assertIs(warning.exc_type, InvoiceMultipleInvoicesPerDayError)
     
     def test_InvoiceProgram_validate_error_wrong_number(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -650,10 +700,14 @@ KNTCRK01G01H663X 2014      6
                 self.assertIs(exc_type, InvoiceWrongNumberError)
     
     def test_InvoiceProgram_validate_error_duplicated_number(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -671,10 +725,14 @@ KNTCRK01G01H663X 2014      6
                 self.assertIs(exc_type, InvoiceDuplicatedNumberError)
         
     def _test_InvoiceProgram_uf_mt(self, warning_action, wsuppress=False, esuppress=False):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -790,10 +848,14 @@ KNTCRK01G01H663X 2014      6
         self._test_InvoiceProgram_uf_mt(warning_action=ValidationResult.WARNING_ACTION_IGNORE, wsuppress=True, esuppress=True)
 
     def _test_InvoiceProgram_uf_mn(self, warning_action):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -851,10 +913,14 @@ KNTCRK01G01H663X 2014      6
         self._test_InvoiceProgram_uf_mn(warning_action=ValidationResult.WARNING_ACTION_IGNORE)
 
     def _test_InvoiceProgram_mi(self, warning_action):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -920,10 +986,14 @@ KNTCRK01G01H663X 2014      6
         self._test_InvoiceProgram_mi(warning_action=ValidationResult.WARNING_ACTION_IGNORE)
 
     def test_InvoiceProgram_malformed_tax_code(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -952,10 +1022,14 @@ KNTCRK01G01H663X 2014      6
                     self.assertEqual(error.message.replace(self.dirname, '<DIRNAME>'), "fattura <DIRNAME>/error_malformed_tax_code/2013_001_bruce_wayne.doc: codice fiscale 'WnYBRCO1GO10663T' non corretto: i caratteri non corretti sono 'W[n]YBRC[O]1G[O]1[0]663T'")
 
     def test_InvoiceProgram_zero_income(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -1124,10 +1198,14 @@ KNTCRK01G01H663X 2014      6
         self._test_InvoiceProgram_remove_orphaned(False)
 
     def _test_InvoiceProgram_stats(self, stats_group, expected_output, total):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -1206,9 +1284,13 @@ KNTCRK01G01H663X 2014      6
 
     def test_InvoiceProgram_xlsx_mode_raises(self):
         p = StringPrinter()
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -1224,10 +1306,14 @@ KNTCRK01G01H663X 2014      6
                 invoice_program.impl_list(table_mode=conf.TABLE_MODE_XLSX)
 
     def test_InvoiceProgram_warning_raise(self):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,
@@ -1249,10 +1335,14 @@ KNTCRK01G01H663X 2014      6
                 invoice_program.validate_invoice_collection(validation_result, invoice_collection)
 
     def _test_InvoiceProgram_inconsistency_errors(self, invoice, error_type):
-        with tempfile.NamedTemporaryFile() as db_file:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+            conf.setup(rc_dir=rc_dir)
+            db_filename = conf.get_db_file()
             p = StringPrinter()
             invoice_program = InvoiceProgram(
-                db_filename=db_file.name,
+                db_filename=db_filename,
                 logger=self.logger,
                 trace=False,
                 printer=p,

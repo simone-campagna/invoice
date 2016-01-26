@@ -136,14 +136,17 @@ anno                       2014
         self.maxDiff = None
 
     def test_invoice_main(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -151,7 +154,7 @@ anno                       2014
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-d', db_filename.name],
+                args=['scan', '-R', rc_dir],
             )
             self.assertEqual(p.string(), '')
 
@@ -159,7 +162,7 @@ anno                       2014
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-d', db_filename.name],
+                args=['scan', '-R', rc_dir],
             )
             self.assertEqual(p.string(), '')
 
@@ -167,7 +170,7 @@ anno                       2014
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -183,7 +186,7 @@ KNTCRK01G01H663X 2014      6
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['dump', '-d', db_filename.name],
+                args=['dump', '-R', rc_dir],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.DUMP_OUTPUT)
 
@@ -191,7 +194,7 @@ KNTCRK01G01H663X 2014      6
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['report', '-d', db_filename.name, '-y', '2014'],
+                args=['report', '-R', rc_dir, '-y', '2014'],
             )
             self.assertEqual(p.string(), self.REPORT_OUTPUT)
 
@@ -199,7 +202,7 @@ KNTCRK01G01H663X 2014      6
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['report', '-d', db_filename.name, '-y', '2014,2015'],
+                args=['report', '-R', rc_dir, '-y', '2014,2015'],
             )
             self.assertEqual(p.string(), self.REPORT_OUTPUT)
 
@@ -207,7 +210,7 @@ KNTCRK01G01H663X 2014      6
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--filter', 'number % 2 == 0', '--filter=tax_code.startswith("P")'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number', '--filter', 'number % 2 == 0', '--filter=tax_code.startswith("P")'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -218,7 +221,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validate', '-d', db_filename.name],
+                args=['validate', '-R', rc_dir],
             )
             self.assertEqual(p.string(), '')
 
@@ -227,7 +230,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['clear', '-d', db_filename.name],
+                args=['clear', '-R', rc_dir],
             )
             self.assertEqual(p.string(), '')
 
@@ -235,7 +238,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--header=off'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number', '--header=off'],
             )
             self.assertEqual(p.string(), '')
 
@@ -243,7 +246,7 @@ PRKPRT01G01H663M 2014      2
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--header=off', '--filter', 'città == Rome'], # InvoiceSyntaxError
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number', '--header=off', '--filter', 'città == Rome'], # InvoiceSyntaxError
             )
             self.assertEqual(p.string(), '')
 
@@ -341,14 +344,17 @@ TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0
         self._test_invoice_main_summary(table_mode=conf.TABLE_MODE_XLSX, pdata=True)
 
     def test_invoice_main_list(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -356,7 +362,7 @@ TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-d', db_filename.name],
+                args=['scan', '-R', rc_dir],
             )
             self.assertEqual(p.string(), '')
 
@@ -364,7 +370,7 @@ TOTALE 0.0      0.0    0.0            0.0                   0.0  0.0
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'date, city,tax_code,year,number', '--filter', 'città != "Gotham City"', '-S', '2014-01-10', '-E', '2014-01-27'],
+                args=['list', '-R', rc_dir, '--fields', 'date, city,tax_code,year,number', '--filter', 'città != "Gotham City"', '-S', '2014-01-10', '-E', '2014-01-27'],
             )
             self.assertEqual(p.string(), """\
 data       città      codice_fiscale   anno numero
@@ -381,7 +387,7 @@ data       città      codice_fiscale   anno numero
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--client', 'WNYBRC01G01H663S'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number', '--client', 'WNYBRC01G01H663S'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -393,7 +399,7 @@ WNYBRC01G01H663S 2014      4
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--client', 'PRKPRT01G01H663M,WNYBRC01G01H663S'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number', '--client', 'PRKPRT01G01H663M,WNYBRC01G01H663S'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -406,7 +412,7 @@ WNYBRC01G01H663S 2014      4
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--client', 'PRKPRT01G01H663M,WNYBRC01G01H663S',
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number', '--client', 'PRKPRT01G01H663M,WNYBRC01G01H663S',
                       '--order', 'tax_code' ],
             )
             self.assertEqual(p.string(), """\
@@ -420,7 +426,7 @@ WNYBRC01G01H663S 2014      4
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--order', 'tax_code'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number', '--order', 'tax_code'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -436,7 +442,7 @@ WNYBRC01G01H663S 2014      4
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--order', 'tax_code,!date'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number', '--order', 'tax_code,!date'],
             )
             self.assertEqual(p.string(), """\
 codice_fiscale   anno numero
@@ -453,7 +459,7 @@ WNYBRC01G01H663S 2014      1
                 invoice_main(
                     printer=p,
                     logger=self.logger,
-                    args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--order', 'tax_code,!date', '--output', o_file.name],
+                    args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number', '--order', 'tax_code,!date', '--output', o_file.name],
                 )
                 self.assertEqual(p.string(), "")
                 o_file.flush()
@@ -480,7 +486,7 @@ WNYBRC01G01H663S 2014      1
                 invoice_main(
                     printer=p,
                     logger=self.logger,
-                    args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--order', 'tax_code,!date', '--output', o_filename_template, '--table-mode', conf.TABLE_MODE_XLSX],
+                    args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number', '--order', 'tax_code,!date', '--output', o_filename_template, '--table-mode', conf.TABLE_MODE_XLSX],
                 )
                 try:
                     self.assertEqual(p.string(), "")
@@ -489,14 +495,17 @@ WNYBRC01G01H663S 2014      1
                     os.remove(o_filename)
 
     def test_invoice_main_dry_run(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -504,7 +513,7 @@ WNYBRC01G01H663S 2014      1
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--header=off'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number', '--header=off'],
             )
             self.assertEqual(p.string(), "")
 
@@ -512,22 +521,25 @@ WNYBRC01G01H663S 2014      1
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-d', db_filename.name, '--dry-run'],
+                args=['scan', '-R', rc_dir, '--dry-run'],
             )
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name, '--fields', 'tax_code,year,number', '--header=off'],
+                args=['list', '-R', rc_dir, '--fields', 'tax_code,year,number', '--header=off'],
             )
             self.assertEqual(p.string(), "")
 
     def _test_invoice_main_global_options(self, *global_options):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
-            args = ['init'] + list(global_options) + ['-d', db_filename.name, os.path.join(self.dirname, '*.doc')]
+            args = ['init'] + list(global_options) + ['-R', rc_dir, os.path.join(self.dirname, '*.doc')]
             p.reset()
             invoice_main(
                 printer=p,

@@ -323,6 +323,11 @@ class InvoiceProgram(object):
             self.db.clear(table_name, connection=connection)
             self.db.import_table(table_name, t_filename, connection=connection)
 
+    def backup_and_remove(self, logger, filename):
+        backup_filename = "{}.{}".format(filename, datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
+        logger.info("file {} -> {}".format(filename, backup_filename))
+        os.rename(filename, backup_filename)
+
     def impl_init(self, *, patterns,
                            warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                            error_mode=ValidationResult.DEFAULT_ERROR_MODE,
@@ -348,10 +353,10 @@ class InvoiceProgram(object):
                 os.remove(self.db_filename)
             if os.path.exists(scanner_config_file):
                 self.logger.info("cancellazione dello scanner config file {!r}...".format(scanner_config_file))
-                os.remove(scanner_config_file)
+                self.backup_and_remove(self.logger, scanner_config_file)
             if os.path.exists(parser_config_file):
                 self.logger.info("cancellazione del parser config file {!r}...".format(parser_config_file))
-                os.remove(parser_config_file)
+                self.backup_and_remove(self.logger, parser_config_file)
         self.db.initialize()
         configuration = self.db.Configuration(
             warning_mode=warning_mode,

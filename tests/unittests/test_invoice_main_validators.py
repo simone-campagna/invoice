@@ -62,14 +62,17 @@ anno numero città         data       codice_fiscale   nome                compe
         self.maxDiff = None
 
     def test_invoice_main_validators_scan(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -77,7 +80,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validators', '-d', db_filename.name],
+                args=['validators', '-R', rc_dir],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EMPTY)
 
@@ -85,7 +88,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validators', '-d', db_filename.name, '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
+                args=['validators', '-R', rc_dir, '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -93,7 +96,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validators', '-d', db_filename.name],
+                args=['validators', '-R', rc_dir],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -101,26 +104,29 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-d', db_filename.name]
+                args=['scan', '-R', rc_dir]
             )
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name]
+                args=['list', '-R', rc_dir]
             )
             self.assertEqual(p.string(), self.LIST_SHORT)
 
     def test_invoice_main_validators_validate(self):
-        with tempfile.NamedTemporaryFile() as db_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -128,14 +134,14 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-d', db_filename.name],
+                args=['scan', '-R', rc_dir],
             )
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name],
+                args=['list', '-R', rc_dir],
             )
             self.assertEqual(p.string(), self.LIST_FULL)
 
@@ -143,7 +149,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validators', '-d', db_filename.name, '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
+                args=['validators', '-R', rc_dir, '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -151,29 +157,14 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validate', '-d', db_filename.name],
+                args=['validate', '-R', rc_dir],
             )
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name],
-            )
-            self.assertEqual(p.string(), self.LIST_SHORT)
-
-            p.reset()
-            invoice_main(
-                printer=p,
-                logger=self.logger,
-                args=['scan', '-d', db_filename.name],
-            )
-
-            p.reset()
-            invoice_main(
-                printer=p,
-                logger=self.logger,
-                args=['list', '-d', db_filename.name],
+                args=['list', '-R', rc_dir],
             )
             self.assertEqual(p.string(), self.LIST_SHORT)
 
@@ -181,7 +172,22 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validators', '-d', db_filename.name, '--clear'],
+                args=['scan', '-R', rc_dir],
+            )
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['list', '-R', rc_dir],
+            )
+            self.assertEqual(p.string(), self.LIST_SHORT)
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['validators', '-R', rc_dir, '--clear'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EMPTY)
 
@@ -189,14 +195,14 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-d', db_filename.name],
+                args=['scan', '-R', rc_dir],
             )
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['list', '-d', db_filename.name],
+                args=['list', '-R', rc_dir],
             )
             #self.assertEqual(p.string(), self.LIST_SHORT)
 #
@@ -204,26 +210,29 @@ anno numero città         data       codice_fiscale   nome                compe
 #            invoice_main(
 #                printer=p,
 #                logger=self.logger,
-#                args=['scan', '-d', db_filename.name, '--force-refresh'],
+#                args=['scan', '-R', rc_dir, '--force-refresh'],
 #            )
 #
 #            p.reset()
 #            invoice_main(
 #                printer=p,
 #                logger=self.logger,
-#                args=['list', '-d', db_filename.name],
+#                args=['list', '-R', rc_dir],
 #            )
             self.assertEqual(p.string(), self.LIST_FULL)
 
     def test_invoice_main_validators_import_export(self):
-        with tempfile.NamedTemporaryFile() as db_filename, tempfile.NamedTemporaryFile() as v_filename:
+        with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile() as v_filename:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -231,7 +240,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validators', '-d', db_filename.name, '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
+                args=['validators', '-R', rc_dir, '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -239,7 +248,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validators', '-d', db_filename.name],
+                args=['validators', '-R', rc_dir],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -247,7 +256,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validators', '-d', db_filename.name, '--export', v_filename.name],
+                args=['validators', '-R', rc_dir, '--export', v_filename.name],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -255,7 +264,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validators', '-d', db_filename.name, '--clear'],
+                args=['validators', '-R', rc_dir, '--clear'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EMPTY)
 
@@ -263,19 +272,22 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validators', '-d', db_filename.name, '--import', v_filename.name],
+                args=['validators', '-R', rc_dir, '--import', v_filename.name],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
     def test_invoice_main_validators_edit(self):
-        with tempfile.NamedTemporaryFile() as db_filename, tempfile.NamedTemporaryFile() as v_filename:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
             p = StringPrinter()
 
             p.reset()
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['init', '-d', db_filename.name, os.path.join(self.dirname, '*.doc')],
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
             )
             self.assertEqual(p.string(), '')
 
@@ -283,7 +295,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validators', '-d', db_filename.name, '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
+                args=['validators', '-R', rc_dir, '--add', 'Date("2014-01-01") <= date <= Date("2014-12-31")', 'not date.weekday() in {Weekday["Saturday"], Weekday["Sunday"]}', 'invalid weekday for year 2014'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -291,7 +303,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validators', '-d', db_filename.name],
+                args=['validators', '-R', rc_dir],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE)
 
@@ -299,7 +311,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['validators', '-d', db_filename.name, '--edit', '--editor', 'sed "s/2014/2028/g" -i'],
+                args=['validators', '-R', rc_dir, '--edit', '--editor', 'sed "s/2014/2028/g" -i'],
             )
             self.assertEqual(p.string(), self.VALIDATORS_SHOW_EXAMPLE.replace('2014', '2028'))
 
