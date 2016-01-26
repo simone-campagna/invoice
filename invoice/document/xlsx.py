@@ -19,7 +19,7 @@ import contextlib
 from .. import conf
 from ..log import get_default_logger
 
-from .base import BasePageTemplate, BaseDocument
+from .base import BasePageTemplate, BaseDocument, Formula
 from .formats import Formats
 
 try:
@@ -37,7 +37,13 @@ __all__ = [
 
 
 class XlsxPageTemplate(BasePageTemplate):
-    pass
+    def transform(self, data):
+        if self.show_header and data:
+            yield self.header
+        convert = self.convert
+        for entry in data:
+            yield tuple(convert.get(field_name, lambda x: x)(self.getter(entry, field_name)) for field_name in self.field_names)
+
 
 
 class XlsxDocument(BaseDocument):
@@ -61,7 +67,7 @@ class XlsxDocument(BaseDocument):
     def define_format(self, format_name, format_data):
         self._formats[format_name] = self.workbook.add_format(format_data)
 
-    def _add_rows(self, worksheet, rows, *, row_offset=0, formats=None):
+    def _add_rows(self, worksheet, rows, *, row_offset=0, formats=None, formula_offset=0):
         num_rows = 0
         for ridx, row in enumerate(rows):
             r = row_offset + ridx
@@ -72,10 +78,14 @@ class XlsxDocument(BaseDocument):
                     format_name = formats.get_format(r, c)
                     if format_name:
                         rc_format = self._formats.get(format_name)
-                worksheet.write(r, c, col, rc_format)
+                if isinstance(col, Formula):
+                    worksheet.write(r, c, col.get_formula(offset=formula_offset), rc_format, col.value)
+                else:
+                    worksheet.write(r, c, col, rc_format)
         return num_rows
 
     def _add_xxxlogue(self, worksheet, row_offset, xxxlogue, formats, pre, post):
+        added_offset = 0
         if xxxlogue:
             rrfirst = row_offset
             row_offset += len(xxxlogue)
@@ -86,12 +96,14 @@ class XlsxDocument(BaseDocument):
                     formats.apply_offset(row_offset, num)
                 rrfirst += num
                 row_offset += num
+                added_offset += num
             worksheet.merge_range(rrfirst, 0, row_offset - 1, 100, text, self._merge_format)
             if post:
                 if formats:
                     formats.apply_offset(row_offset, num)
                 row_offset += num
-        return row_offset
+                added_offset += num
+        return row_offset, added_offset
         
     def _add_prologue(self, worksheet, row_offset, prologue, formats):
         return self._add_xxxlogue(worksheet, row_offset, prologue, formats, pre=False, post=True)
@@ -107,14 +119,15 @@ class XlsxDocument(BaseDocument):
         #    #rrfirst = row_offset
         #    #row_offset + len(prologue)
         #    #worksheet.merge_range(rrfirst, row_offset, 0, 100, '\n'.join(" ".join(row) for row in prologue))
-        row_offset = self._add_prologue(worksheet, row_offset, prologue, formats)
+        row_offset, added_offset = self._add_prologue(worksheet, row_offset, prologue, formats)
+        formula_offset = added_offset + 1  # row numbering starts with 1
         rows = tuple(page_template.transform(data))
         if rows:
-            lengths = [max(len(entry[c]) for entry in rows) for c, f in enumerate(page_template.field_names)]
+            lengths = [max(len(str(entry[c])) for entry in rows) for c, f in enumerate(page_template.field_names)]
             for c, length in enumerate(lengths):
-                l = 8.43 * length / 5
+                l = 8.43 * length / 6
                 worksheet.set_column(c, c, l)
-        row_offset += self._add_rows(worksheet=worksheet, rows=rows, formats=formats, row_offset=row_offset)
+        row_offset += self._add_rows(worksheet=worksheet, rows=rows, formats=formats, row_offset=row_offset, formula_offset=formula_offset)
         #if epilogue:
         #    #row_offset += self._add_rows(worksheet=worksheet, rows=epilogue, formats=formats, row_offset=row_offset)
         #    rrfirst = row_offset

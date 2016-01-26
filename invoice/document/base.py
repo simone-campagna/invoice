@@ -35,6 +35,40 @@ def attr_getter(row, field_name):
 
 # Page template
 
+class Formula(object):
+    def __init__(self, formula, col, row_begin, row_end, value):
+        self._formula = formula
+        self.col = col
+        self.row_begin = row_begin
+        self.row_end = row_end
+        self._value = value
+
+    @classmethod
+    def get_letter(cls, col):
+        return chr(ord('A') + col)
+
+    @property
+    def value(self):
+        return self._value
+
+    @property
+    def formula(self):
+        return self.get_formula()
+
+    def get_formula(self, offset=0):
+        return "={f}({l}{rb}:{l}{re})".format(
+            f=self._formula,
+            l=self.get_letter(self.col),
+            rb=self.row_begin + offset,
+            re=self.row_end + offset,
+        )
+
+    def __str__(self):
+        return str(self.value)
+
+    def __repr__(self):
+        return "{}({!r}, {!r})".format(self.__class__.__name__, self.formula, self.value)
+
 
 class BasePageTemplate(metaclass=abc.ABCMeta):
     def __init__(self, document, field_names, *, header=None, getter=None, convert=None, align=None, **options):

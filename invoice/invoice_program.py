@@ -56,7 +56,7 @@ from .spy.spy_function import spy_function
 from .validation_result import ValidationResult
 from .week import WeekManager
 from .database.db_types import Path
-from .document import document, item_getter, Formats
+from .document import document, item_getter, Formats, Formula
 from . import conf
 from .scanner import load_scanner
 from .parser import load_parser
@@ -553,11 +553,22 @@ class InvoiceProgram(object):
         general_info = load_info()['general']
         summary_prologue = general_info['summary_prologue']
         summary_epilogue = general_info['summary_epilogue']
+        number_fields = {"fee", "refunds", "cpa", "taxable_income", "vat", "deduction", "taxes", "income"}
+        number_cols = []
+        for c, field in enumerate(MReport._fields):
+            if field in number_fields:
+                number_cols.append(c)
+
+        align = conf.ALIGN.copy()
+        for key in total_keys:
+            align[key] = ">"
 
         with document(file=self.get_doc_file(output_filename), mode=table_mode, logger=self.logger) as doc:
             doc.define_format("bold", {"bold": True})
             doc.define_format("bold_yellow", {"bold": True, "bg_color": "yellow"})
-            page_template = doc.create_page_template(field_names=all_field_names, header=header)
+            doc.define_format("money_value", {"align": "right", "num_format": "0.00"})
+            doc.define_format("money_value_total", {"align": "right", "num_format": "0.00", "bold": True, "bg_color": "yellow"})
+            page_template = doc.create_page_template(field_names=all_field_names, header=header, align=align)
             for month in range(1, 12 + 1):
                 m_filter = lambda i: i.date.month == month
                 invoices = self.filter_invoice_collection(invoice_collection, filters=[m_filter])
@@ -581,6 +592,7 @@ class InvoiceProgram(object):
                 total = {}
                 for key in total_keys:
                     total[key] = 0.0
+                row_begin = row_offset
                 for invoice in invoices:
                     mreport = MReport(
                         number=invoice.number,
@@ -595,22 +607,36 @@ class InvoiceProgram(object):
                         income=invoice.income,
                     )
                     rows.append(mreport)
+                    for col in number_cols:
+                        doc_formats.add_format("money_value", row=row_offset + len(rows), col=col)
                     for key in total_keys:
                         val = getattr(mreport, key)
                         if val is not None:
                             total[key] += val
+                row_end = row_offset + len(rows)
                 total["number"] = "TOTALE"
                 total["empty"] = ""
+                row_begin = row_offset
+                if header:
+                    nh = 1
+                else:
+                    nh = 0
+                for key in total_keys:
+                    col = MReport._fields.index(key)
+                    total[key] = Formula("SUM", col, row_begin + nh, row_end, value=round(total[key], 2))
                 if table_mode == conf.TABLE_MODE_XLSX:
                     separator = {key: "" for key in MReport._fields}
                     rows.append(MReport(**separator))
-                for key in total_keys:
-                    total[key] = round(total[key], 2)
+#                    for key in total_keys:
+#                        col = MReport._fields.index(key)
+#                        total[key] = "=SUM({l}{rb}:{l}{re})".format(l=letters[col], rb=row_begin + 3, re=row_end + 2)
+#                        print(key, col, total[key])
                 rows.append(MReport(**total))
-    
+                for col in number_cols:
+                    doc_formats.add_format("money_value_total", row=row_offset + len(rows), col=col)
+                num_rows = row_offset + len(rows)
                 doc_formats.add_format("bold", row=0 + row_offset, col=None)
                 doc_formats.add_format("bold", row=None, col=0)
-                num_rows = row_offset + len(rows)
                 if header:
                     num_rows += 1
                 doc_formats.add_format("bold_yellow", row=num_rows - 1, col=None)

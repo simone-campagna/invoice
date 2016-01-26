@@ -16,7 +16,7 @@
 #
 
 from .document import document
-from .base import item_getter, attr_getter
+from .base import item_getter, attr_getter, Formula
 from .formats import Formats
 
 
@@ -25,5 +25,6 @@ __all__ = [
     'document',
     'item_getter',
     'attr_getter',
+    'Formula',
     'Formats',
 ]
