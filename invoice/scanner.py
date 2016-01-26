@@ -123,22 +123,22 @@ regexpr = ^\s*(?P<city>[^,]+)(?:,|\s)\s*(?P<date>\d{1,2}/\d{1,2}/\d\d\d\d)\s*$
 regexpr = Totale\s+fattura\s+(?P<income>[\d,\.]*)\s+(?P<currency>\w+)\s*$
 
 [prestazione e compenso]
-regexpr = \s*(?:N\s*°\s*\d+|[Pp]restazione\s*:\s*(?:N\s*°\s*\d+)?)\s*(?P<service>[^\d]*)(?:\s+[Pp][Ee][Rr]\s+)?\s*(?P<fee>[\d,\.]*)
+regexpr = \s*(?:N\s*°\s*\d+|[Pp]restazione\s*:\s*(?:N\s*°\s*\d+)?)\s*(?P<service>[^\d]*)(?:\s+[Pp][Ee][Rr]\s+)?\s*(?P<fee>[\d,\.]*)\s+\w+\s*$
 
 [iva]
-regexpr = \s*IVA\s+(?P<p_vat>[\d,\.]+)%\s+(?P<vat>[\d,\.]*)\s+(?:\w+)
+regexpr = \s*IVA\s+(?P<p_vat>[\d,\.]+)%\s+(?P<vat>[\d,\.]*)\s+\w+\s*$
 
 [ritenuta]
-regexpr = \s*Ritenuta d'acconto\s+(?P<p_deduction>[\d,\.]+)%\s+(?P<deduction>[\d,\.]*)\s+(?:\w+)
+regexpr = \s*Ritenuta d'acconto\s+(?P<p_deduction>[\d,\.]+)%\s+(?P<deduction>[\d,\.]*)\s+\w+\s*$
 
 [rimborso spese di viaggio]
-regexpr = \s*Rimborso\s+spese\s+di\s+viaggio\s*(?P<refunds>[\d,\.]+)
+regexpr = \s*Rimborso\s+.*?\s+(?P<refunds>[\d,\.]+)\s+\w+
 
 [cpa]
-regexpr = \s*Contributo\s+previdenziale\s+(?P<p_cpa>[\d,\.]+)%\s+(?P<cpa>[\d,\.]*)\s+(?:\w+)
+regexpr = \s*Contributo\s+previdenziale\s+(?P<p_cpa>[\d,\.]+)%\s+(?P<cpa>[\d,\.]*)\s+\w+\s*$
 
 [bollo]
-regexpr = \s*Bollo\s+\([^\)]*\)\s*(?P<taxes>[\d,\.]+)
+regexpr = \s*Bollo\s+.*?\s+(?P<taxes>[\d,\.]+)\s+\w+\s*$
 
 """
 

@@ -92,36 +92,36 @@ fattura:                   '<DIRNAME>/2014_006_clark_kent.doc'
   città/data:              Smallville/2014-02-28
   nome:                    Clark Kent
   codice fiscale:          KNTCRK01G01H663X
-  incasso:                 216.66 [euro]
+  incasso:                 246.66 [euro]
 """
 
     REPORT_OUTPUT = """\
 anno                       2014
-  * incasso totale:        650.16
+  * incasso totale:        680.16
   * numero di fatture:     6
   * numero di clienti:     4
     + cliente:             WNYBRC01G01H663S (Bruce Wayne):
       numero di fatture:   2
       incasso totale:      102.00
-      incasso percentuale: 15.69%
+      incasso percentuale: 15.00%
       settimane:           1, 4
 
     + cliente:             PRKPRT01G01H663M (Peter B. Parker):
       numero di fatture:   1
       incasso totale:      76.50
-      incasso percentuale: 11.77%
+      incasso percentuale: 11.25%
       settimane:           1
 
     + cliente:             BNNBRC01G01H663S (Robert Bruce Banner):
       numero di fatture:   1
       incasso totale:      102.00
-      incasso percentuale: 15.69%
+      incasso percentuale: 15.00%
       settimane:           4
 
     + cliente:             KNTCRK01G01H663X (Clark Kent):
       numero di fatture:   2
-      incasso totale:      369.66
-      incasso percentuale: 56.86%
+      incasso totale:      399.66
+      incasso percentuale: 58.76%
       settimane:           5, 9
 
   * numero di settimane:   4
@@ -129,25 +129,25 @@ anno                       2014
       numero di fatture:   2
       giorni:              2014-01-03 VE[2]
       incasso totale:      127.50
-      incasso percentuale: 19.61%
+      incasso percentuale: 18.75%
 
     + settimana:           4 [2014-01-20 -> 2014-01-26]:
       numero di fatture:   2
       giorni:              2014-01-22 ME[1], 2014-01-25 SA[1]
       incasso totale:      153.00
-      incasso percentuale: 23.53%
+      incasso percentuale: 22.49%
 
     + settimana:           5 [2014-01-27 -> 2014-02-02]:
       numero di fatture:   1
       giorni:              2014-01-29 ME[1]
       incasso totale:      153.00
-      incasso percentuale: 23.53%
+      incasso percentuale: 22.49%
 
     + settimana:           9 [2014-02-24 -> 2014-03-02]:
       numero di fatture:   1
       giorni:              2014-02-28 VE[1]
-      incasso totale:      216.66
-      incasso percentuale: 33.32%
+      incasso totale:      246.66
+      incasso percentuale: 36.26%
 
 """
 
@@ -173,46 +173,46 @@ anno                       2012
 
     STATS_OUTPUT_YEAR = """\
 anno        da:         a: clienti fatture incasso %incasso
-2014 2014-01-01 2014-12-31       4       6  650.16  100.00%
+2014 2014-01-01 2014-12-31       4       6  680.16  100.00%
 """
 
     STATS_OUTPUT_YEAR_TOTAL = """\
 anno          da:         a: clienti fatture incasso %incasso
-2014   2014-01-01 2014-12-31       4       6  650.16  100.00%
-TOTALE                             4       6  650.16  100.00%
+2014   2014-01-01 2014-12-31       4       6  680.16  100.00%
+TOTALE                             4       6  680.16  100.00%
 """
     STATS_OUTPUT_MONTH = """\
 mese           da:         a: clienti fatture incasso %incasso
-2014-01 2014-01-01 2014-01-31       4       5  433.50   66.68%
-2014-02 2014-02-01 2014-02-28       1       1  216.66   33.32%
+2014-01 2014-01-01 2014-01-31       4       5  433.50   63.74%
+2014-02 2014-02-01 2014-02-28       1       1  246.66   36.26%
 """
 
     STATS_OUTPUT_MONTH_TOTAL = STATS_OUTPUT_MONTH + """\
-TOTALE                              4       6  650.16  100.00%
+TOTALE                              4       6  680.16  100.00%
 """
 
     STATS_OUTPUT_WEEK = """\
 settimana        da:         a: clienti fatture incasso %incasso
-2014:01   2014-01-01 2014-01-05       2       2  127.50   19.61%
-2014:04   2014-01-20 2014-01-26       2       2  153.00   23.53%
-2014:05   2014-01-27 2014-02-02       1       1  153.00   23.53%
-2014:09   2014-02-24 2014-03-02       1       1  216.66   33.32%
+2014:01   2014-01-01 2014-01-05       2       2  127.50   18.75%
+2014:04   2014-01-20 2014-01-26       2       2  153.00   22.49%
+2014:05   2014-01-27 2014-02-02       1       1  153.00   22.49%
+2014:09   2014-02-24 2014-03-02       1       1  246.66   36.26%
 """
 
     STATS_OUTPUT_WEEK_TOTAL = STATS_OUTPUT_WEEK + """\
-TOTALE                                4       6  650.16  100.00%
+TOTALE                                4       6  680.16  100.00%
 """
 
     STATS_OUTPUT_DAY = """\
 giorno            da:         a: clienti fatture incasso %incasso
-2014-01-03 2014-01-03 2014-01-03       2       2  127.50   19.61%
-2014-01-22 2014-01-22 2014-01-22       1       1  102.00   15.69%
-2014-01-25 2014-01-25 2014-01-25       1       1   51.00    7.84%
-2014-01-29 2014-01-29 2014-01-29       1       1  153.00   23.53%
-2014-02-28 2014-02-28 2014-02-28       1       1  216.66   33.32%
+2014-01-03 2014-01-03 2014-01-03       2       2  127.50   18.75%
+2014-01-22 2014-01-22 2014-01-22       1       1  102.00   15.00%
+2014-01-25 2014-01-25 2014-01-25       1       1   51.00    7.50%
+2014-01-29 2014-01-29 2014-01-29       1       1  153.00   22.49%
+2014-02-28 2014-02-28 2014-02-28       1       1  246.66   36.26%
 """
     STATS_OUTPUT_DAY_TOTAL = STATS_OUTPUT_DAY + """\
-TOTALE                                 4       6  650.16  100.00%
+TOTALE                                 4       6  680.16  100.00%
 """
 
     def setUp(self):

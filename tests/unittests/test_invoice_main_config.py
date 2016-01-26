@@ -300,7 +300,7 @@ versione del database:  {}
 ultima fattura inserita per ciascun anno:
 -----------------------------------------
 codice_fiscale   città      numero incasso
-KNTCRK01G01H663X Smallville      6  216.66
+KNTCRK01G01H663X Smallville      6  246.66
 """)
 
             p.reset()
@@ -331,7 +331,7 @@ PRKPRT01G01H663M New York City      2   76.50
 BNNBRC01G01H663S Greenville         3  102.00
 WNYBRC01G01H663S Gotham City        4   51.00
 KNTCRK01G01H663X Smallville         5  153.00
-KNTCRK01G01H663X Smallville         6  216.66
+KNTCRK01G01H663X Smallville         6  246.66
 """)
 
     def test_invoice_main_config(self):

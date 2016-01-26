@@ -72,35 +72,35 @@ fattura:                   '<DIRNAME>/2014_006_clark_kent.doc'
   città/data:              Smallville/2014-02-28
   nome:                    Clark Kent
   codice fiscale:          KNTCRK01G01H663X
-  incasso:                 216.66 [euro]
+  incasso:                 246.66 [euro]
 """
     REPORT_OUTPUT = """\
 anno                       2014
-  * incasso totale:        650.16
+  * incasso totale:        680.16
   * numero di fatture:     6
   * numero di clienti:     4
     + cliente:             WNYBRC01G01H663S (Bruce Wayne):
       numero di fatture:   2
       incasso totale:      102.00
-      incasso percentuale: 15.69%
+      incasso percentuale: 15.00%
       settimane:           1, 4
 
     + cliente:             PRKPRT01G01H663M (Peter B. Parker):
       numero di fatture:   1
       incasso totale:      76.50
-      incasso percentuale: 11.77%
+      incasso percentuale: 11.25%
       settimane:           1
 
     + cliente:             BNNBRC01G01H663S (Robert Bruce Banner):
       numero di fatture:   1
       incasso totale:      102.00
-      incasso percentuale: 15.69%
+      incasso percentuale: 15.00%
       settimane:           4
 
     + cliente:             KNTCRK01G01H663X (Clark Kent):
       numero di fatture:   2
-      incasso totale:      369.66
-      incasso percentuale: 56.86%
+      incasso totale:      399.66
+      incasso percentuale: 58.76%
       settimane:           5, 9
 
   * numero di settimane:   4
@@ -108,25 +108,25 @@ anno                       2014
       numero di fatture:   2
       giorni:              2014-01-03 VE[2]
       incasso totale:      127.50
-      incasso percentuale: 19.61%
+      incasso percentuale: 18.75%
 
     + settimana:           4 [2014-01-20 -> 2014-01-26]:
       numero di fatture:   2
       giorni:              2014-01-22 ME[1], 2014-01-25 SA[1]
       incasso totale:      153.00
-      incasso percentuale: 23.53%
+      incasso percentuale: 22.49%
 
     + settimana:           5 [2014-01-27 -> 2014-02-02]:
       numero di fatture:   1
       giorni:              2014-01-29 ME[1]
       incasso totale:      153.00
-      incasso percentuale: 23.53%
+      incasso percentuale: 22.49%
 
     + settimana:           9 [2014-02-24 -> 2014-03-02]:
       numero di fatture:   1
       giorni:              2014-02-28 VE[1]
-      incasso totale:      216.66
-      incasso percentuale: 33.32%
+      incasso totale:      246.66
+      incasso percentuale: 36.26%
 
 """
 
@@ -289,7 +289,6 @@ summary_epilogue = test line 3
                 args=['summary', '-R', rc_dir, '--year', '2014'],
             )
             if table_mode == conf.TABLE_MODE_TEXT:
-                print(p.string())
                 self.assertEqual(p.string(), """\
 === Gennaio ===
 N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
@@ -301,8 +300,8 @@ N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI 
 TOTALE 425.0    0.0      8.5    433.5          0.0                   0.0  0.0   433.5 
 === Febbraio ===
 N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-6      150.0    0.0      3.0    153.0          33.66                 30.0 0.0   216.66
-TOTALE 150.0    0.0      3.0    153.0          33.66                 30.0 0.0   216.66
+6      120.0    30.0     3.0    123.0          33.66                 30.0 30.0  246.66
+TOTALE 120.0    30.0     3.0    123.0          33.66                 30.0 30.0  246.66
 === Marzo ===
 N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
 TOTALE 0.0      0.0      0.0    0.0            0.0                   0.0  0.0   0.0   

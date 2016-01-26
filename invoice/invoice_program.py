@@ -746,14 +746,23 @@ class InvoiceProgram(object):
                 'income': lambda income: '{:.2f}'.format(income),
                 'income_percentage': lambda income_percentage: '{:.2%}'.format(income_percentage),
             }
-            align = {
-                'client_count': '>',
-                'invoice_count': '>',
-                'income': '>',
-                'income_percentage': '>',
-                'from': '>',
-                'to': '>',
-            }
+            align = conf.ALIGN
+#REMOVE                'client_count': '>',
+#REMOVE                'invoice_count': '>',
+#REMOVE                'income': '>',
+#REMOVE                'fee': '>',
+#REMOVE                'refunds': '>',
+#REMOVE                'taxes': '>',
+#REMOVE                'cpa': '>',
+#REMOVE                'p_cpa': '>',
+#REMOVE                'vat': '>',
+#REMOVE                'p_vat': '>',
+#REMOVE                'deduction': '>',
+#REMOVE                'p_deduction': '>',
+#REMOVE                'income_percentage': '>',
+#REMOVE                'from': '>',
+#REMOVE                'to': '>',
+#REMOVE            }
             if stats_group == conf.STATS_GROUP_CLIENT:
                 cc_field_name = 'name'
                 cc_header = Invoice.get_field_translation(cc_field_name)
@@ -1278,14 +1287,6 @@ class InvoiceProgram(object):
         else:
             return output_filename
 
-# TODO remove    def write_table(self, table, data, output_filename=None):
-# TODO remove        if output_filename is not None:
-# TODO remove            table.write(data=data, to=output_filename)
-# TODO remove        else:
-# TODO remove            if table.mode == conf.TABLE_MODE_XLSX:
-# TODO remove                raise InvoiceArgumentError("non è possibile produrre una tabella in formato {} su terminale; utilizzare --output/-o".format(table.mode))
-# TODO remove            table.write(data=data, to=self.printer)
-
     def list_invoice_collection(self, invoice_collection, list_field_names=None, header=None, order_field_names=None, table_mode=None, output_filename=None):
         list_field_names = self.db.get_config_option('list_field_names', list_field_names)
         header = self.db.get_config_option('header', header)
@@ -1308,10 +1309,20 @@ class InvoiceProgram(object):
                     'number': lambda n: "{n:0{digits}d}".format(n=n, digits=digits),
                     'income': lambda i: "{:.2f}".format(i),
                 },
-                align={
-                    'number': '>',
-                    'income': '>',
-                },
+                align=conf.ALIGN,
+                #REMOVE {
+                #REMOVE     'number': '>',
+                #REMOVE     'income': '>',
+                #REMOVE     'fee': '>',
+                #REMOVE     'refunds': '>',
+                #REMOVE     'taxes': '>',
+                #REMOVE     'cpa': '>',
+                #REMOVE     'p_cpa': '>',
+                #REMOVE     'vat': '>',
+                #REMOVE     'p_vat': '>',
+                #REMOVE     'deduction': '>',
+                #REMOVE     'p_deduction': '>',
+                #REMOVE },
             )
             doc.add_page(page_template, invoices)
 

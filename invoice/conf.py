@@ -80,6 +80,7 @@ __all__ = [
     'SPY_NOTIFY_LEVELS',
     'DEFAULT_SPY_NOTIFY_LEVEL',
     'DEFAULT_SPY_DELAY',
+    'ALIGN',
 ]
 
 import collections
@@ -254,3 +255,22 @@ SPY_NOTIFY_LEVELS = (SPY_NOTIFY_LEVEL_INFO, SPY_NOTIFY_LEVEL_WARNING, SPY_NOTIFY
 SPY_NOTIFY_LEVEL_INDEX = dict((level, c) for c, level in enumerate(SPY_NOTIFY_LEVELS))
 DEFAULT_SPY_NOTIFY_LEVEL = SPY_NOTIFY_LEVEL_INFO
 DEFAULT_SPY_DELAY = 0.5
+
+ALIGN = {
+    'number': '>',
+    'income': '>',
+    'fee': '>',
+    'refunds': '>',
+    'taxes': '>',
+    'cpa': '>',
+    'p_cpa': '>',
+    'vat': '>',
+    'p_vat': '>',
+    'deduction': '>',
+    'p_deduction': '>',
+    'client_count': '>',
+    'invoice_count': '>',
+    'income_percentage': '>',
+    'from': '>',
+    'to': '>',
+}

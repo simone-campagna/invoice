@@ -47,14 +47,14 @@ validators:
 
     LIST_SHORT = """\
 anno numero città         data       codice_fiscale   nome                compenso rimborsi cpa bolli incasso valuta
-2014      1 Gotham City   2014-01-03 WNYBRC01G01H663S Bruce Wayne         50.0     0.0      1.0 0.0     51.00 euro  
-2014      2 New York City 2014-01-03 PRKPRT01G01H663M Peter B. Parker     75.0     0.0      1.5 0.0     76.50 euro  
-2014      3 Greenville    2014-01-22 BNNBRC01G01H663S Robert Bruce Banner 100.0    0.0      2.0 0.0    102.00 euro  
+2014      1 Gotham City   2014-01-03 WNYBRC01G01H663S Bruce Wayne             50.0      0.0 1.0   0.0   51.00 euro  
+2014      2 New York City 2014-01-03 PRKPRT01G01H663M Peter B. Parker         75.0      0.0 1.5   0.0   76.50 euro  
+2014      3 Greenville    2014-01-22 BNNBRC01G01H663S Robert Bruce Banner    100.0      0.0 2.0   0.0  102.00 euro  
 """
     LIST_FULL = LIST_SHORT + """\
-2014      4 Gotham City   2014-01-25 WNYBRC01G01H663S Bruce Wayne         50.0     0.0      1.0 0.0     51.00 euro  
-2014      5 Smallville    2014-01-29 KNTCRK01G01H663X Clark Kent          150.0    0.0      3.0 0.0    153.00 euro  
-2014      6 Smallville    2014-02-28 KNTCRK01G01H663X Clark Kent          150.0    0.0      3.0 0.0    216.66 euro  
+2014      4 Gotham City   2014-01-25 WNYBRC01G01H663S Bruce Wayne             50.0      0.0 1.0   0.0   51.00 euro  
+2014      5 Smallville    2014-01-29 KNTCRK01G01H663X Clark Kent             150.0      0.0 3.0   0.0  153.00 euro  
+2014      6 Smallville    2014-02-28 KNTCRK01G01H663X Clark Kent             120.0     30.0 3.0  30.0  246.66 euro  
 """
     def setUp(self):
         self.dirname = Path.db_to(os.path.join(os.path.dirname(__file__), '..', '..', 'example'))
