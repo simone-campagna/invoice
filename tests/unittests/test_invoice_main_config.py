@@ -44,7 +44,7 @@ configuration:
   + header                   = True
   + total                    = True
   + stats_group              = 'month'
-  + list_field_names         = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + list_field_names         = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'fee', 'refunds', 'cpa', 'taxes', 'income', 'currency')
   + show_scan_report         = False
   + table_mode               = 'text'
   + max_interruption_days    = 365
@@ -60,7 +60,7 @@ configuration:
   + header                   = True
   + total                    = True
   + stats_group              = 'month'
-  + list_field_names         = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + list_field_names         = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'fee', 'refunds', 'cpa', 'taxes', 'income', 'currency')
   + show_scan_report         = False
   + table_mode               = 'text'
   + max_interruption_days    = 365
@@ -76,7 +76,7 @@ configuration:
   + header                   = True
   + total                    = True
   + stats_group              = 'month'
-  + list_field_names         = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + list_field_names         = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'fee', 'refunds', 'cpa', 'taxes', 'income', 'currency')
   + show_scan_report         = False
   + table_mode               = 'text'
   + max_interruption_days    = 365
@@ -92,7 +92,7 @@ configuration:
   + header                   = True
   + total                    = True
   + stats_group              = 'month'
-  + list_field_names         = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'income', 'currency')
+  + list_field_names         = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'fee', 'refunds', 'cpa', 'taxes', 'income', 'currency')
   + show_scan_report         = False
   + table_mode               = 'text'
   + max_interruption_days    = 365

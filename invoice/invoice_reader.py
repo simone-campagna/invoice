@@ -48,7 +48,7 @@ class InvoiceReader(object):
     DATE_FORMATS = (
         "%d/%m/%Y",
     )
-    NULLABLE_FLOAT_FIELDS = ("p_vat", "vat", "p_deduction", "deduction", "extras", "refund")
+    NULLABLE_FLOAT_FIELDS = ("p_vat", "vat", "p_deduction", "deduction", "taxes", "refunds")
     def __init__(self, logger=None):
         if logger is None:
             logger = get_default_logger()
@@ -68,9 +68,9 @@ class InvoiceReader(object):
                 'date': self.convert_date,
                 'service': self.convert_service,
                 'fee': self.convert_money,
-                'refund': self.convert_money,
+                'refunds': self.convert_money,
                 'income': self.convert_money,
-                'extras': self.convert_money,
+                'taxes': self.convert_money,
                 'p_cpa': float,
                 'cpa': self.convert_money,
                 'p_vat': float,

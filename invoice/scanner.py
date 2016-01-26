@@ -128,13 +128,13 @@ regexpr = \s*IVA\s+(?P<p_vat>[\d,\.]+)%\s+(?P<vat>[\d,\.]*)\s+(?:\w+)
 regexpr = \s*Ritenuta d'acconto\s+(?P<p_deduction>[\d,\.]+)%\s+(?P<deduction>[\d,\.]*)\s+(?:\w+)
 
 [rimborso spese di viaggio]
-regexpr = \s*Rimborso\s+spese\s+di\s+viaggio\s*(?P<extra_refund_trip>[\d,\.]+)
+regexpr = \s*Rimborso\s+spese\s+di\s+viaggio\s*(?P<extra_refunds_trip>[\d,\.]+)
 
 [cpa]
 regexpr = \s*Contributo\s+previdenziale\s+(?P<p_cpa>[\d,\.]+)%\s+(?P<cpa>[\d,\.]*)\s+(?:\w+)
 
 [bollo]
-regexpr = \s*Bollo\s+\([^\)]*\)\s*(?P<extra_extras_stamp>[\d,\.]+)
+regexpr = \s*Bollo\s+\([^\)]*\)\s*(?P<extra_taxes_stamp>[\d,\.]+)
 
 """
 

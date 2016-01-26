@@ -62,12 +62,14 @@ class Upgrader_v2_7_x__v3_0_0(MajorMinorUpgrader):
                 ('date', Date()),
                 ('service', Str()),
                 ('fee', Float()),
+                ('refunds', Float()),
                 ('p_cpa', Float()),
                 ('cpa', Float()),
                 ('p_vat', Float()),
                 ('vat', Float()),
                 ('p_deduction', Float()),
                 ('deduction', Float()),
+                ('taxes', Float()),
                 ('income', Float()),
                 ('currency', Str()),
             ),
@@ -94,6 +96,8 @@ class Upgrader_v2_7_x__v3_0_0(MajorMinorUpgrader):
         def old_to_new(old_data):
             return {
                 'fee': old_data["income"],
+                'refunds': 0.0,
+                'taxes': 0.0,
                 'p_cpa': 0.0,
                 'cpa': 0.0,
                 'p_vat': 0.0,

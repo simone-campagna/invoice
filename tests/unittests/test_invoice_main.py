@@ -634,6 +634,7 @@ WNYBRC01G01H663S 2014      1
 [017] la CPA non è consistente con quanto dichiarato
 [018] l'IVA non è consistente con quanto dichiarato
 [019] la ritenuta d'acconto non è consistente con quanto dichiarato
+[020] non è possibile convertire correttamente il valore di un campo della fattura
 """)
 
     def test_invoice_main_missing_subcommand(self):

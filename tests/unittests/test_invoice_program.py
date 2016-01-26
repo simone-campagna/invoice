@@ -225,6 +225,7 @@ TOTALE                                 4       6  650.16  100.00%
             city='New York', date=datetime.date(2015, 1, 1),
             service='therapy A',
             fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
+            refunds=0.0, taxes=0.0,
             income=200.0, currency='euro')
         self._invoice_002_peter_parker = Invoice(
             doc_filename='2015_002_peter_parker.doc',
@@ -233,6 +234,7 @@ TOTALE                                 4       6  650.16  100.00%
             city='New York', date=datetime.date(2015, 1, 2),
             service='therapy B',
             fee=100.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
+            refunds=0.0, taxes=0.0,
             income=100.0, currency='euro')
         self._invoice_003_peter_parker = Invoice(
             doc_filename='2015_003_peter_parser.doc',
@@ -241,6 +243,7 @@ TOTALE                                 4       6  650.16  100.00%
             city='New York', date=datetime.date(2015, 1, 3),
             service='therapy A',
             fee=150.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
+            refunds=0.0, taxes=0.0,
             income=150.0, currency='euro')
         self._invoices = [
             self._invoice_001_peter_parker,
@@ -254,6 +257,7 @@ TOTALE                                 4       6  650.16  100.00%
             city='New York', date=datetime.date(2015, 1, 4),
             service='therapy A',
             fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
+            refunds=0.0, taxes=0.0,
             income=200.0, currency='euro')
         self._invoice_004_peter_parker_wrong_date = Invoice(
             doc_filename='2015_004_peter_parker.doc',
@@ -262,6 +266,7 @@ TOTALE                                 4       6  650.16  100.00%
             city='New York', date=datetime.date(2015, 1, 2),
             service='therapy B',
             fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
+            refunds=0.0, taxes=0.0,
             income=200.0, currency='euro')
         self._invoice_004_peter_parker_wrong_number = Invoice(
             doc_filename='2015_004_peter_parker.doc',
@@ -270,6 +275,7 @@ TOTALE                                 4       6  650.16  100.00%
             city='New York', date=datetime.date(2015, 1, 5),
             service='therapy B',
             fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
+            refunds=0.0, taxes=0.0,
             income=200.0, currency='euro')
         self._invoice_004_peter_parker_duplicated_number = Invoice(
             doc_filename='2015_004_peter_parker.doc',
@@ -278,6 +284,7 @@ TOTALE                                 4       6  650.16  100.00%
             city='New York', date=datetime.date(2015, 1, 5),
             service='therapy A',
             fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
+            refunds=0.0, taxes=0.0,
             income=200.0, currency='euro')
 
     def test_InvoiceProgram(self):
@@ -680,6 +687,7 @@ KNTCRK01G01H663X 2014      6
                 city='New York', date=datetime.date(2015, 1, 4),
                 service='therapy',
                 fee=None, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
+                refunds=0.0, taxes=0.0,
                 income=None, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
         
@@ -798,6 +806,7 @@ KNTCRK01G01H663X 2014      6
                 city='New York', date=datetime.date(2015, 1, 4),
                 service='therapy',
                 fee=None, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
+                refunds=0.0, taxes=0.0,
                 income=None, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
         
@@ -858,6 +867,7 @@ KNTCRK01G01H663X 2014      6
                 city='New York', date=datetime.date(2015, 1, 4),
                 service='therapy',
                 fee=20.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
+                refunds=0.0, taxes=0.0,
                 income=20.0, currency='euro')
             invoice_b = Invoice(
                 doc_filename='2015_005_parker_peter.doc',
@@ -866,6 +876,7 @@ KNTCRK01G01H663X 2014      6
                 city='New York', date=datetime.date(2015, 1, 4),
                 service='therapy',
                 fee=20.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
+                refunds=0.0, taxes=0.0,
                 income=20.0, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a, invoice_b], logger=self.logger)
         
@@ -973,6 +984,7 @@ KNTCRK01G01H663X 2014      6
                 city='New York', date=datetime.date(2015, 1, 4),
                 service='therapy',
                 fee=0.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
+                refunds=0.0, taxes=0.0,
                 income=0.0, currency='euro'))
 
             p.reset()
@@ -1228,6 +1240,7 @@ KNTCRK01G01H663X 2014      6
                 city='New York', date=datetime.date(2015, 1, 4),
                 service='therapy',
                 fee=80.0, p_cpa=0.0, cpa=0.0, p_vat=25.0, vat=0.0, p_deduction=0.0, deduction=0.0,
+                refunds=0.0, taxes=0.0,
                 income=100, currency='euro')
             invoice_collection = InvoiceCollection(self._invoices + [invoice_a], logger=self.logger)
         
@@ -1259,6 +1272,7 @@ KNTCRK01G01H663X 2014      6
             city='New York', date=datetime.date(2015, 1, 4),
             service='therapy',
             fee=80.0, p_cpa=0.0, cpa=0.0, p_vat=10.0, vat=8.0, p_deduction=0.0, deduction=0.0,
+            refunds=0.0, taxes=0.0,
             income=100, currency='euro')
         self._test_InvoiceProgram_inconsistency_errors(invoice, InvoiceInconsistentIncomeError)
 
@@ -1270,6 +1284,7 @@ KNTCRK01G01H663X 2014      6
             city='New York', date=datetime.date(2015, 1, 4),
             service='therapy',
             fee=80.0, p_cpa=0.0, cpa=0.0, p_vat=10.0, vat=20.0, p_deduction=0.0, deduction=0.0,
+            refunds=0.0, taxes=0.0,
             income=100, currency='euro')
         self._test_InvoiceProgram_inconsistency_errors(invoice, InvoiceInconsistentVatError)
 
@@ -1281,6 +1296,7 @@ KNTCRK01G01H663X 2014      6
             city='New York', date=datetime.date(2015, 1, 4),
             service='therapy',
             fee=80.0, p_cpa=5.0, cpa=20.0, p_vat=25.0, vat=25.0, p_deduction=0.0, deduction=0.0,
+            refunds=0.0, taxes=0.0,
             income=125, currency='euro')
         self._test_InvoiceProgram_inconsistency_errors(invoice, InvoiceInconsistentCpaError)
 
@@ -1292,5 +1308,6 @@ KNTCRK01G01H663X 2014      6
             city='New York', date=datetime.date(2015, 1, 4),
             service='therapy',
             fee=80.0, p_cpa=25.0, cpa=20.0, p_vat=25.0, vat=25.0, p_deduction=10.0, deduction=7.0,
+            refunds=0.0, taxes=0.0,
             income=132, currency='euro')
         self._test_InvoiceProgram_inconsistency_errors(invoice, InvoiceInconsistentDeductionError)
