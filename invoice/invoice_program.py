@@ -1114,6 +1114,7 @@ class InvoiceProgram(object):
             for invoice in removed_invoices:
                 existing_doc_filenames.pop(invoice.doc_filename)
 
+            pbar = None
             if existing_doc_filenames:
                 invoice_reader = InvoiceReader(logger=self.logger)
                 new_invoices = []
@@ -1155,7 +1156,7 @@ class InvoiceProgram(object):
                     for invoice in new_invoices:
                         scan_date_times_l.append(scan_date_times[invoice.doc_filename])
                 db.update('scan_date_times', 'doc_filename', scan_date_times_l, connection=connection)
-            if progressbar:
+            if progressbar and pbar:
                 pbar.complete()
             self.delete_failing_invoices(validation_result, connection=connection)
                     

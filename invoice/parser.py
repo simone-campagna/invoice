@@ -133,7 +133,7 @@ class Parser(metaclass=ParserMeta):
         return ' '.join(value.split())
 
     @classmethod
-    def convert(cls, *, logger, postponed_errors, m_type, lines_dict, line_no, value):
+    def convert(cls, *, logger, postponed_errors, m_type, lines_dict, line_no, key, value):
         try:
             return m_type(value)
         except Exception as err:
@@ -152,18 +152,18 @@ class Parser(metaclass=ParserMeta):
             for line_no, dummy_value in lvalues:
                 logger.error("  {}: {!r}".format(key, lines_dict[line_no].strip()))
         line_no, value = lvalues[-1]
-        return cls.convert(logger=logger, postponed_errors=postponed_errors, m_type=m_type, lines_dict=lines_dict, line_no=line_no, value=value)
+        return cls.convert(logger=logger, postponed_errors=postponed_errors, m_type=m_type, lines_dict=lines_dict, line_no=line_no, key=key, value=value)
 
     @classmethod
     def action_overwrite(cls, *, logger, postponed_errors, m_type, lines_dict, key, lvalues):
         line_no, value = lvalues[-1]
-        return cls.convert(logger=logger, postponed_errors=postponed_errors, m_type=m_type, lines_dict=lines_dict, line_no=line_no, value=value)
+        return cls.convert(logger=logger, postponed_errors=postponed_errors, m_type=m_type, lines_dict=lines_dict, line_no=line_no, key=key, value=value)
 
     @classmethod
     def action_cumulate(cls, *, logger, postponed_errors, m_type, lines_dict, key, lvalues):
         values = []
         for line_no, value in lvalues:
-            values.append(cls.convert(logger=logger, postponed_errors=postponed_errors, m_type=m_type, lines_dict=lines_dict, line_no=line_no, value=value))
+            values.append(cls.convert(logger=logger, postponed_errors=postponed_errors, m_type=m_type, lines_dict=lines_dict, line_no=line_no, key=key, value=value))
         return sum(values)
 
     def parse(self, postponed_errors, document):
