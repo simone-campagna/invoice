@@ -24,7 +24,17 @@ __all__ = [
 
 
 class Progressbar(object):
-    def __init__(self, maxvalue, *, stream=sys.stderr, maxlen=80, render_frequency=0.1):
+    BLOCKS = [
+              " ",
+              "▎",
+              "▍",
+              "▌",
+              "▋",
+              "▊",
+              "▉",
+              "█",
+    ]
+    def __init__(self, maxvalue, *, stream=sys.stderr, maxlen=80, render_frequency=0.1, render=False):
         self.maxvalue = maxvalue
         self.stream = stream
         self.render_frequency = render_frequency / 100.0
@@ -34,6 +44,8 @@ class Progressbar(object):
         self._bar_length = max(10, maxlen - non_bar_length)
         self._current_line = ""
         self._next_fraction = 0.0
+        if render:
+            self.render()
 
     @property
     def value(self):
@@ -62,10 +74,19 @@ class Progressbar(object):
         if fraction < self._next_fraction:
             return
         self._next_fraction = min(1.0, fraction + self.render_frequency)
-        nblocks = int(round(self._bar_length * fraction, 0))
-        block = "#" * nblocks
-        non_block = " " * (self._bar_length - nblocks)
-        bar = block + non_block
+        fblocks = self._bar_length * fraction
+        nblocks = int(fblocks)
+        rblocks = fblocks - nblocks
+
+        block = self.BLOCKS[-1] * nblocks
+        if rblocks:
+            part_index = int(round(len(self.BLOCKS) * rblocks, 0))
+            part = self.BLOCKS[min(len(self.BLOCKS) - 1, part_index)]
+        else:
+            part = ""
+        non_block = self.BLOCKS[0] * max(0, self._bar_length - nblocks - len(part))
+        
+        bar = block + part + non_block
         line = self._fmt.format(bar=bar, fraction=fraction)
         if line != self._current_line:
             self.clear()

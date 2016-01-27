@@ -35,20 +35,22 @@ class TestProgressbar(unittest.TestCase):
         s = io.StringIO()
         ticks = 3
         maxlen = 30
-        output = '\r\r[#######              ]  33.3%\r\r                              \r[##############       ]  66.7%\r\r                              \r[#####################] 100.0%\r'
+        output = '\r\r[███████              ]  33.3%\r\r                              \r[██████████████       ]  66.7%\r\r                              \r[█████████████████████] 100.0%\r'
         pbar = Progressbar(ticks, stream=s, maxlen=maxlen)
         for i in range(ticks):
             pbar.tick()
+        print(repr(s.getvalue()))
         assert s.getvalue() == output
 
     def test_add_value(self):
         s = io.StringIO()
         ticks = 10
         maxlen = 30
-        output = '\r\r[######               ]  30.0%\r\r                              \r[##########           ]  50.0%\r\r                              \r[#################### ]  95.0%\r\r                              \r[#####################] 100.0%\r'
+        output = '\r\r[██████▍              ]  30.0%\r\r                              \r[██████████▋          ]  50.0%\r\r                              \r[████████████████████ ]  95.0%\r\r                              \r[█████████████████████] 100.0%\r'
         pbar = Progressbar(ticks, stream=s, maxlen=maxlen)
         pbar.add_value(3)
         pbar.add_value(2)
         pbar.set_value(9.5)
         pbar.set_value(10.0)
+        print(repr(s.getvalue()))
         assert s.getvalue() == output
