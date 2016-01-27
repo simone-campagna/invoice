@@ -104,7 +104,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir]
+                args=['scan', '-R', rc_dir, '--progressbar=off']
             )
 
             p.reset()
@@ -134,7 +134,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
 
             p.reset()
@@ -172,7 +172,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
 
             p.reset()
@@ -195,7 +195,7 @@ anno numero città         data       codice_fiscale   nome                compe
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
 
             p.reset()
@@ -210,7 +210,7 @@ anno numero città         data       codice_fiscale   nome                compe
 #            invoice_main(
 #                printer=p,
 #                logger=self.logger,
-#                args=['scan', '-R', rc_dir, '--force-refresh'],
+#                args=['scan', '-R', rc_dir, '--force-refresh', '--progressbar=off'],
 #            )
 #
 #            p.reset()

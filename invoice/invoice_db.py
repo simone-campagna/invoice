@@ -64,7 +64,8 @@ class InvoiceDb(Db):
          'header', 'total',
          'stats_group', 'list_field_names',
          'show_scan_report', 'table_mode', 'max_interruption_days',
-         'spy_notify_level', 'spy_delay'))
+         'spy_notify_level', 'spy_delay',
+         'progressbar'))
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
     DEFAULT_CONFIGURATION = Configuration(
         warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
@@ -80,6 +81,7 @@ class InvoiceDb(Db):
         max_interruption_days=conf.DEFAULT_MAX_INTERRUPTION_DAYS,
         spy_notify_level=conf.DEFAULT_SPY_NOTIFY_LEVEL,
         spy_delay=conf.DEFAULT_SPY_DELAY,
+        progressbar=conf.DEFAULT_PROGRESSBAR,
     )
     InternalOptions = collections.namedtuple('InternalOptions', ('needs_refresh',))
     DEFAULT_INTERNAL_OPTIONS = InternalOptions(
@@ -111,6 +113,7 @@ class InvoiceDb(Db):
                 ('max_interruption_days', Int()),
                 ('spy_notify_level', SpyNotifyLevelOption()),
                 ('spy_delay', Float()),
+                ('progressbar', Bool()),
             ),
             dict_type=Configuration,
             singleton=True,

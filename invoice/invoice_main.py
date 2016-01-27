@@ -137,6 +137,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     default_warning_mode = None
     default_error_mode = None
     default_partial_update = None
+    default_progressbar = None
     default_show_scan_report = None
     default_remove_orphaned = None
     default_header = None
@@ -351,7 +352,7 @@ include tutti i file 'docs/*.doc', poi fra questi scarta tutti i file
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
                             'list_field_names', 'stats_group', 'show_scan_report', 'table_mode', 'max_interruption_days',
-                            'spy_notify_level', 'spy_delay'),
+                            'spy_notify_level', 'spy_delay', 'progressbar'),
     )
 
     ### version ###
@@ -427,7 +428,7 @@ supportati sono:
                             'list_field_names', 'stats_group', 'show_scan_report',
                             'table_mode',
                             'max_interruption_days',
-                            'spy_notify_level', 'spy_delay',
+                            'spy_notify_level', 'spy_delay', 'progressbar',
                             'import_filename', 'export_filename',
                             'edit', 'editor'),
     )
@@ -599,7 +600,7 @@ Questa rimozione di fatture già scansionate può avvenire in due casi:
         function_name="program_scan",
         function_arguments=('warning_mode', 'error_mode', 'force_refresh',
                             'remove_orphaned', 'partial_update', 'show_scan_report',
-                            'table_mode', 'output_filename'),
+                            'table_mode', 'output_filename', 'progressbar'),
     )
 
     ### clear_parser ###
@@ -1020,9 +1021,18 @@ e validati.
             help="abilita/disabilita la stampa dell'ultima fattura per ciascun anno")
 
     scan_parser.add_argument("--force-refresh",
-            action="store_true",
-            default=False,
-            help="forza un refresh di tutte le fatture")
+        action="store_true",
+        default=False,
+        help="forza un refresh di tutte le fatture")
+
+    for parser in init_parser, config_parser, scan_parser:
+        parser.add_argument("--progressbar", "-P",
+            metavar="on/off",
+            type=type_onoff,
+            const=switch_onoff(False),
+            default=default_progressbar,
+            nargs='?',
+            help="abilita/disabilita la progressbar")
 
     ### patterns option
     for parser in init_parser, legacy_parser:

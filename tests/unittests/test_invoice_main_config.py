@@ -50,6 +50,7 @@ configuration:
   + max_interruption_days    = 365
   + spy_notify_level         = 'info'
   + spy_delay                = 0.5
+  + progressbar              = True
 """
     CONFIG_SHOW_WERROR_ERAISE = """\
 configuration:
@@ -66,6 +67,7 @@ configuration:
   + max_interruption_days    = 365
   + spy_notify_level         = 'info'
   + spy_delay                = 0.5
+  + progressbar              = True
 """
     CONFIG_SHOW_PARTIAL_UPDATE_ON = """\
 configuration:
@@ -82,6 +84,7 @@ configuration:
   + max_interruption_days    = 365
   + spy_notify_level         = 'info'
   + spy_delay                = 0.5
+  + progressbar              = True
 """
     CONFIG_SHOW_PARTIAL_UPDATE_OFF = """\
 configuration:
@@ -98,6 +101,7 @@ configuration:
   + max_interruption_days    = 365
   + spy_notify_level         = 'info'
   + spy_delay                = 0.5
+  + progressbar              = True
 """
     CONFIG_SHOW_MIX = """\
 configuration:
@@ -114,6 +118,7 @@ configuration:
   + max_interruption_days    = 361
   + spy_notify_level         = 'info'
   + spy_delay                = 0.32
+  + progressbar              = False
 """
 
     VERSION_OUTPUT = """\
@@ -283,7 +288,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['config', '-R', rc_dir, '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b', '-I', '361', '-w', 'error:*', 'log:005', '-e', 'raise:009', '-sl', 'info', '-sd','0.32'],
+                args=['config', '-R', rc_dir, '--partial-update', '--fields=codice_fiscale,città,numero,incasso', '-b', '-I', '361', '-w', 'error:*', 'log:005', '-e', 'raise:009', '-sl', 'info', '-sd','0.32', '--progressbar=off'],
             )
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.CONFIG_SHOW_MIX)
 
@@ -291,7 +296,7 @@ versione del database:  {}
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
             self.assertEqual(p.string(), """\
 #fatture aggiunte: 6

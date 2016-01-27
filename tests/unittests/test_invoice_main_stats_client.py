@@ -86,7 +86,7 @@ WNYBRC01G01H663S 2014-01-03 2014-01-03 Bruce Wayne [---] 1 51.00 100.00%
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
             self.assertEqual(p.string(), '')
 

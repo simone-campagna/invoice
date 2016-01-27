@@ -316,6 +316,7 @@ TOTALE                                 4       6  680.16  100.00%
                 error_mode=None,
                 partial_update=None,
                 remove_orphaned=None,
+                progressbar=False,
             )
 
             p.reset()
@@ -379,6 +380,7 @@ KNTCRK01G01H663X 2014      6
                     error_mode=None,
                     partial_update=None,
                     remove_orphaned=None,
+                    progressbar=False,
                 )
 
     def test_InvoiceProgramDbNotInitialized(self):
@@ -402,6 +404,7 @@ KNTCRK01G01H663X 2014      6
                     error_mode=None,
                     partial_update=None,
                     remove_orphaned=None,
+                    progressbar=False,
                 )
 
 
@@ -437,6 +440,7 @@ KNTCRK01G01H663X 2014      6
                     error_mode=None,
                     partial_update=None,
                     remove_orphaned=None,
+                    progressbar=False,
                 )
 
     def test_InvoiceProgramOk(self):
@@ -465,6 +469,7 @@ KNTCRK01G01H663X 2014      6
             validation_result, scan_events, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                 error_mode=(ValidationResult.ERROR_ACTION_RAISE,),
+                progressbar=False,
             )
             self.assertEqual(validation_result.num_errors(), 0)
             self.assertEqual(validation_result.num_warnings(), 0)
@@ -515,6 +520,7 @@ KNTCRK01G01H663X 2014      6
             validation_result, scan_events, invoice_collection = invoice_program.impl_scan(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                 error_mode=(ValidationResult.ERROR_ACTION_RAISE,),
+                progressbar=False,
             )
             self.assertEqual(validation_result.num_errors(), 0)
             self.assertEqual(validation_result.num_warnings(), 0)
@@ -574,6 +580,7 @@ KNTCRK01G01H663X 2014      6
                 invoice_program.impl_scan(
                     warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                     error_mode=(ValidationResult.ERROR_ACTION_RAISE,),
+                    progressbar=False,
                 )
 
     def test_InvoiceProgramErrorDuplicatedLine(self):
@@ -602,6 +609,7 @@ KNTCRK01G01H663X 2014      6
                 invoice_program.impl_scan(
                     warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                     error_mode=(ValidationResult.ERROR_ACTION_RAISE,),
+                    progressbar=False,
                 )
 
     def test_InvoiceProgram_validate_ok(self):
@@ -1011,6 +1019,7 @@ KNTCRK01G01H663X 2014      6
                 error_mode=None,
                 partial_update=None,
                 remove_orphaned=None,
+                progressbar=False,
             )
 
             self.assertEqual(validation_result.num_warnings(), 0)
@@ -1047,6 +1056,7 @@ KNTCRK01G01H663X 2014      6
                 error_mode=None,
                 partial_update=None,
                 remove_orphaned=None,
+                progressbar=False,
             )
             self.assertEqual(validation_result.num_warnings(), 0)
             self.assertEqual(validation_result.num_errors(), 0)
@@ -1096,6 +1106,7 @@ KNTCRK01G01H663X 2014      6
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                 error_mode=None,
                 partial_update=None,
+                progressbar=False,
             )
             self.assertEqual(validation_result.num_warnings(), 0)
             self.assertEqual(validation_result.num_errors(), 0)
@@ -1109,6 +1120,7 @@ KNTCRK01G01H663X 2014      6
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                 error_mode=None,
                 partial_update=None,
+                progressbar=False,
             )
             self.assertEqual(validation_result.num_warnings(), 0)
             self.assertEqual(validation_result.num_errors(), 0)
@@ -1144,6 +1156,7 @@ KNTCRK01G01H663X 2014      6
                 error_mode=None,
                 partial_update=None,
                 remove_orphaned=None,
+                progressbar=False,
             )
             self.assertEqual(validation_result.num_warnings(), 0)
             self.assertEqual(validation_result.num_errors(), 0)
@@ -1172,6 +1185,7 @@ KNTCRK01G01H663X 2014      6
                 error_mode=None,
                 partial_update=None,
                 remove_orphaned=None,
+                progressbar=False,
             )
             self.assertEqual(validation_result.num_warnings(), 0)
             self.assertEqual(validation_result.num_errors(), 0)
@@ -1222,6 +1236,7 @@ KNTCRK01G01H663X 2014      6
             invoice_program.impl_scan(
                 warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                 error_mode=None,
+                progressbar=False,
             )
 
             p.reset()

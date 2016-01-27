@@ -154,7 +154,7 @@ anno                       2014
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
             self.assertEqual(p.string(), '')
 
@@ -162,7 +162,7 @@ anno                       2014
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
             self.assertEqual(p.string(), '')
 
@@ -278,7 +278,7 @@ summary_epilogue = test line 3
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
             self.assertEqual(p.string(), '')
 
@@ -363,7 +363,7 @@ TOTALE      0.0      0.0    0.0            0.0     0.0                0.0   0.0 
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
             self.assertEqual(p.string(), '')
 
@@ -522,7 +522,7 @@ WNYBRC01G01H663S 2014      1
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir, '--dry-run'],
+                args=['scan', '-R', rc_dir, '--dry-run', '--progressbar=off'],
             )
 
             p.reset()

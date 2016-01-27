@@ -74,26 +74,74 @@ class Upgrader_v2_7_x__v3_0_0(MajorMinorUpgrader):
                 ('currency', Str()),
             ),
     )
+    CONFIGURATION_TABLE_v2_7_x = DbTable(
+        fields=(
+            ('warning_mode', Str()),
+            ('error_mode', Str()),
+            ('remove_orphaned', Bool()),
+            ('partial_update', Bool()),
+            ('header', Bool()),
+            ('total', Bool()),
+            ('stats_group', Str()),
+            ('list_field_names', StrTuple()),
+            ('show_scan_report', Bool()),
+            ('table_mode', Str()),
+            ('max_interruption_days', Int()),
+            ('spy_notify_level', Str()),
+            ('spy_delay', Float()),
+        ),
+    )
+    CONFIGURATION_TABLE_v3_0_0 = DbTable(
+        fields=(
+            ('warning_mode', Str()),
+            ('error_mode', Str()),
+            ('remove_orphaned', Bool()),
+            ('partial_update', Bool()),
+            ('header', Bool()),
+            ('total', Bool()),
+            ('stats_group', Str()),
+            ('list_field_names', StrTuple()),
+            ('show_scan_report', Bool()),
+            ('table_mode', Str()),
+            ('max_interruption_days', Int()),
+            ('spy_notify_level', Str()),
+            ('spy_delay', Float()),
+            ('progressbar', Bool()),
+        ),
+    )
+
 
     def impl_downgrade(self, db, version_from, version_to, connection=None):
-        def new_to_old(new_data):
+        def i_new_to_old(new_data):
             return {}
 
-        return self.do_downgrade(
+        self.do_downgrade(
             table_name="invoices",
             old_table=self.INVOICES_TABLE_v2_7_x,
             new_table=self.INVOICES_TABLE_v3_0_0,
-            new_to_old=new_to_old,
+            new_to_old=i_new_to_old,
             db=db,
             version_from=version_from,
             version_to=version_to,
             connection=connection
         )
-        with db.connect() as connection:
-            cursor = connection.cursor()
+
+        def c_new_to_old(new_data):
+            return {}
+
+        self.do_downgrade(
+            table_name="configuration",
+            old_table=self.CONFIGURATION_TABLE_v2_7_x,
+            new_table=self.CONFIGURATION_TABLE_v3_0_0,
+            new_to_old=c_new_to_old,
+            db=db,
+            version_from=version_from,
+            version_to=version_to,
+            connection=connection
+        )
 
     def impl_upgrade(self, db, version_from, version_to, connection=None):
-        def old_to_new(old_data):
+        def i_old_to_new(old_data):
             return {
                 'fee': old_data["income"],
                 'refunds': 0.0,
@@ -109,12 +157,25 @@ class Upgrader_v2_7_x__v3_0_0(MajorMinorUpgrader):
             table_name="invoices",
             old_table=self.INVOICES_TABLE_v2_7_x,
             new_table=self.INVOICES_TABLE_v3_0_0,
-            old_to_new=old_to_new,
+            old_to_new=i_old_to_new,
             db=db,
             version_from=version_from,
             version_to=version_to,
             connection=connection
         )
-        with db.connect() as connection:
-            cursor = connection.cursor()
+
+        def c_old_to_new(old_data):
+            return {
+                'progressbar': True,
+            }
+        self.do_upgrade(
+            table_name="configuration",
+            old_table=self.CONFIGURATION_TABLE_v2_7_x,
+            new_table=self.CONFIGURATION_TABLE_v3_0_0,
+            old_to_new=c_old_to_new,
+            db=db,
+            version_from=version_from,
+            version_to=version_to,
+            connection=connection
+        )
 

@@ -50,6 +50,7 @@ from .invoice_collection_reader import InvoiceCollectionReader
 from .invoice_reader import InvoiceReader
 from .invoice_db import InvoiceDb
 from .invoice import Invoice
+from .progressbar import Progressbar
 from .spy import observe
 from .spy import notify_osd
 from .spy.spy_function import spy_function
@@ -135,6 +136,7 @@ class InvoiceProgram(object):
                               max_interruption_days=None,
                               spy_notify_level=None,
                               spy_delay=None,
+                              progressbar=None,
                               reset=False):
         self.impl_init(
             patterns=patterns,
@@ -151,6 +153,7 @@ class InvoiceProgram(object):
             max_interruption_days=max_interruption_days,
             spy_notify_level=spy_notify_level,
             spy_delay=spy_delay,
+            progressbar=progressbar,
             reset=reset,
         )
         return 0
@@ -168,6 +171,7 @@ class InvoiceProgram(object):
                                 max_interruption_days=None,
                                 spy_notify_level=None,
                                 spy_delay=None,
+                                progressbar=None,
                                 reset=False,
                                 import_filename=None,
                                 export_filename=None,
@@ -187,6 +191,7 @@ class InvoiceProgram(object):
             max_interruption_days=max_interruption_days,
             spy_notify_level=spy_notify_level,
             spy_delay=spy_delay,
+            progressbar=progressbar,
             reset=reset,
             import_filename=import_filename,
             export_filename=export_filename,
@@ -221,7 +226,7 @@ class InvoiceProgram(object):
         self.impl_spy(action=action, spy_notify_level=spy_notify_level, spy_delay=spy_delay)
         return 0
 
-    def program_scan(self, *, warning_mode, error_mode, force_refresh=None,
+    def program_scan(self, *, warning_mode, error_mode, force_refresh=None, progressbar=None,
                               partial_update=True, remove_orphaned=True, show_scan_report=True, table_mode=None, output_filename=None):
         validation_result, scan_events, invoice_collection = self.impl_scan(
             warning_mode=warning_mode,
@@ -232,6 +237,7 @@ class InvoiceProgram(object):
             show_scan_report=show_scan_report,
             table_mode=table_mode,
             output_filename=output_filename,
+            progressbar=progressbar,
         )
         return validation_result.num_errors()
 
@@ -342,6 +348,7 @@ class InvoiceProgram(object):
                            max_interruption_days=None,
                            spy_notify_level=None,
                            spy_delay=None,
+                           progressbar=None,
                            reset=False):
         if list_field_names is None:
             lsit_field_names = conf.DEFAULT_LIST_FIELD_NAMES
@@ -372,6 +379,7 @@ class InvoiceProgram(object):
             max_interruption_days=max_interruption_days,
             spy_notify_level=spy_notify_level,
             spy_delay=spy_delay,
+            progressbar=progressbar,
         )
         configuration = self.db.store_configuration(configuration)
         #self.show_configuration(configuration)
@@ -408,6 +416,7 @@ class InvoiceProgram(object):
                              max_interruption_days=None,
                              spy_notify_level=None,
                              spy_delay=None,
+                             progressbar=None,
                              reset=False,
                              import_filename=None,
                              export_filename=None,
@@ -437,6 +446,7 @@ class InvoiceProgram(object):
             max_interruption_days=max_interruption_days,
             spy_notify_level=spy_notify_level,
             spy_delay=spy_delay,
+            progressbar=progressbar,
         )
         configuration = self.db.store_configuration(configuration)
         if edit:
@@ -1012,12 +1022,13 @@ class InvoiceProgram(object):
             result = doc_observer.apply_action(action)
             self.printer("spy {} -> {}".format(action, result))
         
-    def impl_scan(self, warning_mode=None, error_mode=None, force_refresh=None,
+    def impl_scan(self, warning_mode=None, error_mode=None, force_refresh=None, progressbar=None,
                         partial_update=None, remove_orphaned=None, show_scan_report=None, table_mode=None, output_filename=None):
         self.db.check()
         warning_mode = self.db.get_config_option('warning_mode', warning_mode)
         error_mode = self.db.get_config_option('error_mode', error_mode)
         show_scan_report = self.db.get_config_option('show_scan_report', show_scan_report)
+        progressbar = self.db.get_config_option('progressbar', progressbar)
         internal_options = self.db.load_internal_options()
         force_refresh = force_refresh or internal_options.needs_refresh
         found_doc_filenames = set()
@@ -1108,6 +1119,8 @@ class InvoiceProgram(object):
                 new_invoices = []
                 old_invoices = []
                 scan_date_times = collections.OrderedDict()
+                if progressbar:
+                    pbar = Progressbar(len(existing_doc_filenames))
                 for doc_filename, existing in existing_doc_filenames.items():
                     invoice = invoice_reader(validation_result, doc_filename)
                     updated_invoice_collection.add(invoice)
@@ -1120,6 +1133,8 @@ class InvoiceProgram(object):
                     scan_date_times[invoice.doc_filename] = db.ScanDateTime(
                         doc_filename=invoice.doc_filename,
                         scan_date_time=file_date_times[invoice.doc_filename])
+                    if progressbar:
+                        pbar.tick()
                 self.validate_invoice_collection(validation_result, updated_invoice_collection, user_validators=user_validators)
                 if validation_result.num_errors():
                     message = "validazione fallita - {} errori".format(validation_result.num_errors())
@@ -1140,6 +1155,8 @@ class InvoiceProgram(object):
                     for invoice in new_invoices:
                         scan_date_times_l.append(scan_date_times[invoice.doc_filename])
                 db.update('scan_date_times', 'doc_filename', scan_date_times_l, connection=connection)
+            if progressbar:
+                pbar.complete()
             self.delete_failing_invoices(validation_result, connection=connection)
                     
             if validation_result.num_errors():

@@ -60,7 +60,7 @@ class Test_invoice_main_scan_error(unittest.TestCase):
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
             self.assertEqual(p.string(), '')
 
@@ -99,7 +99,7 @@ KNTCRK01G01H663X 2014      6
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
             self.assertEqual(p.string(), '')
 
@@ -136,7 +136,7 @@ KNTCRK01G01H663X 2014      6
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
             self.assertEqual(p.string(), '')
 
@@ -203,7 +203,7 @@ PRKPRT01G01H663M 2014      2 2014-12-03
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
             self.assertEqual(p.string(), '')
 
@@ -235,7 +235,7 @@ KNTCRK01G01H663X 2014      6 2014-02-28
             invoice_main(
                 printer=p,
                 logger=self.logger,
-                args=['scan', '-R', rc_dir],
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
             )
             self.assertEqual(p.string(), '')
 

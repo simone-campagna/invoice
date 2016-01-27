@@ -130,9 +130,7 @@ class Parser(metaclass=ParserMeta):
 
     @classmethod
     def type_service(cls, value):
-        l = [token.lower() for token in value.split()]
-        l[0] = l[0].title()
-        return ' '.join(l)
+        return ' '.join(value.split())
 
     @classmethod
     def convert(cls, *, logger, postponed_errors, m_type, lines_dict, line_no, value):
