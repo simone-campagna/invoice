@@ -25,7 +25,7 @@ from . import notify_logger
 
 
 def spy_function(program, event_queue, spy_notify_level=None): # pragma: no cover
-    validation_result, scan_events, updated_invoice_collection = program.impl_scan()
+    validation_result, scan_events, updated_invoice_collection = program.impl_scan(progressbar=False)
     program.logger.info("validation_result: {}".format(validation_result))
     program.db.reset_config_cache()
     spy_notify_level = program.db.get_config_option('spy_notify_level', spy_notify_level)
