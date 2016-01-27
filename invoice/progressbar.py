@@ -31,9 +31,9 @@ class Progressbar(object):
         self._value = 0.0
         self._fmt = "[{bar}] {fraction:6.1%}"
         non_bar_length = len(self._fmt.format(bar="", fraction=1.0))
-        self.bar_length = max(10, maxlen - non_bar_length)
-        self.current_bar = ""
-        self.next_fraction = 0.0
+        self._bar_length = max(10, maxlen - non_bar_length)
+        self._current_line = ""
+        self._next_fraction = 0.0
 
     @property
     def value(self):
@@ -53,22 +53,24 @@ class Progressbar(object):
         self.add_value(1)
 
     def clear(self):
-        self.stream.write("\r" + (" " * len(self.current_bar) + "\r"))
+        self.stream.write("\r" + (" " * len(self._current_line) + "\r"))
 
     def render(self):
         if self.maxvalue == 0:
             return
         fraction = self._value / self.maxvalue
-        if fraction < self.next_fraction:
+        if fraction < self._next_fraction:
             return
-        self.next_fraction = min(1.0, fraction + self.render_frequency)
-        nblocks = int(round(self.bar_length * fraction, 0))
+        self._next_fraction = min(1.0, fraction + self.render_frequency)
+        nblocks = int(round(self._bar_length * fraction, 0))
         block = "#" * nblocks
-        non_block = " " * (self.bar_length - nblocks)
+        non_block = " " * (self._bar_length - nblocks)
         bar = block + non_block
-        self.clear()
-        self.stream.write(self._fmt.format(bar=bar, fraction=fraction) + '\r')
-        self.current_bar = bar
+        line = self._fmt.format(bar=bar, fraction=fraction)
+        if line != self._current_line:
+            self.clear()
+            self.stream.write(line + '\r')
+            self._current_line = line
         
     def complete(self):
         self.stream.write("\n")
