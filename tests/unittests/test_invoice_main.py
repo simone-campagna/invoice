@@ -301,8 +301,8 @@ N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI 
 TOTALE    425.0      0.0    8.5          433.5     0.0                0.0   0.0  433.5
 === Febbraio ===
 N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-     6    120.0     30.0    3.0          123.0   33.66               30.0  30.0 246.66
-TOTALE    120.0     30.0    3.0          123.0   33.66               30.0  30.0 246.66
+     6    120.0     30.0    3.0          153.0   33.66               30.0  30.0 246.66
+TOTALE    120.0     30.0    3.0          153.0   33.66               30.0  30.0 246.66
 === Marzo ===
 N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
 TOTALE      0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0

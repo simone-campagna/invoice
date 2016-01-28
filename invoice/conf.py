@@ -82,6 +82,7 @@ __all__ = [
     'DEFAULT_SPY_DELAY',
     'DEFAULT_PROGRESSBAR',
     'ALIGN',
+    'DERIVATIVES',
 ]
 
 import collections
@@ -275,4 +276,11 @@ ALIGN = {
     'income_percentage': '>',
     'from': '>',
     'to': '>',
+}
+
+DERIVATIVES = {
+    'vat': ['fee', 'cpa', 'refunds'],
+    'cpa': ['fee', 'refunds'],
+    'deduction': ['fee', 'refunds'],
+    'income': ['fee', 'refunds', 'cpa', 'vat', 'deduction', 'taxes'],
 }

@@ -610,7 +610,7 @@ class InvoiceProgram(object):
                         refunds=invoice.refunds,
                         taxes=invoice.taxes,
                         cpa=invoice.cpa,
-                        taxable_income=invoice.fee + invoice.cpa,
+                        taxable_income=sum(getattr(invoice, skey) for skey in conf.DERIVATIVES['vat']),
                         vat=invoice.vat,
                         empty="",
                         deduction=invoice.deduction,
