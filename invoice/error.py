@@ -173,3 +173,7 @@ class InvoiceKeyConversionError(InvoiceValidationError):
     EXC_CODE = '020'
     EXC_DESCRIPTION = "non è possibile convertire correttamente il valore di un campo della fattura"
 
+class InvoiceMissingTaxError(InvoiceValidationError):
+    EXC_CODE = '021'
+    EXC_DESCRIPTION = "manca il bollo di 2 euro per prestazione superiore a 77.47 euro"
+

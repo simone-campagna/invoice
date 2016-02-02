@@ -74,7 +74,7 @@ fattura:                   '<DIRNAME>/2014_003_bruce_banner.doc'
   città/data:              Greenville/2014-01-22
   nome:                    Robert Bruce Banner
   codice fiscale:          BNNBRC01G01H663S
-  incasso:                 102.00 [euro]
+  incasso:                 107.00 [euro]
 fattura:                   '<DIRNAME>/2014_004_bruce_wayne.doc'
   anno/numero:             2014/4
   città/data:              Gotham City/2014-01-25
@@ -86,7 +86,7 @@ fattura:                   '<DIRNAME>/2014_005_clark_kent.doc'
   città/data:              Smallville/2014-01-29
   nome:                    Clark Kent
   codice fiscale:          KNTCRK01G01H663X
-  incasso:                 153.00 [euro]
+  incasso:                 155.00 [euro]
 fattura:                   '<DIRNAME>/2014_006_clark_kent.doc'
   anno/numero:             2014/6
   città/data:              Smallville/2014-02-28
@@ -97,31 +97,31 @@ fattura:                   '<DIRNAME>/2014_006_clark_kent.doc'
 
     REPORT_OUTPUT = """\
 anno                       2014
-  * incasso totale:        680.16
+  * incasso totale:        687.16
   * numero di fatture:     6
   * numero di clienti:     4
     + cliente:             WNYBRC01G01H663S (Bruce Wayne):
       numero di fatture:   2
       incasso totale:      102.00
-      incasso percentuale: 15.00%
+      incasso percentuale: 14.84%
       settimane:           1, 4
 
     + cliente:             PRKPRT01G01H663M (Peter B. Parker):
       numero di fatture:   1
       incasso totale:      76.50
-      incasso percentuale: 11.25%
+      incasso percentuale: 11.13%
       settimane:           1
 
     + cliente:             BNNBRC01G01H663S (Robert Bruce Banner):
       numero di fatture:   1
-      incasso totale:      102.00
-      incasso percentuale: 15.00%
+      incasso totale:      107.00
+      incasso percentuale: 15.57%
       settimane:           4
 
     + cliente:             KNTCRK01G01H663X (Clark Kent):
       numero di fatture:   2
-      incasso totale:      399.66
-      incasso percentuale: 58.76%
+      incasso totale:      401.66
+      incasso percentuale: 58.45%
       settimane:           5, 9
 
   * numero di settimane:   4
@@ -129,25 +129,25 @@ anno                       2014
       numero di fatture:   2
       giorni:              2014-01-03 VE[2]
       incasso totale:      127.50
-      incasso percentuale: 18.75%
+      incasso percentuale: 18.55%
 
     + settimana:           4 [2014-01-20 -> 2014-01-26]:
       numero di fatture:   2
       giorni:              2014-01-22 ME[1], 2014-01-25 SA[1]
-      incasso totale:      153.00
-      incasso percentuale: 22.49%
+      incasso totale:      158.00
+      incasso percentuale: 22.99%
 
     + settimana:           5 [2014-01-27 -> 2014-02-02]:
       numero di fatture:   1
       giorni:              2014-01-29 ME[1]
-      incasso totale:      153.00
-      incasso percentuale: 22.49%
+      incasso totale:      155.00
+      incasso percentuale: 22.56%
 
     + settimana:           9 [2014-02-24 -> 2014-03-02]:
       numero di fatture:   1
       giorni:              2014-02-28 VE[1]
       incasso totale:      246.66
-      incasso percentuale: 36.26%
+      incasso percentuale: 35.90%
 
 """
 
@@ -173,46 +173,46 @@ anno                       2012
 
     STATS_OUTPUT_YEAR = """\
 anno        da:         a: clienti fatture incasso %incasso
-2014 2014-01-01 2014-12-31       4       6  680.16  100.00%
+2014 2014-01-01 2014-12-31       4       6  687.16  100.00%
 """
 
     STATS_OUTPUT_YEAR_TOTAL = """\
 anno          da:         a: clienti fatture incasso %incasso
-2014   2014-01-01 2014-12-31       4       6  680.16  100.00%
-TOTALE                             4       6  680.16  100.00%
+2014   2014-01-01 2014-12-31       4       6  687.16  100.00%
+TOTALE                             4       6  687.16  100.00%
 """
     STATS_OUTPUT_MONTH = """\
 mese           da:         a: clienti fatture incasso %incasso
-2014-01 2014-01-01 2014-01-31       4       5  433.50   63.74%
-2014-02 2014-02-01 2014-02-28       1       1  246.66   36.26%
+2014-01 2014-01-01 2014-01-31       4       5  440.50   64.10%
+2014-02 2014-02-01 2014-02-28       1       1  246.66   35.90%
 """
 
     STATS_OUTPUT_MONTH_TOTAL = STATS_OUTPUT_MONTH + """\
-TOTALE                              4       6  680.16  100.00%
+TOTALE                              4       6  687.16  100.00%
 """
 
     STATS_OUTPUT_WEEK = """\
 settimana        da:         a: clienti fatture incasso %incasso
-2014:01   2014-01-01 2014-01-05       2       2  127.50   18.75%
-2014:04   2014-01-20 2014-01-26       2       2  153.00   22.49%
-2014:05   2014-01-27 2014-02-02       1       1  153.00   22.49%
-2014:09   2014-02-24 2014-03-02       1       1  246.66   36.26%
+2014:01   2014-01-01 2014-01-05       2       2  127.50   18.55%
+2014:04   2014-01-20 2014-01-26       2       2  158.00   22.99%
+2014:05   2014-01-27 2014-02-02       1       1  155.00   22.56%
+2014:09   2014-02-24 2014-03-02       1       1  246.66   35.90%
 """
 
     STATS_OUTPUT_WEEK_TOTAL = STATS_OUTPUT_WEEK + """\
-TOTALE                                4       6  680.16  100.00%
+TOTALE                                4       6  687.16  100.00%
 """
 
     STATS_OUTPUT_DAY = """\
 giorno            da:         a: clienti fatture incasso %incasso
-2014-01-03 2014-01-03 2014-01-03       2       2  127.50   18.75%
-2014-01-22 2014-01-22 2014-01-22       1       1  102.00   15.00%
-2014-01-25 2014-01-25 2014-01-25       1       1   51.00    7.50%
-2014-01-29 2014-01-29 2014-01-29       1       1  153.00   22.49%
-2014-02-28 2014-02-28 2014-02-28       1       1  246.66   36.26%
+2014-01-03 2014-01-03 2014-01-03       2       2  127.50   18.55%
+2014-01-22 2014-01-22 2014-01-22       1       1  107.00   15.57%
+2014-01-25 2014-01-25 2014-01-25       1       1   51.00    7.42%
+2014-01-29 2014-01-29 2014-01-29       1       1  155.00   22.56%
+2014-02-28 2014-02-28 2014-02-28       1       1  246.66   35.90%
 """
     STATS_OUTPUT_DAY_TOTAL = STATS_OUTPUT_DAY + """\
-TOTALE                                 4       6  680.16  100.00%
+TOTALE                                 4       6  687.16  100.00%
 """
 
     def setUp(self):
@@ -225,8 +225,8 @@ TOTALE                                 4       6  680.16  100.00%
             city='New York', date=datetime.date(2015, 1, 1),
             service='therapy A',
             fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
-            refunds=0.0, taxes=0.0,
-            income=200.0, currency='euro')
+            refunds=0.0, taxes=2.0,
+            income=202.0, currency='euro')
         self._invoice_002_peter_parker = Invoice(
             doc_filename='2015_002_peter_parker.doc',
             year=2015, number=2,
@@ -234,8 +234,8 @@ TOTALE                                 4       6  680.16  100.00%
             city='New York', date=datetime.date(2015, 1, 2),
             service='therapy B',
             fee=100.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
-            refunds=0.0, taxes=0.0,
-            income=100.0, currency='euro')
+            refunds=0.0, taxes=2.0,
+            income=102.0, currency='euro')
         self._invoice_003_peter_parker = Invoice(
             doc_filename='2015_003_peter_parser.doc',
             year=2015, number=3,
@@ -243,8 +243,8 @@ TOTALE                                 4       6  680.16  100.00%
             city='New York', date=datetime.date(2015, 1, 3),
             service='therapy A',
             fee=150.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
-            refunds=0.0, taxes=0.0,
-            income=150.0, currency='euro')
+            refunds=0.0, taxes=2.0,
+            income=152.0, currency='euro')
         self._invoices = [
             self._invoice_001_peter_parker,
             self._invoice_002_peter_parker,
@@ -257,8 +257,8 @@ TOTALE                                 4       6  680.16  100.00%
             city='New York', date=datetime.date(2015, 1, 4),
             service='therapy A',
             fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
-            refunds=0.0, taxes=0.0,
-            income=200.0, currency='euro')
+            refunds=0.0, taxes=2.0,
+            income=202.0, currency='euro')
         self._invoice_004_peter_parker_wrong_date = Invoice(
             doc_filename='2015_004_peter_parker.doc',
             year=2015, number=4,
@@ -266,8 +266,8 @@ TOTALE                                 4       6  680.16  100.00%
             city='New York', date=datetime.date(2015, 1, 2),
             service='therapy B',
             fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
-            refunds=0.0, taxes=0.0,
-            income=200.0, currency='euro')
+            refunds=0.0, taxes=2.0,
+            income=202.0, currency='euro')
         self._invoice_004_peter_parker_wrong_number = Invoice(
             doc_filename='2015_004_peter_parker.doc',
             year=2015, number=6,
@@ -275,8 +275,8 @@ TOTALE                                 4       6  680.16  100.00%
             city='New York', date=datetime.date(2015, 1, 5),
             service='therapy B',
             fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
-            refunds=0.0, taxes=0.0,
-            income=200.0, currency='euro')
+            refunds=0.0, taxes=2.0,
+            income=202.0, currency='euro')
         self._invoice_004_peter_parker_duplicated_number = Invoice(
             doc_filename='2015_004_peter_parker.doc',
             year=2015, number=self._invoices[-1].number,
@@ -284,8 +284,8 @@ TOTALE                                 4       6  680.16  100.00%
             city='New York', date=datetime.date(2015, 1, 5),
             service='therapy A',
             fee=200.0, p_cpa=0.0, cpa=0.0, p_vat=0.0, vat=0.0, p_deduction=0.0, deduction=0.0,
-            refunds=0.0, taxes=0.0,
-            income=200.0, currency='euro')
+            refunds=0.0, taxes=2.0,
+            income=202.0, currency='euro')
 
     def test_InvoiceProgram(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -343,6 +343,7 @@ KNTCRK01G01H663X 2014      6
             self.assertEqual(p.string().replace(self.dirname, '<DIRNAME>'), self.DUMP_OUTPUT)
             p.reset()
             invoice_program.impl_report()
+            print(p.string().replace(self.dirname, '<DIRNAME>'))
             self.assertEqual(p.string(), self.REPORT_OUTPUT)
 
             p.reset()

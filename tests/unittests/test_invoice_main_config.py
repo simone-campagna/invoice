@@ -333,9 +333,9 @@ KNTCRK01G01H663X 2014      6
 codice_fiscale   città         numero incasso
 WNYBRC01G01H663S Gotham City        1   51.00
 PRKPRT01G01H663M New York City      2   76.50
-BNNBRC01G01H663S Greenville         3  102.00
+BNNBRC01G01H663S Greenville         3  107.00
 WNYBRC01G01H663S Gotham City        4   51.00
-KNTCRK01G01H663X Smallville         5  153.00
+KNTCRK01G01H663X Smallville         5  155.00
 KNTCRK01G01H663X Smallville         6  246.66
 """)
 

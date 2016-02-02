@@ -32,6 +32,7 @@ from .error import InvoiceUndefinedFieldError, \
                    InvoiceInconsistentCpaError, \
                    InvoiceInconsistentVatError, \
                    InvoiceInconsistentDeductionError, \
+                   InvoiceMissingTaxError, \
                    InvoiceSyntaxError
 
 from .validation_result import ValidationResult
@@ -163,6 +164,20 @@ class Invoice(InvoiceNamedTuple):
                                 p=percentage,
                                 e=expected_val))
             
+        if self.fee is not None:
+            if self.fee > 77.47 and self.vat == 0 and self.deduction == 0:
+                if self.taxes < 2:
+                    message = "fattura {}: importo={}, iva={}, ritenuta={}, bolli={}: è richiesto un bollo di almeno 2 euro".format(
+                        self.doc_filename,
+                        self.fee,
+                        self.vat,
+                        self.deduction,
+                        self.taxes,
+                    )
+                    validation_result.add_error(
+                        invoice=self,
+                        exc_type=InvoiceMissingTaxError,
+                        message=message)
 
         tax_code = self.tax_code
         if tax_code:

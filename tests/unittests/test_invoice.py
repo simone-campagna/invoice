@@ -25,7 +25,8 @@ import unittest
 
 from invoice.error import InvoiceUndefinedFieldError, \
                           InvoiceYearError, \
-                          InvoiceMalformedTaxCodeError
+                          InvoiceMalformedTaxCodeError, \
+                          InvoiceMissingTaxError
 from invoice.invoice import Invoice
 from invoice.log import get_null_logger
 from invoice.validation_result import ValidationResult
@@ -37,14 +38,14 @@ class TestInvoice(unittest.TestCase):
     # invoice
     def test_Invoice(self):
         invoice = Invoice(doc_filename='x.doc', year=2015, number=1, name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
-            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=200.0, currency='euro',
-            p_vat=0.0, p_cpa=0.0, p_deduction=0.0, refunds=0.0, taxes=0.0,
+            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=202.0, currency='euro',
+            p_vat=0.0, p_cpa=0.0, p_deduction=0.0, refunds=0.0, taxes=2.0,
             service='therapy')
 
     def test_InvoiceValidateOk(self):
         invoice = Invoice(doc_filename='x.doc', year=2015, number=1, name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
-            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=200.0, currency='euro',
-            p_vat=0.0, p_cpa=0.0, p_deduction=0.0, refunds=0.0, taxes=0.0,
+            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=202.0, currency='euro',
+            p_vat=0.0, p_cpa=0.0, p_deduction=0.0, refunds=0.0, taxes=2.0,
             service='therapy')
         validation_result = ValidationResult(logger=get_null_logger(), error_mode=(ValidationResult.ERROR_ACTION_RAISE, ))
         invoice.validate(validation_result)
@@ -53,8 +54,8 @@ class TestInvoice(unittest.TestCase):
 
     def test_InvoiceValidateUndefinedField(self):
         invoice = Invoice(doc_filename='x.doc', year=None, number=1, name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
-            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=200.0, currency='euro',
-            p_vat=0.0, p_cpa=0.0, p_deduction=0.0, refunds=0.0, taxes=0.0,
+            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=202.0, currency='euro',
+            p_vat=0.0, p_cpa=0.0, p_deduction=0.0, refunds=0.0, taxes=2.0,
             service='therapy')
         validation_result = ValidationResult(logger=get_null_logger(), error_mode=(ValidationResult.ERROR_ACTION_RAISE, ))
         with self.assertRaises(InvoiceUndefinedFieldError):
@@ -62,8 +63,8 @@ class TestInvoice(unittest.TestCase):
 
     def test_InvoiceValidateYearError(self):
         invoice = Invoice(doc_filename='x.doc', year=2013, number=1, name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
-            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=200.0, currency='euro',
-            p_vat=0.0, p_cpa=0.0, p_deduction=0.0, refunds=0.0, taxes=0.0,
+            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=205.0, currency='euro',
+            p_vat=0.0, p_cpa=0.0, p_deduction=0.0, refunds=0.0, taxes=5.0,
             service='therapy')
         validation_result = ValidationResult(logger=get_null_logger(), error_mode=(ValidationResult.ERROR_ACTION_RAISE, ))
         with self.assertRaises(InvoiceYearError):
@@ -71,12 +72,45 @@ class TestInvoice(unittest.TestCase):
 
     def _test_InvoiceValidateMalformedTaxCode(self, tax_code):
         invoice = Invoice(doc_filename='x.doc', year=2015, number=1, name='Peter B. Parker', tax_code=tax_code, 
-            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=200.0, currency='euro',
-            p_vat=0.0, p_cpa=0.0, p_deduction=0.0, refunds=0.0, taxes=0.0,
+            city='New York', date=datetime.date(2015, 1, 1), fee=200.0, vat=0.0, cpa=0.0, deduction=0.0, income=202.0, currency='euro',
+            p_vat=0.0, p_cpa=0.0, p_deduction=0.0, refunds=0.0, taxes=2.0,
             service='therapy')
         validation_result = ValidationResult(logger=get_null_logger(), error_mode=(ValidationResult.ERROR_ACTION_RAISE, ))
         with self.assertRaises(InvoiceMalformedTaxCodeError):
             invoice.validate(validation_result)
+
+    def _test_InvoiceMissingTaxError(self, fee, fail, p_vat=0.0, p_deduction=0.0, taxes=0.0):
+        vat = fee * p_vat / 100.0
+        deduction = fee * p_deduction / 100.0
+        income = fee + vat + deduction + taxes
+        invoice = Invoice(doc_filename='x.doc', year=2015, number=1, name='Peter B. Parker', tax_code='PRKPRT01G01H663M', 
+            city='New York', date=datetime.date(2015, 1, 1), fee=fee, vat=vat, cpa=0.0, deduction=deduction, income=income, currency='euro',
+            p_vat=p_vat, p_cpa=0.0, p_deduction=p_deduction, refunds=0.0, taxes=taxes,
+            service='therapy')
+        validation_result = ValidationResult(logger=get_null_logger(), error_mode=(ValidationResult.ERROR_ACTION_RAISE, ))
+        if fail:
+            with self.assertRaises(InvoiceMissingTaxError):
+                invoice.validate(validation_result)
+        else:
+            invoice.validate(validation_result)
+
+    def test_InvoiceMissingTaxError0(self):
+        self._test_InvoiceMissingTaxError(fee=77.0, p_vat=0.0, p_deduction=0.0, taxes=0.0, fail=False)
+
+    def test_InvoiceMissingTaxError1(self):
+        self._test_InvoiceMissingTaxError(fee=77.48, p_vat=0.0, p_deduction=0.0, taxes=0.0, fail=True)
+
+    def test_InvoiceMissingTaxError2(self):
+        self._test_InvoiceMissingTaxError(fee=100, p_vat=22.0, p_deduction=0.0, taxes=0.0, fail=False)
+
+    def test_InvoiceMissingTaxError3(self):
+        self._test_InvoiceMissingTaxError(fee=100, p_vat=0.0, p_deduction=22.0, taxes=0.0, fail=False)
+
+    def test_InvoiceMissingTaxError4(self):
+        self._test_InvoiceMissingTaxError(fee=100, p_vat=0.0, p_deduction=0.0, taxes=1.9, fail=True)
+
+    def test_InvoiceMissingTaxError5(self):
+        self._test_InvoiceMissingTaxError(fee=100, p_vat=0.0, p_deduction=0.0, taxes=2.0, fail=False)
 
     def test_InvoiceValidateMalformedTaxCode_short(self):
         self._test_InvoiceValidateMalformedTaxCode('PRKPRT01G0H663M')

@@ -54,7 +54,7 @@ fattura:                   '<DIRNAME>/2014_003_bruce_banner.doc'
   città/data:              Greenville/2014-01-22
   nome:                    Robert Bruce Banner
   codice fiscale:          BNNBRC01G01H663S
-  incasso:                 102.00 [euro]
+  incasso:                 107.00 [euro]
 fattura:                   '<DIRNAME>/2014_004_bruce_wayne.doc'
   anno/numero:             2014/4
   città/data:              Gotham City/2014-01-25
@@ -66,7 +66,7 @@ fattura:                   '<DIRNAME>/2014_005_clark_kent.doc'
   città/data:              Smallville/2014-01-29
   nome:                    Clark Kent
   codice fiscale:          KNTCRK01G01H663X
-  incasso:                 153.00 [euro]
+  incasso:                 155.00 [euro]
 fattura:                   '<DIRNAME>/2014_006_clark_kent.doc'
   anno/numero:             2014/6
   città/data:              Smallville/2014-02-28
@@ -76,31 +76,31 @@ fattura:                   '<DIRNAME>/2014_006_clark_kent.doc'
 """
     REPORT_OUTPUT = """\
 anno                       2014
-  * incasso totale:        680.16
+  * incasso totale:        687.16
   * numero di fatture:     6
   * numero di clienti:     4
     + cliente:             WNYBRC01G01H663S (Bruce Wayne):
       numero di fatture:   2
       incasso totale:      102.00
-      incasso percentuale: 15.00%
+      incasso percentuale: 14.84%
       settimane:           1, 4
 
     + cliente:             PRKPRT01G01H663M (Peter B. Parker):
       numero di fatture:   1
       incasso totale:      76.50
-      incasso percentuale: 11.25%
+      incasso percentuale: 11.13%
       settimane:           1
 
     + cliente:             BNNBRC01G01H663S (Robert Bruce Banner):
       numero di fatture:   1
-      incasso totale:      102.00
-      incasso percentuale: 15.00%
+      incasso totale:      107.00
+      incasso percentuale: 15.57%
       settimane:           4
 
     + cliente:             KNTCRK01G01H663X (Clark Kent):
       numero di fatture:   2
-      incasso totale:      399.66
-      incasso percentuale: 58.76%
+      incasso totale:      401.66
+      incasso percentuale: 58.45%
       settimane:           5, 9
 
   * numero di settimane:   4
@@ -108,25 +108,25 @@ anno                       2014
       numero di fatture:   2
       giorni:              2014-01-03 VE[2]
       incasso totale:      127.50
-      incasso percentuale: 18.75%
+      incasso percentuale: 18.55%
 
     + settimana:           4 [2014-01-20 -> 2014-01-26]:
       numero di fatture:   2
       giorni:              2014-01-22 ME[1], 2014-01-25 SA[1]
-      incasso totale:      153.00
-      incasso percentuale: 22.49%
+      incasso totale:      158.00
+      incasso percentuale: 22.99%
 
     + settimana:           5 [2014-01-27 -> 2014-02-02]:
       numero di fatture:   1
       giorni:              2014-01-29 ME[1]
-      incasso totale:      153.00
-      incasso percentuale: 22.49%
+      incasso totale:      155.00
+      incasso percentuale: 22.56%
 
     + settimana:           9 [2014-02-24 -> 2014-03-02]:
       numero di fatture:   1
       giorni:              2014-02-28 VE[1]
       incasso totale:      246.66
-      incasso percentuale: 36.26%
+      incasso percentuale: 35.90%
 
 """
 
@@ -295,10 +295,10 @@ summary_epilogue = test line 3
 N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
      1     50.0      0.0    1.0           51.0     0.0                0.0   0.0   51.0
      2     75.0      0.0    1.5           76.5     0.0                0.0   0.0   76.5
-     3    100.0      0.0    2.0          102.0     0.0                0.0   0.0  102.0
+     3    100.0      0.0    2.0          102.0     0.0                0.0   5.0  107.0
      4     50.0      0.0    1.0           51.0     0.0                0.0   0.0   51.0
-     5    150.0      0.0    3.0          153.0     0.0                0.0   0.0  153.0
-TOTALE    425.0      0.0    8.5          433.5     0.0                0.0   0.0  433.5
+     5    150.0      0.0    3.0          153.0     0.0                0.0   2.0  155.0
+TOTALE    425.0      0.0    8.5          433.5     0.0                0.0   7.0  440.5
 === Febbraio ===
 N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
      6    120.0     30.0    3.0          153.0   33.66               30.0  30.0 246.66
@@ -648,6 +648,7 @@ WNYBRC01G01H663S 2014      1
 [018] l'IVA non è consistente con quanto dichiarato
 [019] la ritenuta d'acconto non è consistente con quanto dichiarato
 [020] non è possibile convertire correttamente il valore di un campo della fattura
+[021] manca il bollo di 2 euro per prestazione superiore a 77.47 euro
 """)
 
     def test_invoice_main_missing_subcommand(self):
