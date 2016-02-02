@@ -165,11 +165,12 @@ class Invoice(InvoiceNamedTuple):
                                 e=expected_val))
             
         if self.fee is not None:
-            if self.fee > 77.47 and self.vat == 0 and self.deduction == 0:
+            taxable_income = sum(getattr(self, key) for key in conf.DERIVATIVES['vat'])
+            if taxable_income > 77.47 and self.vat == 0 and self.deduction == 0:
                 if self.taxes < 2:
-                    message = "fattura {}: importo={}, iva={}, ritenuta={}, bolli={}: è richiesto un bollo di almeno 2 euro".format(
+                    message = "fattura {}: imponibile={}, iva={}, ritenuta={}, bolli={}: è richiesto un bollo di almeno 2 euro".format(
                         self.doc_filename,
-                        self.fee,
+                        taxable_income,
                         self.vat,
                         self.deduction,
                         self.taxes,
