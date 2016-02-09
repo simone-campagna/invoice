@@ -1102,6 +1102,13 @@ class InvoiceProgram(object):
                     for invoice in db.read('invoices', where=where, connection=connection):
                         discarded_doc_filenames.add(invoice.doc_filename)
                     db.delete('invoices', where=where, connection=connection)
+
+                def _del_invoices(invoice):
+                    min_number = year_min_number.get(invoice.year, None)
+                    return min_number is None or invoice.number < min_number
+
+                invoice_collection = invoice_collection.filter(_del_invoices)
+                updated_invoice_collection = updated_invoice_collection.filter(_del_invoices)
                 scan_events['removed'] += len(discarded_doc_filenames)
                 # force rescan
                 for doc_filename in discarded_doc_filenames:
