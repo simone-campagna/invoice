@@ -62,6 +62,7 @@ def main():
             'invoice',
             'invoice.database',
             'invoice.database.upgrade',
+            'invoice.document',
             'invoice.ee',
             'invoice.spy',
         ],
