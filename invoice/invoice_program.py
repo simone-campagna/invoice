@@ -65,7 +65,7 @@ from .version import VERSION
 from .ee import snow
 
 
-MReport = collections.namedtuple("MReport", ["number", "fee", "refunds", "cpa", "taxable_income", "vat", "empty", "deduction", "taxes", "income"])
+MReport = collections.namedtuple("MReport", ["number", "date", "tax_code", "name", "fee", "refunds", "cpa", "taxable_income", "vat", "empty", "deduction", "taxes", "income"])
 
 class FileDateTimes(object):
     def __init__(self):
@@ -557,7 +557,7 @@ class InvoiceProgram(object):
         all_field_names = MReport._fields
 
         #"number", "fee", "cpa", "taxable_income", "vat", "empty", "deduction", "income"
-        header = ["N.DOC.", "COMPENSO", "RIMBORSI", "C.P.A.", "IMPONIBILE IVA", "IVA 22%", "ES.IVA ART.10", "R.A.", "BOLLI", "TOTALE"]
+        header = ["N.DOC.", "DATA", "CODICE FISCALE", "NOME", "COMPENSO", "RIMBORSI", "C.P.A.", "IMPONIBILE IVA", "IVA 22%", "ES.IVA ART.10", "R.A.", "BOLLI", "TOTALE"]
         total_keys = 'fee', 'refunds', 'cpa', 'taxable_income', 'vat', 'deduction', 'taxes', 'income'
 
         general_info = load_info()['general']
@@ -565,9 +565,13 @@ class InvoiceProgram(object):
         summary_epilogue = general_info['summary_epilogue']
         number_fields = {"fee", "refunds", "cpa", "taxable_income", "vat", "deduction", "taxes", "income"}
         number_cols = []
+        date_fields = {"date"}
+        date_cols = []
         for c, field in enumerate(MReport._fields):
             if field in number_fields:
                 number_cols.append(c)
+            elif field in date_fields:
+                date_cols.append(c)
 
         align = conf.ALIGN.copy()
         for key in total_keys:
@@ -576,6 +580,7 @@ class InvoiceProgram(object):
         with document(file=self.get_doc_file(output_filename), mode=table_mode, logger=self.logger) as doc:
             doc.define_format("bold", {"bold": True})
             doc.define_format("bold_yellow", {"bold": True, "bg_color": "yellow"})
+            doc.define_format("date_value", {"align": "right", "num_format": "dd/mm/yyyy"})
             doc.define_format("money_value", {"align": "right", "num_format": "0.00"})
             doc.define_format("money_value_total", {"align": "right", "num_format": "0.00", "bold": True, "bg_color": "yellow"})
             page_template = doc.create_page_template(field_names=all_field_names, header=header, align=align)
@@ -606,6 +611,9 @@ class InvoiceProgram(object):
                 for invoice in invoices:
                     mreport = MReport(
                         number=invoice.number,
+                        date=invoice.date,
+                        tax_code=invoice.tax_code,
+                        name=invoice.name,
                         fee=invoice.fee,
                         refunds=invoice.refunds,
                         taxes=invoice.taxes,
@@ -619,6 +627,8 @@ class InvoiceProgram(object):
                     rows.append(mreport)
                     for col in number_cols:
                         doc_formats.add_format("money_value", row=row_offset + len(rows), col=col)
+                    for col in date_cols:
+                        doc_formats.add_format("date_value", row=row_offset + len(rows), col=col)
                     for key in total_keys:
                         val = getattr(mreport, key)
                         if val is not None:
@@ -626,6 +636,9 @@ class InvoiceProgram(object):
                 row_end = row_offset + len(rows)
                 total["number"] = "TOTALE"
                 total["empty"] = ""
+                total["date"] = ""
+                total["tax_code"] = ""
+                total["name"] = ""
                 row_begin = row_offset
                 if header:
                     nh = 1
