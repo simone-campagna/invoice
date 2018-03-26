@@ -671,3 +671,73 @@ WNYBRC01G01H663S 2014      1
                     args=[],
                 )
             self.assertEqual(cm.exception.code, 2)
+
+
+    def _test_invoice_main_yreport(self, table_mode):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc_dir = os.path.join(tmpdir, 'rc_dir')
+            os.makedirs(rc_dir)
+
+            p = StringPrinter()
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['init', '-R', rc_dir, os.path.join(self.dirname, '*.doc')],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['scan', '-R', rc_dir, '--progressbar=off'],
+            )
+            self.assertEqual(p.string(), '')
+
+            p.reset()
+            invoice_main(
+                printer=p,
+                logger=self.logger,
+                args=['yreport', '-R', rc_dir, '--year', '2014', '-m', table_mode],
+            )
+            if table_mode == conf.TABLE_MODE_TEXT:
+                print(p.string())
+                assert p.string() == """\
+TipoDocumento DataDocumento NumDocumento DataPagamento CodiceFiscale    TipoSpesa FlagTipoSpesa Importo DataDocumentoRimborso NumDocumentoRimborso
+FT            20140103      1            20140103      WNYBRC01G01H663S SP                        51,00                                           
+FT            20140103      2            20140103      PRKPRT01G01H663M SP                        76,50                                           
+FT            20140122      3            20140122      BNNBRC01G01H663S SP                       107,00                                           
+FT            20140125      4            20140125      WNYBRC01G01H663S SP                        51,00                                           
+FT            20140129      5            20140129      KNTCRK01G01H663X SP                       155,00                                           
+"""
+            elif table_mode == conf.TABLE_MODE_CSV:
+                assert p.string() == """\
+TipoDocumento,DataDocumento,NumDocumento,DataPagamento,CodiceFiscale,TipoSpesa,FlagTipoSpesa,Importo,DataDocumentoRimborso,NumDocumentoRimborso
+FT,20140103,1,20140103,WNYBRC01G01H663S,SP,,51,00,,
+FT,20140103,2,20140103,PRKPRT01G01H663M,SP,,76,50,,
+FT,20140122,3,20140122,BNNBRC01G01H663S,SP,,107,00,,
+FT,20140125,4,20140125,WNYBRC01G01H663S,SP,,51,00,,
+FT,20140129,5,20140129,KNTCRK01G01H663X,SP,,155,00,,
+"""
+            elif table_mode == conf.TABLE_MODE_SCSV:
+                assert p.string() == """\
+TipoDocumento;DataDocumento;NumDocumento;DataPagamento;CodiceFiscale;TipoSpesa;FlagTipoSpesa;Importo;DataDocumentoRimborso;NumDocumentoRimborso
+FT;20140103;1;20140103;WNYBRC01G01H663S;SP;;51,00;;
+FT;20140103;2;20140103;PRKPRT01G01H663M;SP;;76,50;;
+FT;20140122;3;20140122;BNNBRC01G01H663S;SP;;107,00;;
+FT;20140125;4;20140125;WNYBRC01G01H663S;SP;;51,00;;
+FT;20140129;5;20140129;KNTCRK01G01H663X;SP;;155,00;;
+"""
+
+
+    def test_invoice_main_yreport_text(self):
+        self._test_invoice_main_yreport(table_mode=conf.TABLE_MODE_TEXT)
+
+    def test_invoice_main_yreport_csv(self):
+        self._test_invoice_main_yreport(table_mode=conf.TABLE_MODE_CSV)
+
+    def test_invoice_main_yreport_scsv(self):
+        self._test_invoice_main_yreport(table_mode=conf.TABLE_MODE_SCSV)
+

@@ -28,6 +28,7 @@ __all__ = [
     'TEXT_AVAILABLE',
     'CsvDocument',
     'CsvPageTemplate',
+    'SCsvPageTemplate',
     'CSV_AVAILABLE',
 ]
 
@@ -61,6 +62,12 @@ class BaseTCPageTemplate(BasePageTemplate):
             for row in rows:
                 yield fmt.format(row=row, lengths=lengths)
 
+    def transform_value(self, value):
+        if value is None:
+            return ''
+        else:
+            return super().transform_value(value)
+
 
 class TextPageTemplate(BaseTCPageTemplate):
     JUSTIFY = True
@@ -70,6 +77,11 @@ class TextPageTemplate(BaseTCPageTemplate):
 class CsvPageTemplate(BaseTCPageTemplate):
     JUSTIFY = False
     FIELD_SEPARATOR = ","
+
+
+class SCsvPageTemplate(CsvPageTemplate):
+    JUSTIFY = False
+    FIELD_SEPARATOR = ";"
 
 
 class BaseTCDocument(BaseDocument):
@@ -138,3 +150,7 @@ class CsvDocument(BaseTCDocument):
         if title:
             self.file.write("# {}\n".format(title))
 
+
+class SCsvDocument(CsvDocument):
+    def page_template_class(cls):
+        return SCsvPageTemplate

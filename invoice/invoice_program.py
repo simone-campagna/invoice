@@ -66,6 +66,9 @@ from .ee import snow
 
 
 MReport = collections.namedtuple("MReport", ["number", "fee", "refunds", "cpa", "taxable_income", "vat", "empty", "deduction", "taxes", "income"])
+YReport = collections.namedtuple("YReport", ["document_type", "document_date", "document_num", "payment_date", "tax_code", "cost_type",
+                                             "cost_type_flag", "income", "refund_document_date", "refund_document_num"])
+
 
 class FileDateTimes(object):
     def __init__(self):
@@ -267,6 +270,10 @@ class InvoiceProgram(object):
 
     def program_summary(self, *, year=None, table_mode=None, output_filename=None, header=None):
         self.impl_summary(year=year, table_mode=table_mode, output_filename=output_filename, header=header)
+        return 0
+
+    def program_yreport(self, *, year=None, table_mode=None, output_filename=None, header=None):
+        self.impl_yreport(year=year, table_mode=table_mode, output_filename=output_filename, header=header)
         return 0
 
     def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, header=None, table_mode=None, output_filename=None):
@@ -544,6 +551,44 @@ class InvoiceProgram(object):
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters)
         self.report_invoice_collection(invoice_collection)
 
+    def impl_yreport(self, *, year=None, table_mode=None, output_filename=None, header=None):
+        table_mode = self.db.get_config_option('table_mode', table_mode)
+        header = self.db.get_config_option('header', table_mode)
+        self.db.check()
+        filters = []
+        if year is None:
+            year = datetime.datetime.now().year
+        filters.append(lambda i: i.year == year)
+        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters)
+        all_field_names = YReport._fields
+        align = conf.ALIGN.copy()
+
+        header = ["TipoDocumento", "DataDocumento", "NumDocumento", "DataPagamento", "CodiceFiscale",
+                  "TipoSpesa", "FlagTipoSpesa", "Importo", "DataDocumentoRimborso", "NumDocumentoRimborso"]
+        with document(file=self.get_doc_file(output_filename), mode=table_mode, logger=self.logger) as doc:
+            page_template = doc.create_page_template(field_names=all_field_names, header=header, align=align)
+            doc_formats = Formats()
+            rows = []
+            for invoice in invoice_collection:
+                if invoice.vat:
+                    continue
+                date_fmt = invoice.date.strftime("%Y%m%d")
+                yreport = YReport(
+                    document_type="FT",
+                    document_date=date_fmt,
+                    document_num=invoice.number,
+                    payment_date=date_fmt,
+                    tax_code=invoice.tax_code,
+                    cost_type="SP",
+                    cost_type_flag=None,
+                    income="{:.2f}".format(invoice.income).replace('.', ','),
+                    refund_document_date=None,
+                    refund_document_num=None,
+                )
+                rows.append(yreport)
+            doc.add_page(page_template=page_template, data=rows, title=None, formats=doc_formats, prologue=None, epilogue=None)
+
+        
     def impl_summary(self, *, year=None, table_mode=None, output_filename=None, header=None):
         table_mode = self.db.get_config_option('table_mode', table_mode)
         header = self.db.get_config_option('header', table_mode)

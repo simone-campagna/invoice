@@ -695,7 +695,7 @@ Per ciascun anno, vengono mostrate le seguenti informazioni:
         function_arguments=('filters', ),
     )
 
-    ### report_parser ###
+    ### summary_parser ###
     summary_parser = add_subparser(subparsers,
         "summary",
         parents=(common_parser, ),
@@ -714,6 +714,22 @@ verranno mostrati rispettivamente all'inizio ed alla fine di ogni foglio.
     )
     summary_parser.set_defaults(
         function_name="program_summary",
+        function_arguments=('year', 'output_filename', 'table_mode'),
+    )
+
+    ### yreport_parser ###
+    yreport_parser = add_subparser(subparsers,
+        "yreport",
+        parents=(common_parser, ),
+        add_help=False,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""\
+Mostra un report per anno per l'Agenzia delle Entrate.
+
+"""
+    )
+    yreport_parser.set_defaults(
+        function_name="program_yreport",
         function_arguments=('year', 'output_filename', 'table_mode'),
     )
 
@@ -844,7 +860,7 @@ e validati.
             default=default_list_field_names,
             help="selezione manuale dei campi, ad esempio 'anno,codice_fiscale,città' [{}]".format('|'.join(all_field_names)))
 
-    for parser in init_parser, config_parser, list_parser, scan_parser, summary_parser:
+    for parser in init_parser, config_parser, list_parser, scan_parser, summary_parser, yreport_parser:
         parser.add_argument("--table-mode", "-m",
             dest="table_mode",
             choices=conf.TABLE_MODES,
@@ -859,7 +875,7 @@ e validati.
             default=default_max_interruption_days,
             help="numero di giorni massimo di interruzione di un incarico")
 
-    for parser in list_parser, scan_parser, summary_parser:
+    for parser in list_parser, scan_parser, summary_parser, yreport_parser:
         parser.add_argument("--output",
             dest="output_filename",
             type=str,
@@ -899,7 +915,7 @@ e validati.
             default=default_filters,
             help="filtra le fatture in base all'anno")
 
-    for parser in (summary_parser,):
+    for parser in summary_parser, yreport_parser:
         parser.add_argument("--year", "-y",
             metavar="Y",
             dest="year",

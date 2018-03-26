@@ -72,9 +72,6 @@ if HAS_NOTIFY2: # pragma: no cover
             }
             notification.update(summary=summary, message=message, icon=icon)
             notification.set_urgency(urgency_d[kind])
-            #if notify_pyqt4.available():
-            #    callback = lambda : notify_pyqt4.notify(logger, kind, title, text, detailed_text)
-            #    notification.add_action("fai qualcosa", "qualcosa", callback, user_data=None)
             notification.show()
 else:
     notify = None

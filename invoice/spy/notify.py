@@ -21,11 +21,11 @@ __all__ = [
     'notify',
 ]
 
-from . import notify_pyqt4
+from . import notify_pyqt
 from . import notify_logger
 
-if notify_pyqt4.available():
-    notify = notify_pyqt4.notify
+if notify_pyqt.available():
+    notify = notify_pyqt.notify
 elif notify_logger.available():
     notify = notify_logger.notify
 else:
