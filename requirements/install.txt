@@ -1,4 +1,5 @@
 XlsxWriter
+openpyxl
 SIP
 PyQt5
 # --allow-external SIP --allow-unverified SIP SIP

@@ -44,6 +44,7 @@ from .error import InvoiceSyntaxError, \
                    InvoiceUserValidatorError, \
                    InvoiceArgumentError
 
+from .import_excel import read_clients, read_invoices, create_documents
 from .info import load_info
 from .invoice_collection import InvoiceCollection
 from .invoice_collection_reader import InvoiceCollectionReader
@@ -125,7 +126,8 @@ class InvoiceProgram(object):
         self.impl_version(upgrade=upgrade)
         return 0
 
-    def program_init(self, *, patterns,
+    def program_init(self, *, clients,
+                              patterns,
                               warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                               error_mode=ValidationResult.DEFAULT_ERROR_MODE,
                               partial_update=True,
@@ -142,6 +144,7 @@ class InvoiceProgram(object):
                               progressbar=None,
                               reset=False):
         self.impl_init(
+            clients=clients,
             patterns=patterns,
             warning_mode=warning_mode,
             error_mode=error_mode,
@@ -161,7 +164,8 @@ class InvoiceProgram(object):
         )
         return 0
 
-    def program_config(self, *, warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
+    def program_config(self, *, clients="",
+                                warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                                 error_mode=ValidationResult.DEFAULT_ERROR_MODE,
                                 partial_update=True,
                                 remove_orphaned=True,
@@ -181,6 +185,7 @@ class InvoiceProgram(object):
                                 edit=False,
                                 editor=None):
         self.impl_config(
+            clients=clients,
             warning_mode=warning_mode,
             error_mode=error_mode,
             partial_update=partial_update,
@@ -341,7 +346,8 @@ class InvoiceProgram(object):
         logger.info("file {} -> {}".format(filename, backup_filename))
         os.rename(filename, backup_filename)
 
-    def impl_init(self, *, patterns,
+    def impl_init(self, *, clients,
+                           patterns,
                            warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                            error_mode=ValidationResult.DEFAULT_ERROR_MODE,
                            partial_update=True,
@@ -373,6 +379,7 @@ class InvoiceProgram(object):
                 self.backup_and_remove(self.logger, parser_config_file)
         self.db.initialize()
         configuration = self.db.Configuration(
+            clients=clients,
             warning_mode=warning_mode,
             error_mode=error_mode,
             partial_update=partial_update,
@@ -410,7 +417,8 @@ class InvoiceProgram(object):
         if not self.db.version_is_valid(version):
             self.logger.error("la versione del database non è valida; è necessario eseguire l'upgrade (opzione --upgrade/-U)")
 
-    def impl_config(self, *, warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
+    def impl_config(self, *, clients=None,
+                             warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                              error_mode=ValidationResult.DEFAULT_ERROR_MODE,
                              partial_update=True,
                              remove_orphaned=True,
@@ -440,6 +448,7 @@ class InvoiceProgram(object):
         if warning_mode is not None:
             warning_mode = tuple(warning_mode)
         configuration = self.db.Configuration(
+            clients=clients,
             warning_mode=warning_mode,
             error_mode=error_mode,
             partial_update=partial_update,
@@ -1083,15 +1092,36 @@ class InvoiceProgram(object):
         removed_invoices = []
         validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
         scan_events = {'removed': 0, 'added': 0, 'modified': 0}
+        docs_pattern = os.path.join(conf.TMP_DOCS_DIR, "*.doc")
+
+        # clean 
+        for filename in glob.glob(docs_pattern):
+            print("remove {}".format(filename))
+            # os.remove(filename)
+
         with db.connect() as connection:
             configuration = db.load_configuration(connection)
+            clients = read_clients(configuration.clients)
             user_validators = self.compile_user_validators(connection)
             if remove_orphaned is None:
                 remove_orphaned = configuration.remove_orphaned
             if partial_update is None:
                 partial_update = configuration.partial_update
 
-            for pattern in db.load_patterns(connection=connection):
+            found_excel_filenames = set()
+            for excel_pattern in db.load_patterns(connection=connection):
+                if excel_pattern.skip:
+                    found_excel_filenames.difference_update(fnmatch.filter(found_excel_filenames, excel_pattern.pattern))
+                else:
+                    for excel_filename in glob.glob(excel_pattern.pattern):
+                        found_excel_filenames.add(Path.db_to(excel_filename))
+            excel_index = 0
+            for excel_filename in found_excel_filenames:
+                invoices = read_invoices(excel_filename)
+                create_documents(clients, invoices, os.path.join(conf.TMP_DOCS_DIR, "{index:05d}_{{year}}_{{number:05d}}.doc".format(index=excel_index)))
+                excel_index += 1
+
+            for pattern in [InvoiceDb.Pattern(pattern=docs_pattern, skip=False)]:
                 if pattern.skip:
                     found_doc_filenames.difference_update(fnmatch.filter(found_doc_filenames, pattern.pattern))
                 else:

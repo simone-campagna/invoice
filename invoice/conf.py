@@ -57,6 +57,7 @@ __all__ = [
     'RC_DIR_EXPR',
     'DB_FILE_EXPR',
     'RC_DIR',
+    'TMP_DOCS_DIR',
     'DB_FILE',
     'SCANNER_CONFIG_FILE',
     'PARSER_CONFIG_FILE',
@@ -206,6 +207,7 @@ def setup(rc_dir=None, db_file=None):
     global RC_DIR_EXPR
     global DB_FILE_EXPR
     global RC_DIR
+    global TMP_DOCS_DIR
     global DB_FILE
     global SCANNER_CONFIG_FILE
     global PARSER_CONFIG_FILE
@@ -213,7 +215,7 @@ def setup(rc_dir=None, db_file=None):
     global SPY_LOCK_FILE
     global SPY_LOG_FILE
     if rc_dir is None:
-        rc_dir = os.path.join('~', '.invoice')
+        rc_dir = os.path.join('~', '.invoice-import-excel')
     RC_DIR_EXPR = os.environ.get(RC_DIR_VAR, rc_dir)
     RC_DIR = expand(RC_DIR_EXPR)
     if not os.path.isabs(RC_DIR):
@@ -228,6 +230,9 @@ def setup(rc_dir=None, db_file=None):
     if not os.path.isabs(DB_FILE):
         DB_FILE = os.path.join(RC_DIR, DB_FILE)
 
+    TMP_DOCS_DIR = os.path.join(RC_DIR, 'tmp-docs')
+    if not os.path.exists(TMP_DOCS_DIR):
+        os.makedirs(TMP_DOCS_DIR)
     SCANNER_CONFIG_FILE = os.path.join(RC_DIR, "scanner.config")
     PARSER_CONFIG_FILE = os.path.join(RC_DIR, "parser.config")
     INFO_CONFIG_FILE = os.path.join(RC_DIR, "info.config")

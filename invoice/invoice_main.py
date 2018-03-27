@@ -310,44 +310,18 @@ oppure
 Inizializza il database. Deve essere fornito almeno un pattern, ad
 esempio:
 
-$ %(prog)s init 'docs/*.doc'
+$ %(prog)s init Clients.xlsx 'Fatture/*.xlsx'
 
-I pattern vengono utilizzati per la ricerca dei DOC file contenenti le
-fatture.
+I pattern vengono utilizzati per la ricerca dei file excel file
+contenenti le fatture.
 È importante che il comando riceva un pattern e non la lista di file
 corrispondenti alla sua espansione, altrimenti la ricerca non avverrà
-in modo corretto. Pertanto:
-
-$ %(prog)s init 'docs/*.doc'
-
-è corretto, e fa in modo che le successive scansioni ispezionino tutti
-i DOC file corrispondenti al pattern 'docs/*.doc'. Al contrario,
-
-$ %(prog)s init docs/*.doc
-
-inizializza il database con i nomi dei file che corrispondono *adesso*
-al pattern '*.doc'; le successive scansioni ispezioneranno solo questi
-file, e non nuovi file che corrispondono al pattern.
-
-Durante questa fase possono anche essere fissati i valori dei parametri
-di configurazione; vedi
-
-$ %(prog)s config -h
-
-per una spiegazione di questi valori.
-
-Se un pattern inizia con '!', i file già inclusi che fanno match con esso
-vengono scartati; dunque l'ordine è importante. Ad esempio,
-
-$ %(prog)s init 'docs/*.doc' 'docs/*.ERR.doc' 'docs/2015*.ERR.doc'
-
-include tutti i file 'docs/*.doc', poi fra questi scarta tutti i file
-'docs/*.ERR.doc', infine aggiunge tutti i file 'docs/2015*.ERR.doc'.
+in modo corretto.
 """,
     )
     init_parser.set_defaults(
         function_name="program_init",
-        function_arguments=('patterns', 'reset',
+        function_arguments=('clients', 'patterns', 'reset',
                             'warning_mode', 'error_mode',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
@@ -421,7 +395,7 @@ supportati sono:
     )
     config_parser.set_defaults(
         function_name="program_config",
-        function_arguments=('reset',
+        function_arguments=('clients', 'reset',
                             'warning_mode', 'error_mode',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
@@ -1049,6 +1023,15 @@ e validati.
             default=default_progressbar,
             nargs='?',
             help="abilita/disabilita la progressbar")
+
+    config_parser.add_argument("--clients", "-c",
+        type=str,
+        default=None,
+        help="file excel contenente l'anagrafica dei clienti")
+
+    init_parser.add_argument("clients",
+        type=str,
+        help="file excel contenente l'anagrafica dei clienti")
 
     ### patterns option
     for parser in init_parser, legacy_parser:

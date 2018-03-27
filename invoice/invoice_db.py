@@ -58,7 +58,8 @@ class InvoiceDb(Db):
     Validator = collections.namedtuple('Validator', ('filter_function', 'check_function', 'message'))
     Configuration = collections.namedtuple(
         'Configuration',
-        ('warning_mode', 
+        ('clients',
+         'warning_mode', 
          'error_mode',
          'partial_update', 'remove_orphaned',
          'header', 'total',
@@ -68,6 +69,7 @@ class InvoiceDb(Db):
          'progressbar'))
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
     DEFAULT_CONFIGURATION = Configuration(
+        clients='',
         warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
         error_mode=ValidationResult.DEFAULT_ERROR_MODE,
         remove_orphaned=True,
@@ -100,6 +102,7 @@ class InvoiceDb(Db):
         ),
         'configuration': DbTable(
             fields=(
+                ('clients', Str()),
                 ('warning_mode', StrTuple()),
                 ('error_mode', StrTuple()),
                 ('remove_orphaned', Bool()),
