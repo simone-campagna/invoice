@@ -1096,8 +1096,7 @@ class InvoiceProgram(object):
 
         # clean 
         for filename in glob.glob(docs_pattern):
-            print("remove {}".format(filename))
-            # os.remove(filename)
+            os.remove(filename)
 
         with db.connect() as connection:
             configuration = db.load_configuration(connection)
