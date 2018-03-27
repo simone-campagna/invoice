@@ -66,7 +66,7 @@ def read_clients(filename):
     return clients
 
 
-def create_document(filename, number, year, rows, clients):
+def create_document(filename, year, number, rows, clients):
     if len(rows) != 1:
         raise ValueError("unsupported number of entries #{} in invoice {}/{:03d}".format(len(rows), year, number))
     filename = filename.format(year=year, number=number)

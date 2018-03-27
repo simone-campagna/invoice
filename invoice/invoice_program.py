@@ -1117,7 +1117,7 @@ class InvoiceProgram(object):
             excel_index = 0
             for excel_filename in found_excel_filenames:
                 invoices = read_invoices(excel_filename)
-                create_documents(clients, invoices, os.path.join(conf.TMP_DOCS_DIR, "{index:05d}_{{year}}_{{number:05d}}.doc".format(index=excel_index)))
+                create_documents(clients, invoices, os.path.join(conf.TMP_DOCS_DIR, "{{year}}_{index:05d}_{{number:05d}}.doc".format(index=excel_index)))
                 excel_index += 1
 
             for pattern in [InvoiceDb.Pattern(pattern=docs_pattern, skip=False)]:
