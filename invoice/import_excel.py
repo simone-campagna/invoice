@@ -17,6 +17,13 @@ Field = collections.namedtuple(
 OUT_DATE_FMT = '%d/%m/%Y'
 
 
+def mk_vat_number(x):
+    if x:
+        return x.strip()
+    else:
+        return None
+
+
 def mk_date(x):
     return datetime.date.fromordinal(datetime.date(1899,12, 30).toordinal() + x).strftime(OUT_DATE_FMT)
 
@@ -32,7 +39,7 @@ def mk_float(x):
     return float(x)
 
 
-def read_workbook(filename, cols):
+def read_workbook(filename, fields):
     wb = load_workbook(filename)
     if len(wb.sheetnames) != 1:
         raise ValueError("file {}: sheetnames: {!r}".format(filename, wb.sheetnames))
@@ -40,10 +47,18 @@ def read_workbook(filename, cols):
     ws = wb[sheetname]
     iws = iter(ws.rows)
     header = [cell.value for cell in next(iws)]
-    for index, field in sorted(cols.items(), key=lambda x: x[0]):
-        hdr = str(header[index])
-        if hdr != field.header:
-            raise ValueError("file {}: col {}={!r} is not {!r}".format(filename, index, hdr, field.header))
+    fields_dict = {field.header: field for field in fields}
+    cols = {}
+    for index, value in enumerate(header):
+        field = fields_dict.pop(value, None)
+        if field is not None:
+            cols[index] = field
+    for field in fields_dict.values():
+        raise ValueError("{}: field {} not found".format(filename, field))
+    # for index, field in sorted(cols.items(), key=lambda x: x[0]):
+    #     hdr = str(header[index])
+    #     if hdr != field.header:
+    #         raise ValueError("file {}: col {}={!r} is not {!r}".format(filename, index, hdr, field.header))
     for row in iws:
         dct = {}
         for index, field in cols.items():
@@ -52,17 +67,17 @@ def read_workbook(filename, cols):
 
 
 def read_clients(filename):
-    cols = {
-        0: Field('Cliente', 'name', str),
-        1: Field('Indirizzo', 'address', str),
-        2: Field('Comune', 'city', str),
-        5: Field('CodiceFiscale', 'tax_code', str),
-    }
+    fields = [
+        Field('Cliente', 'name', str),
+        Field('Indirizzo', 'address', str),
+        Field('Comune', 'city', str),
+        Field('CodiceFiscale', 'tax_code', str),
+    ]
     clients = {}
-    for dct in read_workbook(filename, cols):
+    for dct in read_workbook(filename, fields):
         if dct['name'] in clients:
             raise ValueError("client {!r} already defined".format(dct['name']))
-        clients[dct['name']] = dct
+        clients[dct['tax_code']] = dct
     return clients
 
 
@@ -104,10 +119,16 @@ Bollo (abc)	{taxes} euro
 Totale fattura	{income} euro
 """
     ref_row = rows[-1]
-    name = ref_row['name']
-    if name not in clients:
-        raise ValueError("cliente {!r} non in anagrafica".format(name))
-    client = clients[name]
+    vat_number = None
+    for key in 'e_vat_number', 'p_vat_number':
+        if ref_row[key] is not None:
+            vat_number = ref_row[key]
+            break
+    else:
+        raise ValueError("{}: c.f./p.iva mancante".format(ref_row))
+    if vat_number not in clients:
+        raise ValueError("cliente {!r} non in anagrafica".format(vat_number))
+    client = clients[vat_number]
     data = ref_row.copy()
     data.update({
         'refunds': 0.0,
@@ -132,24 +153,26 @@ def create_documents(clients, invoices, filename):
         create_document(filename, year, number, rows, clients)
 
 def read_invoices(filename):
-    cols = {
-        1: Field('Anno', 'year', int),
-        2: Field('Numero', 'number', int),
-        4: Field('Data', 'date', mk_date),
-        8: Field('Cliente/Fornitore', 'name', str),
-        9: Field('Numero riga', 'num_row', int),
-        11: Field('Descrizione', 'service', str),
-        16: Field('PrezzoTot', 'fee', mk_float),
-        17: Field('Aliquota', 'p_vat', mk_p_vat),
-        20: Field('Totale (val)', 'income', mk_float),
-        22: Field('Imposta (val)', 'vat', mk_float),
-        24: Field('Cassa Previdenza (%)', 'p_cpa', mk_float),
-        25: Field('Cassa previdenza (val)', 'cpa', mk_float),
-        27: Field('Ritenuta (%)', 'p_deduction', mk_float),
-        28: Field('Ritenuta (val)', 'deduction', mk_float),
-    }
+    fields = [
+        Field('Anno', 'year', int),
+        Field('Numero', 'number', int),
+        Field('Data', 'date', mk_date),
+        Field('Cliente/Fornitore', 'name', str),
+        Field('C.F.', 'p_vat_number', mk_vat_number),
+        Field('P.I.', 'e_vat_number', mk_vat_number),
+        Field('Numero riga', 'num_row', int),
+        Field('Descrizione', 'service', str),
+        Field('PrezzoTot', 'fee', mk_float),
+        Field('Aliquota', 'p_vat', mk_p_vat),
+        Field('Totale (val)', 'income', mk_float),
+        Field('Imposta (val)', 'vat', mk_float),
+        Field('Cassa Previdenza (%)', 'p_cpa', mk_float),
+        Field('Cassa previdenza (val)', 'cpa', mk_float),
+        Field('Ritenuta (%)', 'p_deduction', mk_float),
+        Field('Ritenuta (val)', 'deduction', mk_float),
+    ]
     invoices = collections.defaultdict(list)
-    for dct in read_workbook(filename, cols):
+    for dct in read_workbook(filename, fields):
         invoices[(dct['year'], dct['number'])].append(dct)
     return invoices
 

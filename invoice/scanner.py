@@ -109,7 +109,7 @@ regexpr = ^[Ff]attura\s+n.\s+(?P<year>\d+)/(?P<number>\d+)\s*$
 regexpr = ^\s*[Ss]pett\.\s*(?:[Ss]ig\.?|[Dd]ott\.?(?:\s*ssa)?)?\s*(?P<name>[\w\s'\.]+)\s*$
 
 [codice fiscale]
-regexpr = ^.*[^\w]?(?P<tax_code>[A-Z]{6,6}\d{2,2}[A-Z]\d{2,2}[A-Z]\d{3,3}[A-Z])\s*$
+regexpr = ^.*[^\w]?Cod\.\s*Fisc\.\s*(?P<tax_code>[A-Z]{6,6}\d{2,2}[A-Z]\d{2,2}[A-Z]\d{3,3}[A-Z]|\d+)\s*$
 
 [codice fiscale sbagliato]
 regexpr = ^.*[^\w](?P<tax_code>[A-Za-z0]{6,6}[\dO]{2,2}[A-Za-z0][\dO]{2,2}[A-Za-z0][\dO]{3,3}[A-Za-z0])\s*$
@@ -123,7 +123,7 @@ regexpr = ^\s*(?P<city>[^,]+)(?:,|\s)\s*(?P<date>\d{1,2}/\d{1,2}/\d\d\d\d)\s*$
 regexpr = Totale\s+fattura\s+(?P<income>[\d,\.]*)\s+(?P<currency>\w+)\s*$
 
 [prestazione e compenso]
-regexpr = \s*(?:N\s*°\s*\d+|[Pp]restazione\s*:\s*(?:N\s*°\s*\d+)?)\s*(?P<service>[^\d]*)(?:\s+[Pp][Ee][Rr]\s+)?\s*(?P<fee>[\d,\.]*)\s+\w+\s*$
+regexpr = \s*(?:N\s*°\s*\d+|[Pp]restazione\s*:\s*(?:N\s*°\s*\d+)?)\s*(?P<service>[^\t]*)(?:\s+[Pp][Ee][Rr]\s+)?\s*(?P<fee>[\d,\.]*)\s+euro\s*$
 
 [iva]
 regexpr = \s*IVA\s+(?P<p_vat>[\d,\.]+)%\s+(?P<vat>[\d,\.]*)\s+\w+\s*$

@@ -138,7 +138,7 @@ class Parser(metaclass=ParserMeta):
             return m_type(value)
         except Exception as err:
             e_type = m_type.__name__[len("type_"):]
-            message = "{}: errore nella conversione a tipo {}".format(key, e_type)
+            message = "{}={!r}: errore nella conversione a tipo {}".format(key, value, e_type)
             postponed_errors.append((InvoiceKeyConversionError, message))
 
     @classmethod
