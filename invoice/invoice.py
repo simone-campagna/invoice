@@ -166,6 +166,7 @@ class Invoice(InvoiceNamedTuple):
                        error_class = InvoiceInconsistentCpaError
                     elif key == "deduction":
                        error_class = InvoiceInconsistentDeductionError
+                       val = -val
                 source_fields = conf.DERIVATIVES[key]
                 source_vals = [getattr(self, source_field) for source_field in source_fields]
                 source_val = round(sum(v for v in source_vals if v is not None), ndecimals)

@@ -9,6 +9,7 @@ import os
 
 from openpyxl import load_workbook
 
+from . import conf
 
 Field = collections.namedtuple(
     'Field', 'header field type')
@@ -93,7 +94,7 @@ def create_document(filename, year, number, rows, clients):
     for row in rows:
         taxable_income += sum(row.get(key, 0) for key in ['fee', 'cpa', 'refunds'])
         fee += row['fee']
-    if taxable_income > 77.47 and row['vat'] == 0 and row['deduction'] == 0:
+    if taxable_income > 77.47 and row['vat'] == 0:
         taxes = 2.0
     else:
         taxes = 0.0
@@ -117,6 +118,31 @@ IVA {p_vat}%	{vat} euro
 Ritenuta d'acconto {p_deduction}%	{deduction} euro
 Bollo (abc)	{taxes} euro
 Totale fattura	{income} euro
+
+################################################################################
+
+# year_and_number|{year}|{number}
+
+# name|{name}
+
+# tax_code|{tax_code}
+
+# city_and_date|{city}|{date}
+
+# income_and_currency|{income}|euro
+
+# service_and_fee|{service}|{fee}
+
+# p_vat_and_vat|{p_vat}|{vat}
+
+# p_deduction_and_deduction|{p_deduction}|{deduction}
+
+# p_cpa_and_cpa|{p_cpa}|{cpa}
+
+# refunds|{refunds}
+
+# taxes|{taxes}
+
 """
     ref_row = rows[-1]
     vat_number = None
@@ -143,6 +169,8 @@ Totale fattura	{income} euro
             return str(v).replace('.', ',')
         else:
             return v
+        
+    data['income'] += data['deduction']
     test = template.format(**{k: conv(k, v) for k, v in data.items()})
 
     with open(filename, "w") as o_file:
