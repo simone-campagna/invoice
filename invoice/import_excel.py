@@ -41,14 +41,17 @@ def mk_float(x):
 
 
 def read_workbook(filename, fields):
+    def strip(txt):
+        return txt.replace(' ', '')
+
     wb = load_workbook(filename)
     if len(wb.sheetnames) != 1:
         raise ValueError("file {}: sheetnames: {!r}".format(filename, wb.sheetnames))
     sheetname = wb.sheetnames[0]
     ws = wb[sheetname]
     iws = iter(ws.rows)
-    header = [cell.value for cell in next(iws)]
-    fields_dict = {field.header: field for field in fields}
+    header = [strip(cell.value) for cell in next(iws)]
+    fields_dict = {strip(field.header): field for field in fields}
     cols = {}
     for index, value in enumerate(header):
         field = fields_dict.pop(value, None)
