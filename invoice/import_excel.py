@@ -30,7 +30,7 @@ def mk_date(x):
 
 
 def mk_p_vat(x):
-    if x.strip() == 'A10_18':
+    if x.strip() in {'A1', 'A10_18'}:
         return  mk_float(0)
     else:
         return  mk_float(x.strip())
@@ -66,6 +66,7 @@ def read_workbook(filename, fields):
     for row in iws:
         dct = {}
         for index, field in cols.items():
+            # print(index, field, row)
             dct[field.field] = field.type(row[index].value)
         yield dct
 
