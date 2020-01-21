@@ -249,6 +249,8 @@ type = {t_money}
 action = {a_cumulate}
 default = 0.0
 
+[exceptions]
+type = {t_str}
 """.format(undefined=_UNDEFINED, **_DCT)
 
 def load_parser(parser_config_filename=None):

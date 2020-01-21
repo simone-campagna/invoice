@@ -165,6 +165,7 @@ class InvoiceDb(Db):
                 ('taxes', Float()),
                 ('income', Float()),
                 ('currency', Str()),
+                ('exceptions', Str()),
             ),
             dict_type=Invoice,
             singleton=False,

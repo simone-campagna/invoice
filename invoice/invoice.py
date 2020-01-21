@@ -189,17 +189,22 @@ class Invoice(InvoiceNamedTuple):
             taxable_income = sum(getattr(self, key) for key in conf.DERIVATIVES['vat'])
             if taxable_income > 77.47 and self.vat == 0 and self.deduction == 0:
                 if self.taxes < 2:
-                    message = "fattura {}: imponibile={}, iva={}, ritenuta={}, bolli={}: è richiesto un bollo di almeno 2 euro".format(
-                        self.doc_filename,
-                        taxable_income,
-                        self.vat,
-                        self.deduction,
-                        self.taxes,
-                    )
-                    validation_result.add_error(
-                        invoice=self,
-                        exc_type=InvoiceMissingTaxError,
-                        message=message)
+                    if self.exceptions:
+                        exceptions = self.exceptions.split(',')
+                    else:
+                        exceptions = []
+                    if 'no-bollo' not in exceptions:
+                        message = "fattura {}: imponibile={}, iva={}, ritenuta={}, bolli={}: è richiesto un bollo di almeno 2 euro".format(
+                            self.doc_filename,
+                            taxable_income,
+                            self.vat,
+                            self.deduction,
+                            self.taxes,
+                        )
+                        validation_result.add_error(
+                            invoice=self,
+                            exc_type=InvoiceMissingTaxError,
+                            message=message)
 
         tax_code = self.tax_code
         if tax_code:

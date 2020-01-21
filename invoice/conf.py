@@ -111,6 +111,7 @@ FIELD_TRANSLATION = collections.OrderedDict((
     ('taxes',		'bolli'),
     ('income',		'incasso'),
     ('currency',	'valuta'),
+    ('exceptions',	'eccezioni'),
 ))
 
 WEEKDAY_TRANSLATION_DICT = collections.OrderedDict((
@@ -155,7 +156,7 @@ REV_FIELD_TRANSLATION = dict(
 LIST_FIELD_NAMES = FIELD_NAMES + tuple(REV_FIELD_TRANSLATION.keys())
 
 LIST_FIELD_NAMES_SHORT = ('year', 'number', 'date', 'tax_code', 'income', 'currency')
-LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'fee', 'refunds', 'cpa', 'taxes', 'income', 'currency')
+LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'fee', 'refunds', 'cpa', 'taxes', 'income', 'currency', 'exceptions')
 LIST_FIELD_NAMES_FULL = FIELD_NAMES
 
 DEFAULT_LIST_FIELD_NAMES = LIST_FIELD_NAMES_LONG
@@ -283,6 +284,7 @@ ALIGN = {
     'income_percentage': '>',
     'from': '>',
     'to': '>',
+    'exceptions': '>',
 }
 
 DERIVATIVES = {

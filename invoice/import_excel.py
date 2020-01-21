@@ -6,6 +6,7 @@ import argparse
 import collections
 import datetime
 import os
+import re
 
 from openpyxl import load_workbook
 
@@ -38,6 +39,20 @@ def mk_p_vat(x):
 
 def mk_float(x):
     return float(x)
+
+
+_EXCEPTIONS = [
+    (re.compile(r"\s+non\s+.*addebito\s+.*\s+marca\s+da\s+bollo"), 'no-bollo'),
+]
+
+
+def mk_exceptions(x):
+    exceptions = []
+    if x:
+        for r, key in _EXCEPTIONS:
+            if r.search(x):
+                exceptions.append(key)
+    return ','.join(exceptions)
 
 
 def read_workbook(filename, fields):
@@ -98,10 +113,10 @@ def create_document(filename, year, number, rows, clients):
     for row in rows:
         taxable_income += sum(row.get(key, 0) for key in ['fee', 'cpa', 'refunds'])
         fee += row['fee']
-    if taxable_income > 77.47 and row['vat'] == 0:
-        taxes = 2.0
-    else:
-        taxes = 0.0
+    # REM if taxable_income > 77.47 and row['vat'] == 0:
+    # REM     taxes = 2.0
+    # REM else:
+    # REM     taxes = 0.0
     # print(taxable_income, row['vat'], row['deduction'], taxes)
 
     template = """\
@@ -147,6 +162,7 @@ Totale fattura	{income} euro
 
 # taxes|{taxes}
 
+# exceptions|{exceptions}
 """
     ref_row = rows[-1]
     vat_number = None
@@ -163,7 +179,7 @@ Totale fattura	{income} euro
     data.update({
         'refunds': 0.0,
         'fee': fee,
-        'taxes': taxes,
+        # REM 'taxes': taxes,
         'address': client['address'],
         'tax_code': client['tax_code'],
         'city': client['city'],
@@ -202,6 +218,8 @@ def read_invoices(filename):
         Field('Cassa previdenza (val)', 'cpa', mk_float),
         Field('Ritenuta (%)', 'p_deduction', mk_float),
         Field('Ritenuta (val)', 'deduction', mk_float),
+        Field('Note piede', 'exceptions', mk_exceptions),
+        Field('Bollo (val)', 'taxes', mk_float),
     ]
     invoices = collections.defaultdict(list)
     for dct in read_workbook(filename, fields):

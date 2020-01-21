@@ -144,6 +144,9 @@ regexpr = ^\# p_cpa_and_cpa\|\s*(?P<p_cpa>{p})\s*\|\s*(?P<cpa>{p})\s*$
 [bollo]
 regexpr = ^\# taxes\|\s*(?P<taxes>{p})\s*$
 
+[exceptions]
+regexpr = ^\# exceptions\|\s*(?P<exceptions>.*)\s*$
+
 """.format(p='[^\|]*')
 
 
