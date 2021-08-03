@@ -27,7 +27,12 @@ def mk_vat_number(x):
 
 
 def mk_date(x):
-    return datetime.date.fromordinal(datetime.date(1899,12, 30).toordinal() + x).strftime(OUT_DATE_FMT)
+    if isinstance(x, int):
+        return datetime.date.fromordinal(datetime.date(1899,12, 30).toordinal() + x).strftime(OUT_DATE_FMT)
+    elif isinstance(x, datetime.datetime):
+        return x.date().strftime(OUT_DATE_FMT)
+    else:
+        raise TypeError(x)
 
 
 def mk_p_vat(x):
@@ -57,7 +62,10 @@ def mk_exceptions(x):
 
 def read_workbook(filename, fields):
     def strip(txt):
-        return txt.replace(' ', '')
+        if isinstance(txt, str):
+            return txt.replace(' ', '')
+        else:
+            return txt
 
     wb = load_workbook(filename)
     if len(wb.sheetnames) != 1:
@@ -65,19 +73,37 @@ def read_workbook(filename, fields):
     sheetname = wb.sheetnames[0]
     ws = wb[sheetname]
     iws = iter(ws.rows)
-    header = [strip(cell.value) for cell in next(iws)]
     fields_dict = {strip(field.header): field for field in fields}
-    cols = {}
-    for index, value in enumerate(header):
-        field = fields_dict.pop(value, None)
-        if field is not None:
-            cols[index] = field
-    for field in fields_dict.values():
-        raise ValueError("{}: field {} not found".format(filename, field))
-    # for index, field in sorted(cols.items(), key=lambda x: x[0]):
-    #     hdr = str(header[index])
-    #     if hdr != field.header:
-    #         raise ValueError("file {}: col {}={!r} is not {!r}".format(filename, index, hdr, field.header))
+    alternate_names = {
+        strip('Codice fiscale'): strip('C.F.'),
+        strip('Cliente'): strip('Cliente/Fornitore'),
+        strip('Partita IVA'): strip('P.I.'),
+    }
+    def token_names(token):
+        yield token
+        if token in alternate_names:
+            yield alternate_names[token]
+
+    for line_no, row in enumerate(iws):
+        header = [strip(cell.value) for cell in row]
+        missing_fields = set(fields_dict)
+        cols = {}
+        for index, token in enumerate(header):
+            for name in token_names(token):
+                if name in fields_dict:
+                    missing_fields.discard(name)
+                    cols[index] = fields_dict[name]
+                    break
+        if not missing_fields:
+            ## print("header found at line {}".format(line_no + 1))
+            break
+        # else:
+        #     print(missing_fields)
+        #     input("---")
+        #     print("line {}: missing {}".format(line_no + 1, sorted(missing_fields)))
+    else:
+        for field in missing_fields:
+            raise ValueError("{}: field {} not found".format(filename, field))
     for row in iws:
         dct = {}
         for index, field in cols.items():
