@@ -1,0 +1,3 @@
+4.0.0
+  - allow multi-row invoices
+  - add changed_tax_codes configuration attribute
