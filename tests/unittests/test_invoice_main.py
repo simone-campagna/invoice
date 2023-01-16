@@ -292,47 +292,47 @@ summary_epilogue = test line 3
                 print(p.string())
                 self.assertEqual(p.string(), """\
 === Gennaio ===
-N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-     1     50.0      0.0    1.0           51.0     0.0                0.0   0.0   51.0
-     2     75.0      0.0    1.5           76.5     0.0                0.0   0.0   76.5
-     3    100.0      0.0    2.0          102.0     0.0                0.0   5.0  107.0
-     4     50.0      0.0    1.0           51.0     0.0                0.0   0.0   51.0
-     5    150.0      0.0    3.0          153.0     0.0                0.0   2.0  155.0
-TOTALE    425.0      0.0    8.5          433.5     0.0                0.0   7.0  440.5
+N.DOC. DATA       CODICE FISCALE   NOME                COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+     1 2014-01-03 WNYBRC01G01H663S Bruce Wayne             50.0      0.0    1.0           51.0     0.0                0.0   0.0   51.0
+     2 2014-01-03 PRKPRT01G01H663M Peter B. Parker         75.0      0.0    1.5           76.5     0.0                0.0   0.0   76.5
+     3 2014-01-22 BNNBRC01G01H663S Robert Bruce Banner    100.0      0.0    2.0          102.0     0.0                0.0   5.0  107.0
+     4 2014-01-25 WNYBRC01G01H663S Bruce Wayne             50.0      0.0    1.0           51.0     0.0                0.0   0.0   51.0
+     5 2014-01-29 KNTCRK01G01H663X Clark Kent             150.0      0.0    3.0          153.0     0.0                0.0   2.0  155.0
+TOTALE                                                    425.0      0.0    8.5          433.5     0.0                0.0   7.0  440.5
 === Febbraio ===
-N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-     6    120.0     30.0    3.0          153.0   33.66               30.0  30.0 246.66
-TOTALE    120.0     30.0    3.0          153.0   33.66               30.0  30.0 246.66
+N.DOC. DATA       CODICE FISCALE   NOME       COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+     6 2014-02-28 KNTCRK01G01H663X Clark Kent    120.0     30.0    3.0          153.0   33.66               30.0  30.0 246.66
+TOTALE                                           120.0     30.0    3.0          153.0   33.66               30.0  30.0 246.66
 === Marzo ===
-N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-TOTALE      0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
+N.DOC. DATA CODICE FISCALE NOME COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE                               0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
 === Aprile ===
-N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-TOTALE      0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
+N.DOC. DATA CODICE FISCALE NOME COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE                               0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
 === Maggio ===
-N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-TOTALE      0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
+N.DOC. DATA CODICE FISCALE NOME COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE                               0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
 === Giugno ===
-N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-TOTALE      0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
+N.DOC. DATA CODICE FISCALE NOME COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE                               0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
 === Luglio ===
-N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-TOTALE      0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
+N.DOC. DATA CODICE FISCALE NOME COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE                               0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
 === Agosto ===
-N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-TOTALE      0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
+N.DOC. DATA CODICE FISCALE NOME COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE                               0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
 === Settembre ===
-N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-TOTALE      0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
+N.DOC. DATA CODICE FISCALE NOME COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE                               0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
 === Ottobre ===
-N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-TOTALE      0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
+N.DOC. DATA CODICE FISCALE NOME COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE                               0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
 === Novembre ===
-N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-TOTALE      0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
+N.DOC. DATA CODICE FISCALE NOME COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE                               0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
 === Dicembre ===
-N.DOC. COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
-TOTALE      0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
+N.DOC. DATA CODICE FISCALE NOME COMPENSO RIMBORSI C.P.A. IMPONIBILE IVA IVA 22% ES.IVA ART.10 R.A. BOLLI TOTALE
+TOTALE                               0.0      0.0    0.0            0.0     0.0                0.0   0.0    0.0
 """)
 
     def test_invoice_main_summary_text(self):
