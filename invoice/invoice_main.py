@@ -136,6 +136,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     # configuration
     default_warning_mode = None
     default_error_mode = None
+    default_changed_tax_codes = None
     default_partial_update = None
     default_progressbar = None
     default_show_scan_report = None
@@ -322,7 +323,7 @@ in modo corretto.
     init_parser.set_defaults(
         function_name="program_init",
         function_arguments=('clients', 'patterns', 'reset',
-                            'warning_mode', 'error_mode',
+                            'warning_mode', 'error_mode', 'changed_tax_codes',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
                             'list_field_names', 'stats_group', 'show_scan_report', 'table_mode', 'max_interruption_days',
@@ -382,6 +383,8 @@ supportati sono:
  * stats_group[={sg}]: raggruppamento preferito per il comando 'stats'
  * list_field_names[={fn}]:
    lista predefinita dei campi per il comando 'list'
+ * changed_tax_codes[=()]:
+   lista di codici fiscali la cui denominazione è cambiata
 """.format(
             wm=InvoiceDb.DEFAULT_CONFIGURATION.warning_mode,
             em=InvoiceDb.DEFAULT_CONFIGURATION.error_mode,
@@ -396,7 +399,7 @@ supportati sono:
     config_parser.set_defaults(
         function_name="program_config",
         function_arguments=('clients', 'reset',
-                            'warning_mode', 'error_mode',
+                            'warning_mode', 'error_mode', 'changed_tax_codes',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
                             'list_field_names', 'stats_group', 'show_scan_report',
@@ -572,9 +575,9 @@ Questa rimozione di fatture già scansionate può avvenire in due casi:
     )
     scan_parser.set_defaults(
         function_name="program_scan",
-        function_arguments=('warning_mode', 'error_mode', 'force_refresh',
+        function_arguments=('warning_mode', 'error_mode', 'changed_tax_codes', 'force_refresh',
                             'remove_orphaned', 'partial_update', 'show_scan_report',
-                            'table_mode', 'output_filename', 'progressbar'),
+                            'table_mode', 'output_filename', 'progressbar', 'changed_tax_codes'),
     )
 
     ### clear_parser ###
@@ -604,7 +607,7 @@ Esegue una validazione del contenuto del database.
     )
     validate_parser.set_defaults(
         function_name="program_validate",
-        function_arguments=('warning_mode', 'error_mode'),
+        function_arguments=('warning_mode', 'error_mode', 'changed_tax_codes'),
     )
 
     ### list_parser ###
@@ -778,7 +781,7 @@ e validati.
     legacy_parser.set_defaults(
         function_name="legacy",
         function_arguments=('patterns', 'filters', 'date_from', 'date_to', 'validate', 'list', 'report',
-                            'warning_mode', 'error_mode'),
+                            'warning_mode', 'error_mode', 'changed_tax_codes'),
     )
 
     ### help parser commands
@@ -970,6 +973,13 @@ e validati.
             nargs='*',
             default=default_error_mode,
             help="modalità di gestione degli errori")
+
+        parser.add_argument("--changed-vat-numbers", "-X",
+            dest="changed_tax_codes",
+            type=str,
+            nargs='*',
+            default=default_changed_tax_codes,
+            help="codici fiscali per i quali è cambiata la denominazione")
 
     ### reset options
     init_parser.add_argument("--reset", "-r",
