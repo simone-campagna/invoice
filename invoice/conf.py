@@ -188,7 +188,7 @@ DEFAULT_TABLE_MODE = TABLE_MODE_TEXT
 
 DEFAULT_MAX_INTERRUPTION_DAYS = 365
 
-VERSION_MAJOR = 3
+VERSION_MAJOR = 4
 VERSION_MINOR = 0
 VERSION_PATCH = 0
 
@@ -216,7 +216,7 @@ def setup(rc_dir=None, db_file=None):
     global SPY_LOCK_FILE
     global SPY_LOG_FILE
     if rc_dir is None:
-        rc_dir = os.path.join('~', '.invoice-db')
+        rc_dir = os.path.join('~', f'.invoice-{VERSION_MAJOR}')
     RC_DIR_EXPR = os.environ.get(RC_DIR_VAR, rc_dir)
     RC_DIR = expand(RC_DIR_EXPR)
     if not os.path.isabs(RC_DIR):
