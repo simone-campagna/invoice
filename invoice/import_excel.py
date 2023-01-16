@@ -106,8 +106,10 @@ def read_workbook(filename, fields):
             raise ValueError("{}: field {} not found".format(filename, field))
     for row in iws:
         dct = {}
+        if all(row[index].value is None for index in cols):
+            # empty line
+            break
         for index, field in cols.items():
-            # print(index, field, row)
             dct[field.field] = field.type(row[index].value)
         yield dct
 
@@ -128,8 +130,8 @@ def read_clients(filename):
 
 
 def create_document(filename, year, number, rows, clients):
-    if len(rows) != 1:
-        raise ValueError("unsupported number of entries #{} in invoice {}/{:03d}".format(len(rows), year, number))
+    #if len(rows) != 1:
+    #    raise ValueError("unsupported number of entries #{} in invoice {}/{:03d}".format(len(rows), year, number))
     filename = filename.format(year=year, number=number)
     dirname = os.path.dirname(os.path.abspath(filename))
     if not os.path.isdir(dirname):
