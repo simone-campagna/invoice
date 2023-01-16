@@ -1,4 +1,7 @@
 XlsxWriter
---allow-external SIP --allow-unverified SIP SIP
---allow-external PyQt4 --allow-unverified PyQt4 PyQt4
+openpyxl
+SIP
+PyQt5
+# --allow-external SIP --allow-unverified SIP SIP
+# --allow-external PyQt4 --allow-unverified PyQt4 PyQt4
 watchdog

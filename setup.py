@@ -53,6 +53,7 @@ def main():
         name = "invoice",
         version = VERSION,
         requires = [],
+        install_requires = ['openpyxl', 'XlsxWriter'],
         description = "Tool to read and process invoices",
         author = "Simone Campagna",
         author_email = "simone.campagna11@gmail.com",

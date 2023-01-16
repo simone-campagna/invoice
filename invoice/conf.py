@@ -47,6 +47,7 @@ __all__ = [
     'DEFAULT_STATS_MODE',
     'TABLE_MODE_TEXT',
     'TABLE_MODE_CSV',
+    'TABLE_MODE_SCSV',
     'TABLE_MODE_XLSX',
     'TABLE_MODES',
     'DEFAULT_TABLE_MODE',
@@ -56,6 +57,7 @@ __all__ = [
     'RC_DIR_EXPR',
     'DB_FILE_EXPR',
     'RC_DIR',
+    'TMP_DOCS_DIR',
     'DB_FILE',
     'SCANNER_CONFIG_FILE',
     'PARSER_CONFIG_FILE',
@@ -109,6 +111,7 @@ FIELD_TRANSLATION = collections.OrderedDict((
     ('taxes',		'bolli'),
     ('income',		'incasso'),
     ('currency',	'valuta'),
+    ('exceptions',	'eccezioni'),
 ))
 
 WEEKDAY_TRANSLATION_DICT = collections.OrderedDict((
@@ -153,7 +156,7 @@ REV_FIELD_TRANSLATION = dict(
 LIST_FIELD_NAMES = FIELD_NAMES + tuple(REV_FIELD_TRANSLATION.keys())
 
 LIST_FIELD_NAMES_SHORT = ('year', 'number', 'date', 'tax_code', 'income', 'currency')
-LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'fee', 'refunds', 'cpa', 'taxes', 'income', 'currency')
+LIST_FIELD_NAMES_LONG = ('year', 'number', 'city', 'date', 'tax_code', 'name', 'fee', 'refunds', 'cpa', 'taxes', 'income', 'currency', 'exceptions')
 LIST_FIELD_NAMES_FULL = FIELD_NAMES
 
 DEFAULT_LIST_FIELD_NAMES = LIST_FIELD_NAMES_LONG
@@ -178,13 +181,14 @@ DEFAULT_STATS_GROUP = STATS_GROUP_MONTH
 
 TABLE_MODE_TEXT = 'text'
 TABLE_MODE_CSV = 'csv'
+TABLE_MODE_SCSV = 'scsv'
 TABLE_MODE_XLSX = 'xlsx'
-TABLE_MODES = (TABLE_MODE_TEXT, TABLE_MODE_CSV, TABLE_MODE_XLSX)
+TABLE_MODES = (TABLE_MODE_TEXT, TABLE_MODE_CSV, TABLE_MODE_SCSV, TABLE_MODE_XLSX)
 DEFAULT_TABLE_MODE = TABLE_MODE_TEXT
 
 DEFAULT_MAX_INTERRUPTION_DAYS = 365
 
-VERSION_MAJOR = 3
+VERSION_MAJOR = 4
 VERSION_MINOR = 0
 VERSION_PATCH = 0
 
@@ -204,6 +208,7 @@ def setup(rc_dir=None, db_file=None):
     global RC_DIR_EXPR
     global DB_FILE_EXPR
     global RC_DIR
+    global TMP_DOCS_DIR
     global DB_FILE
     global SCANNER_CONFIG_FILE
     global PARSER_CONFIG_FILE
@@ -211,7 +216,7 @@ def setup(rc_dir=None, db_file=None):
     global SPY_LOCK_FILE
     global SPY_LOG_FILE
     if rc_dir is None:
-        rc_dir = os.path.join('~', '.invoice')
+        rc_dir = os.path.join('~', f'.invoice-{VERSION_MAJOR}')
     RC_DIR_EXPR = os.environ.get(RC_DIR_VAR, rc_dir)
     RC_DIR = expand(RC_DIR_EXPR)
     if not os.path.isabs(RC_DIR):
@@ -226,6 +231,9 @@ def setup(rc_dir=None, db_file=None):
     if not os.path.isabs(DB_FILE):
         DB_FILE = os.path.join(RC_DIR, DB_FILE)
 
+    TMP_DOCS_DIR = os.path.join(RC_DIR, 'tmp-docs')
+    if not os.path.exists(TMP_DOCS_DIR):
+        os.makedirs(TMP_DOCS_DIR)
     SCANNER_CONFIG_FILE = os.path.join(RC_DIR, "scanner.config")
     PARSER_CONFIG_FILE = os.path.join(RC_DIR, "parser.config")
     INFO_CONFIG_FILE = os.path.join(RC_DIR, "info.config")
@@ -276,6 +284,7 @@ ALIGN = {
     'income_percentage': '>',
     'from': '>',
     'to': '>',
+    'exceptions': '>',
 }
 
 DERIVATIVES = {

@@ -70,7 +70,5 @@ class InvoiceReader(object):
         return invoice
 
     def read_text(self, doc_filename):
-        cmdline = ["catdoc", doc_filename, "-f", "ascii", "-w"]
-        p = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        return p.communicate()[0].decode("utf-8")
-        
+        with open(doc_filename, "r") as f_in:
+            return f_in.read()

@@ -136,6 +136,7 @@ def invoice_main(printer=StreamPrinter(sys.stdout), logger=None, args=None):
     # configuration
     default_warning_mode = None
     default_error_mode = None
+    default_changed_tax_codes = None
     default_partial_update = None
     default_progressbar = None
     default_show_scan_report = None
@@ -310,45 +311,19 @@ oppure
 Inizializza il database. Deve essere fornito almeno un pattern, ad
 esempio:
 
-$ %(prog)s init 'docs/*.doc'
+$ %(prog)s init Clients.xlsx 'Fatture/*.xlsx'
 
-I pattern vengono utilizzati per la ricerca dei DOC file contenenti le
-fatture.
+I pattern vengono utilizzati per la ricerca dei file excel file
+contenenti le fatture.
 È importante che il comando riceva un pattern e non la lista di file
 corrispondenti alla sua espansione, altrimenti la ricerca non avverrà
-in modo corretto. Pertanto:
-
-$ %(prog)s init 'docs/*.doc'
-
-è corretto, e fa in modo che le successive scansioni ispezionino tutti
-i DOC file corrispondenti al pattern 'docs/*.doc'. Al contrario,
-
-$ %(prog)s init docs/*.doc
-
-inizializza il database con i nomi dei file che corrispondono *adesso*
-al pattern '*.doc'; le successive scansioni ispezioneranno solo questi
-file, e non nuovi file che corrispondono al pattern.
-
-Durante questa fase possono anche essere fissati i valori dei parametri
-di configurazione; vedi
-
-$ %(prog)s config -h
-
-per una spiegazione di questi valori.
-
-Se un pattern inizia con '!', i file già inclusi che fanno match con esso
-vengono scartati; dunque l'ordine è importante. Ad esempio,
-
-$ %(prog)s init 'docs/*.doc' 'docs/*.ERR.doc' 'docs/2015*.ERR.doc'
-
-include tutti i file 'docs/*.doc', poi fra questi scarta tutti i file
-'docs/*.ERR.doc', infine aggiunge tutti i file 'docs/2015*.ERR.doc'.
+in modo corretto.
 """,
     )
     init_parser.set_defaults(
         function_name="program_init",
-        function_arguments=('patterns', 'reset',
-                            'warning_mode', 'error_mode',
+        function_arguments=('clients', 'patterns', 'reset',
+                            'warning_mode', 'error_mode', 'changed_tax_codes',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
                             'list_field_names', 'stats_group', 'show_scan_report', 'table_mode', 'max_interruption_days',
@@ -408,6 +383,8 @@ supportati sono:
  * stats_group[={sg}]: raggruppamento preferito per il comando 'stats'
  * list_field_names[={fn}]:
    lista predefinita dei campi per il comando 'list'
+ * changed_tax_codes[=()]:
+   lista di codici fiscali la cui denominazione è cambiata
 """.format(
             wm=InvoiceDb.DEFAULT_CONFIGURATION.warning_mode,
             em=InvoiceDb.DEFAULT_CONFIGURATION.error_mode,
@@ -421,8 +398,8 @@ supportati sono:
     )
     config_parser.set_defaults(
         function_name="program_config",
-        function_arguments=('reset',
-                            'warning_mode', 'error_mode',
+        function_arguments=('clients', 'reset',
+                            'warning_mode', 'error_mode', 'changed_tax_codes',
                             'remove_orphaned', 'partial_update',
                             'header', 'total',
                             'list_field_names', 'stats_group', 'show_scan_report',
@@ -598,9 +575,9 @@ Questa rimozione di fatture già scansionate può avvenire in due casi:
     )
     scan_parser.set_defaults(
         function_name="program_scan",
-        function_arguments=('warning_mode', 'error_mode', 'force_refresh',
+        function_arguments=('warning_mode', 'error_mode', 'changed_tax_codes', 'force_refresh',
                             'remove_orphaned', 'partial_update', 'show_scan_report',
-                            'table_mode', 'output_filename', 'progressbar'),
+                            'table_mode', 'output_filename', 'progressbar', 'changed_tax_codes'),
     )
 
     ### clear_parser ###
@@ -630,7 +607,7 @@ Esegue una validazione del contenuto del database.
     )
     validate_parser.set_defaults(
         function_name="program_validate",
-        function_arguments=('warning_mode', 'error_mode'),
+        function_arguments=('warning_mode', 'error_mode', 'changed_tax_codes'),
     )
 
     ### list_parser ###
@@ -695,7 +672,7 @@ Per ciascun anno, vengono mostrate le seguenti informazioni:
         function_arguments=('filters', ),
     )
 
-    ### report_parser ###
+    ### summary_parser ###
     summary_parser = add_subparser(subparsers,
         "summary",
         parents=(common_parser, ),
@@ -714,6 +691,22 @@ verranno mostrati rispettivamente all'inizio ed alla fine di ogni foglio.
     )
     summary_parser.set_defaults(
         function_name="program_summary",
+        function_arguments=('year', 'output_filename', 'table_mode'),
+    )
+
+    ### yreport_parser ###
+    yreport_parser = add_subparser(subparsers,
+        "yreport",
+        parents=(common_parser, ),
+        add_help=False,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""\
+Mostra un report per anno per l'Agenzia delle Entrate.
+
+"""
+    )
+    yreport_parser.set_defaults(
+        function_name="program_yreport",
         function_arguments=('year', 'output_filename', 'table_mode'),
     )
 
@@ -788,7 +781,7 @@ e validati.
     legacy_parser.set_defaults(
         function_name="legacy",
         function_arguments=('patterns', 'filters', 'date_from', 'date_to', 'validate', 'list', 'report',
-                            'warning_mode', 'error_mode'),
+                            'warning_mode', 'error_mode', 'changed_tax_codes'),
     )
 
     ### help parser commands
@@ -844,7 +837,7 @@ e validati.
             default=default_list_field_names,
             help="selezione manuale dei campi, ad esempio 'anno,codice_fiscale,città' [{}]".format('|'.join(all_field_names)))
 
-    for parser in init_parser, config_parser, list_parser, scan_parser, summary_parser:
+    for parser in init_parser, config_parser, list_parser, scan_parser, summary_parser, yreport_parser:
         parser.add_argument("--table-mode", "-m",
             dest="table_mode",
             choices=conf.TABLE_MODES,
@@ -859,7 +852,7 @@ e validati.
             default=default_max_interruption_days,
             help="numero di giorni massimo di interruzione di un incarico")
 
-    for parser in list_parser, scan_parser, summary_parser:
+    for parser in list_parser, scan_parser, summary_parser, yreport_parser:
         parser.add_argument("--output",
             dest="output_filename",
             type=str,
@@ -899,7 +892,7 @@ e validati.
             default=default_filters,
             help="filtra le fatture in base all'anno")
 
-    for parser in (summary_parser,):
+    for parser in summary_parser, yreport_parser:
         parser.add_argument("--year", "-y",
             metavar="Y",
             dest="year",
@@ -981,6 +974,13 @@ e validati.
             default=default_error_mode,
             help="modalità di gestione degli errori")
 
+        parser.add_argument("--changed-vat-numbers", "-X",
+            dest="changed_tax_codes",
+            type=str,
+            nargs='*',
+            default=default_changed_tax_codes,
+            help="codici fiscali per i quali è cambiata la denominazione")
+
     ### reset options
     init_parser.add_argument("--reset", "-r",
         dest="reset",
@@ -1033,6 +1033,15 @@ e validati.
             default=default_progressbar,
             nargs='?',
             help="abilita/disabilita la progressbar")
+
+    config_parser.add_argument("--clients", "-c",
+        type=str,
+        default=None,
+        help="file excel contenente l'anagrafica dei clienti")
+
+    init_parser.add_argument("clients",
+        type=str,
+        help="file excel contenente l'anagrafica dei clienti")
 
     ### patterns option
     for parser in init_parser, legacy_parser:

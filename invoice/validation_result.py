@@ -43,7 +43,7 @@ class ValidationResult(object):
 
     Entry = collections.namedtuple('Entry', ('exc_type', 'message'))
 
-    def __init__(self, logger, warning_mode=DEFAULT_WARNING_MODE, error_mode=DEFAULT_ERROR_MODE):
+    def __init__(self, logger, warning_mode=DEFAULT_WARNING_MODE, error_mode=DEFAULT_ERROR_MODE, changed_tax_codes=None):
         self._failing_invoices = dict()
         self.logger = logger
         self._errors = collections.OrderedDict()
@@ -71,6 +71,7 @@ class ValidationResult(object):
 
         self.error_action = self._make_error_action(mode=error_mode)
         self.warning_action = self._make_warning_action(mode=warning_mode)
+        self.changed_tax_codes = changed_tax_codes or ()
 
 
     @classmethod

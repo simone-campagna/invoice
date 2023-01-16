@@ -58,18 +58,22 @@ class InvoiceDb(Db):
     Validator = collections.namedtuple('Validator', ('filter_function', 'check_function', 'message'))
     Configuration = collections.namedtuple(
         'Configuration',
-        ('warning_mode', 
+        ('clients',
+         'warning_mode', 
          'error_mode',
          'partial_update', 'remove_orphaned',
          'header', 'total',
          'stats_group', 'list_field_names',
          'show_scan_report', 'table_mode', 'max_interruption_days',
          'spy_notify_level', 'spy_delay',
-         'progressbar'))
+         'progressbar',
+         'changed_tax_codes'))
     ScanDateTime = collections.namedtuple('ScanDateTime', ('scan_date_time', 'doc_filename'))
     DEFAULT_CONFIGURATION = Configuration(
+        clients='',
         warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
         error_mode=ValidationResult.DEFAULT_ERROR_MODE,
+        changed_tax_codes=(),
         remove_orphaned=True,
         partial_update=True,
         header=True,
@@ -100,8 +104,10 @@ class InvoiceDb(Db):
         ),
         'configuration': DbTable(
             fields=(
+                ('clients', Str()),
                 ('warning_mode', StrTuple()),
                 ('error_mode', StrTuple()),
+                ('changed_tax_codes', StrTuple()),
                 ('remove_orphaned', Bool()),
                 ('partial_update', Bool()),
                 ('header', Bool()),
@@ -162,6 +168,7 @@ class InvoiceDb(Db):
                 ('taxes', Float()),
                 ('income', Float()),
                 ('currency', Str()),
+                ('exceptions', Str()),
             ),
             dict_type=Invoice,
             singleton=False,

@@ -93,12 +93,15 @@ class BasePageTemplate(metaclass=abc.ABCMeta):
             align = {}
         self.align = align
         
+    def transform_value(self, value):
+        return value
+
     def transform(self, data):
         if self.show_header and data:
             yield self.header
         convert = self.convert
         for entry in data:
-            yield tuple(convert.get(field_name, str)(self.getter(entry, field_name)) for field_name in self.field_names)
+            yield tuple(convert.get(field_name, str)(self.transform_value(self.getter(entry, field_name))) for field_name in self.field_names)
 
 
 class BaseDocument(metaclass=abc.ABCMeta):

@@ -76,6 +76,26 @@ for digit in range(10):
 _TAX_CODE_CONTROL_LETTER = {i: chr(i + ord('A')) for i in range(26)}
 
 
+def _cin_personal(tax_code):
+    # control internal number for personal tax_code
+    s = 0
+    for c, symbol in enumerate(tax_code[:-1]):
+        s += _TAX_CODE_EVEN_ODD[symbol][(c + 1) % 2]
+    cin = _TAX_CODE_CONTROL_LETTER[s % 26]
+    return cin
+
+
+def _cin_luhn(tax_code):
+    # control internal number for vat number
+    digits = [int(i) for i in tax_code]
+    control_digit = digits.pop(-1)
+    value_x = sum(digits[0::2])
+    value_y = sum(((2 * i) % 9) for i in digits[1::2])
+    value_t = (value_x + value_y) % 10
+    value_c = (10 - value_t) % 10
+    return str(value_c)
+
+
 class Invoice(InvoiceNamedTuple):
     def _asdict(self):
         return collections.OrderedDict(((field, getattr(self, field)) for field in self._fields))
@@ -146,6 +166,7 @@ class Invoice(InvoiceNamedTuple):
                        error_class = InvoiceInconsistentCpaError
                     elif key == "deduction":
                        error_class = InvoiceInconsistentDeductionError
+                       val = -val
                 source_fields = conf.DERIVATIVES[key]
                 source_vals = [getattr(self, source_field) for source_field in source_fields]
                 source_val = round(sum(v for v in source_vals if v is not None), ndecimals)
@@ -168,76 +189,97 @@ class Invoice(InvoiceNamedTuple):
             taxable_income = sum(getattr(self, key) for key in conf.DERIVATIVES['vat'])
             if taxable_income > 77.47 and self.vat == 0 and self.deduction == 0:
                 if self.taxes < 2:
-                    message = "fattura {}: imponibile={}, iva={}, ritenuta={}, bolli={}: è richiesto un bollo di almeno 2 euro".format(
-                        self.doc_filename,
-                        taxable_income,
-                        self.vat,
-                        self.deduction,
-                        self.taxes,
-                    )
-                    validation_result.add_error(
-                        invoice=self,
-                        exc_type=InvoiceMissingTaxError,
-                        message=message)
+                    if self.exceptions:
+                        exceptions = self.exceptions.split(',')
+                    else:
+                        exceptions = []
+                    if 'no-bollo' not in exceptions:
+                        message = "fattura {}: imponibile={}, iva={}, ritenuta={}, bolli={}: è richiesto un bollo di almeno 2 euro".format(
+                            self.doc_filename,
+                            taxable_income,
+                            self.vat,
+                            self.deduction,
+                            self.taxes,
+                        )
+                        validation_result.add_error(
+                            invoice=self,
+                            exc_type=InvoiceMissingTaxError,
+                            message=message)
 
         tax_code = self.tax_code
         if tax_code:
             valid_tax_code = True
             # length check
-            if len(tax_code) != 16:
-                message = "fattura {}: codice fiscale {!r} non corretto: la lunghezza è {!r}, non 16 come richiesto".format(
-                    self.doc_filename,
-                    tax_code,
-                    len(tax_code),
-                )
-                validation_result.add_error(
-                    invoice=self,
-                    exc_type=InvoiceMalformedTaxCodeError,
-                    message=message)
-                valid_tax_code = False
 
+            cin_function = None
             if valid_tax_code:
-                # symbols check
-                expected_ch = 'LLLLLLNNLNNLNNNL'
-                error_fmt = '[{}]'
-                success_fmt = '{}'
-                error_l = []
-                num_errors = 0
-                for ch, expected_ch in zip(tax_code, expected_ch):
-                    error = False
-                    if expected_ch == 'L' and not (ord('A') <= ord(ch) <= ord('Z')):
-                        error = True
-                    elif expected_ch == 'N' and not (ord('0') <= ord(ch) <= ord('9')):
-                        error = True
-                    if error:
-                        error_l.append(error_fmt.format(ch))
-                        num_errors += 1
+                # è una partita iva?
+                if len([ch for ch in tax_code if ch not in set('0123456789')]) == 0:
+                    # partita iva
+                    cin_function = _cin_luhn
+                    if len(tax_code) != 11:
+                        message = "fattura {}: partita iva {!r} non corretto: la lunghezza è {!r}, non 11 come richiesto".format(
+                            self.doc_filename,
+                            tax_code,
+                            len(tax_code),
+                        )
+                        validation_result.add_error(
+                            invoice=self,
+                            exc_type=InvoiceMalformedTaxCodeError,
+                            message=message)
+                        valid_tax_code = False
+                else:
+                    if len(tax_code) != 16:
+                        message = "fattura {}: codice fiscale {!r} non corretto: la lunghezza è {!r}, non 16 come richiesto".format(
+                            self.doc_filename,
+                            tax_code,
+                            len(tax_code),
+                        )
+                        validation_result.add_error(
+                            invoice=self,
+                            exc_type=InvoiceMalformedTaxCodeError,
+                            message=message)
+                        valid_tax_code = False
                     else:
-                        error_l.append(success_fmt.format(ch))
-                if num_errors:
-                    message = "fattura {}: codice fiscale {!r} non corretto: i caratteri non corretti sono {!r}".format(
-                        self.doc_filename,
-                        tax_code,
-                        ''.join(error_l),
-                    )
-                    validation_result.add_error(
-                        invoice=self,
-                        exc_type=InvoiceMalformedTaxCodeError,
-                        message=message)
-                    valid_tax_code = False
+                        cin_function = _cin_personal
+                        # symbols check
+                        expected_ch = 'LLLLLLNNLNNLNNNL'
+                        error_fmt = '[{}]'
+                        success_fmt = '{}'
+                        error_l = []
+                        num_errors = 0
+                        for ch, expected_ch in zip(tax_code, expected_ch):
+                            error = False
+                            if expected_ch == 'L' and not (ord('A') <= ord(ch) <= ord('Z')):
+                                error = True
+                            elif expected_ch == 'N' and not (ord('0') <= ord(ch) <= ord('9')):
+                                error = True
+                            if error:
+                                error_l.append(error_fmt.format(ch))
+                                num_errors += 1
+                            else:
+                                error_l.append(success_fmt.format(ch))
+                        if num_errors:
+                            message = "fattura {}: codice fiscale {!r} non corretto: i caratteri non corretti sono {!r}".format(
+                                self.doc_filename,
+                                tax_code,
+                                ''.join(error_l),
+                            )
+                            validation_result.add_error(
+                                invoice=self,
+                                exc_type=InvoiceMalformedTaxCodeError,
+                                message=message)
+                            valid_tax_code = False
 
             if valid_tax_code:
                 # control letter check
-                s = 0
-                for c, symbol in enumerate(tax_code[:-1]):
-                    s += _TAX_CODE_EVEN_ODD[symbol][(c + 1) % 2]
-                control_letter = _TAX_CODE_CONTROL_LETTER[s % 26]
-                if control_letter != tax_code[-1]:
+                cin = cin_function(tax_code)
+                if cin != tax_code[-1]:
                     message = "fattura {}: codice fiscale {!r} non corretto: il carattere di controllo è {!r}, non {!r} come atteso".format(
                         self.doc_filename,
                         tax_code,
                         tax_code[-1],
-                        control_letter,
+                        cin,
                     )
                     validation_result.add_error(
                         invoice=self,

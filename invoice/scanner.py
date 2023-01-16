@@ -46,6 +46,15 @@ class ScanLine(object):
         else:
             return dict(m.groupdict())
 
+    def __repr__(self):
+        return "{n}(tag={t!r}, regexpr={r!r}, label={l!r}, priority={p!r}".format(
+            n=type(self).__name__,
+            t=self.tag,
+            r=self.regexpr,
+            l=self.label,
+            p=self.priority,
+        )
+
 
 class Scanner(object):
     def __init__(self, init=None):
@@ -97,50 +106,49 @@ class Scanner(object):
         return values_dict, lines_dict
 
 
-_DEFAULT_SCANNER_CONFIG = """\
+_DEFAULT_SCANNER_CONFIG = r"""
 [DEFAULT]
 priority = 0
 label =
 
 [anno e numero]
-regexpr = ^[Ff]attura\s+n.\s+(?P<year>\d+)/(?P<number>\d+)\s*$
+regexpr = ^\# year_and_number\|\s*(?P<year>{p})\s*\|\s*(?P<number>{p})\s*$
 
 [nome]
-regexpr = ^\s*[Ss]pett\.\s*(?:[Ss]ig\.?|[Dd]ott\.?(?:\s*ssa)?)?\s*(?P<name>[\w\s'\.]+)\s*$
+regexpr = ^\# name\|\s*(?P<name>{p})\s*$
 
 [codice fiscale]
-regexpr = ^.*[^\w]?(?P<tax_code>[A-Z]{6,6}\d{2,2}[A-Z]\d{2,2}[A-Z]\d{3,3}[A-Z])\s*$
-
-[codice fiscale sbagliato]
-regexpr = ^.*[^\w](?P<tax_code>[A-Za-z0]{6,6}[\dO]{2,2}[A-Za-z0][\dO]{2,2}[A-Za-z0][\dO]{3,3}[A-Za-z0])\s*$
-priority = -1
-label = codice fiscale
+regexpr = ^\# tax_code\|\s*(?P<tax_code>{p})\s*$
 
 [città e data]
-regexpr = ^\s*(?P<city>[^,]+)(?:,|\s)\s*(?P<date>\d{1,2}/\d{1,2}/\d\d\d\d)\s*$
+regexpr = ^\# city_and_date\|\s*(?P<city>{p})\s*\|\s*(?P<date>{p})\s*$
 
 [incasso e valuta]
-regexpr = Totale\s+fattura\s+(?P<income>[\d,\.]*)\s+(?P<currency>\w+)\s*$
+regexpr = ^\# income_and_currency\|\s*(?P<income>{p})\s*\|\s*(?P<currency>{p})\s*$
 
 [prestazione e compenso]
-regexpr = \s*(?:N\s*°\s*\d+|[Pp]restazione\s*:\s*(?:N\s*°\s*\d+)?)\s*(?P<service>[^\d]*)(?:\s+[Pp][Ee][Rr]\s+)?\s*(?P<fee>[\d,\.]*)\s+\w+\s*$
+regexpr = ^\# service_and_fee\|\s*(?P<service>{p})\s*\|\s*(?P<fee>{p})\s*$
 
 [iva]
-regexpr = \s*IVA\s+(?P<p_vat>[\d,\.]+)%\s+(?P<vat>[\d,\.]*)\s+\w+\s*$
+regexpr = ^\# p_vat_and_vat\|\s*(?P<p_vat>{p})\s*\|\s*(?P<vat>{p})\s*$
 
 [ritenuta]
-regexpr = \s*Ritenuta d'acconto\s+(?P<p_deduction>[\d,\.]+)%\s+(?P<deduction>[\d,\.]*)\s+\w+\s*$
+regexpr = ^\# p_deduction_and_deduction\|\s*(?P<p_deduction>{p})\s*\|\s*(?P<deduction>{p})\s*$
 
 [rimborso spese di viaggio]
-regexpr = \s*Rimborso\s+.*?\s+(?P<refunds>[\d,\.]+)\s+\w+
+regexpr = ^\# refunds\|\s*(?P<refunds>{p})\s*$
 
 [cpa]
-regexpr = \s*Contributo\s+previdenziale\s+(?P<p_cpa>[\d,\.]+)%\s+(?P<cpa>[\d,\.]*)\s+\w+\s*$
+regexpr = ^\# p_cpa_and_cpa\|\s*(?P<p_cpa>{p})\s*\|\s*(?P<cpa>{p})\s*$
 
 [bollo]
-regexpr = \s*Bollo\s+.*?\s+(?P<taxes>[\d,\.]+)\s+\w+\s*$
+regexpr = ^\# taxes\|\s*(?P<taxes>{p})\s*$
 
-"""
+[exceptions]
+regexpr = ^\# exceptions\|\s*(?P<exceptions>.*)\s*$
+
+""".format(p='[^\|]*')
+
 
 def load_scanner(scanner_config_filename=None):
     if scanner_config_filename is None:

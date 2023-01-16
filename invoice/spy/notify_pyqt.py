@@ -22,11 +22,16 @@ __all__ = [
 ]
 
 try: # pragma: no cover
-    from PyQt4 import QtGui
-    from PyQt4.QtCore import Qt
-    HAS_PYQT4 = True
+    from PyQt5 import QtGui
+    from PyQt5.QtCore import Qt
+    HAS_PYQT = True
 except ImportError:
-    HAS_PYQT4 = False
+    try: # pragma: no cover
+        from PyQt4 import QtGui
+        from PyQt4.QtCore import Qt
+        HAS_PYQT = True
+    except ImportError:
+        HAS_PYQT = False
 
 import sys
 
@@ -35,9 +40,9 @@ from . import text_formatter
 _APP = None
 
 def available(): # pragma: no cover
-    return HAS_PYQT4
+    return HAS_PYQT
 
-if HAS_PYQT4: # pragma: no cover
+if HAS_PYQT: # pragma: no cover
     def notify(logger, validation_result, scan_events, updated_invoice_collection, event_queue, spy_notify_level):
         notification_required, kind, title, text, detailed_text = text_formatter.formatter(
             validation_result=validation_result,

@@ -44,6 +44,7 @@ from .error import InvoiceSyntaxError, \
                    InvoiceUserValidatorError, \
                    InvoiceArgumentError
 
+from .import_excel import read_clients, read_invoices, create_documents
 from .info import load_info
 from .invoice_collection import InvoiceCollection
 from .invoice_collection_reader import InvoiceCollectionReader
@@ -65,7 +66,9 @@ from .version import VERSION
 from .ee import snow
 
 
-MReport = collections.namedtuple("MReport", ["number", "date", "tax_code", "name", "fee", "refunds", "cpa", "taxable_income", "vat", "empty", "deduction", "taxes", "income"])
+MReport = collections.namedtuple("MReport", ["number", "fee", "refunds", "cpa", "taxable_income", "vat", "empty", "deduction", "taxes", "income"])
+YReport = collections.namedtuple("YReport", ["document_type", "document_date", "document_num", "payment_date", "tax_code", "cost_type",
+                                             "cost_type_flag", "income", "refund_document_date", "refund_document_num"])
 
 class FileDateTimes(object):
     def __init__(self):
@@ -102,11 +105,12 @@ class InvoiceProgram(object):
     def get_week_range(self, year, week_number):
         return self._week_manager.week_range(year=year, week_number=week_number)
 
-    def create_validation_result(self, warning_mode=None, error_mode=None):
+    def create_validation_result(self, warning_mode=None, error_mode=None, changed_tax_codes=None):
         return ValidationResult(
             logger=self.logger,
             warning_mode=warning_mode,
             error_mode=error_mode,
+            changed_tax_codes=changed_tax_codes,
         )
 
     def program_help(self, *, parser_dict, argument):
@@ -122,9 +126,11 @@ class InvoiceProgram(object):
         self.impl_version(upgrade=upgrade)
         return 0
 
-    def program_init(self, *, patterns,
+    def program_init(self, *, clients,
+                              patterns,
                               warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                               error_mode=ValidationResult.DEFAULT_ERROR_MODE,
+                              changed_tax_codes=(),
                               partial_update=True,
                               remove_orphaned=False,
                               header=True,
@@ -139,9 +145,11 @@ class InvoiceProgram(object):
                               progressbar=None,
                               reset=False):
         self.impl_init(
+            clients=clients,
             patterns=patterns,
             warning_mode=warning_mode,
             error_mode=error_mode,
+            changed_tax_codes=changed_tax_codes,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
             header=header,
@@ -158,8 +166,10 @@ class InvoiceProgram(object):
         )
         return 0
 
-    def program_config(self, *, warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
+    def program_config(self, *, clients="",
+                                warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                                 error_mode=ValidationResult.DEFAULT_ERROR_MODE,
+                                changed_tax_codes=(),
                                 partial_update=True,
                                 remove_orphaned=True,
                                 header=True,
@@ -178,8 +188,10 @@ class InvoiceProgram(object):
                                 edit=False,
                                 editor=None):
         self.impl_config(
+            clients=clients,
             warning_mode=warning_mode,
             error_mode=error_mode,
+            changed_tax_codes=changed_tax_codes,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
             header=header,
@@ -226,11 +238,12 @@ class InvoiceProgram(object):
         self.impl_spy(action=action, spy_notify_level=spy_notify_level, spy_delay=spy_delay)
         return 0
 
-    def program_scan(self, *, warning_mode, error_mode, force_refresh=None, progressbar=None,
+    def program_scan(self, *, warning_mode, error_mode, changed_tax_codes, force_refresh=None, progressbar=None,
                               partial_update=True, remove_orphaned=True, show_scan_report=True, table_mode=None, output_filename=None):
         validation_result, scan_events, invoice_collection = self.impl_scan(
             warning_mode=warning_mode,
             error_mode=error_mode,
+            changed_tax_codes=changed_tax_codes,
             force_refresh=force_refresh,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
@@ -245,8 +258,8 @@ class InvoiceProgram(object):
         self.impl_clear()
         return 0
 
-    def program_validate(self, *, warning_mode, error_mode):
-        self.impl_validate(warning_mode=warning_mode, error_mode=error_mode)
+    def program_validate(self, *, warning_mode, error_mode, changed_tax_codes):
+        self.impl_validate(warning_mode=warning_mode, error_mode=error_mode, changed_tax_codes=changed_tax_codes)
         return 0
 
     def program_list(self, *, list_field_names=None, header=None, filters=None, date_from=None, date_to=None, order_field_names=None, table_mode=None, output_filename=None):
@@ -269,12 +282,16 @@ class InvoiceProgram(object):
         self.impl_summary(year=year, table_mode=table_mode, output_filename=output_filename, header=header)
         return 0
 
+    def program_yreport(self, *, year=None, table_mode=None, output_filename=None, header=None):
+        self.impl_yreport(year=year, table_mode=table_mode, output_filename=output_filename, header=header)
+        return 0
+
     def program_stats(self, *, filters=None, date_from=None, date_to=None, stats_group=None, total=None, stats_mode=None, header=None, table_mode=None, output_filename=None):
         self.impl_stats(filters=filters, date_from=date_from, date_to=date_to, stats_group=stats_group, total=total, stats_mode=stats_mode, header=header, table_mode=table_mode,
             output_filename=output_filename)
         return 0
 
-    def legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode):
+    def legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode, changed_tax_codes):
         self.impl_legacy(
             patterns=patterns,
             filters=filters,
@@ -285,6 +302,7 @@ class InvoiceProgram(object):
             report=report,
             warning_mode=warning_mode,
             error_mode=error_mode,
+            changed_tax_codes=changed_tax_codes,
         )
         return 0
 
@@ -334,9 +352,11 @@ class InvoiceProgram(object):
         logger.info("file {} -> {}".format(filename, backup_filename))
         os.rename(filename, backup_filename)
 
-    def impl_init(self, *, patterns,
+    def impl_init(self, *, clients,
+                           patterns,
                            warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                            error_mode=ValidationResult.DEFAULT_ERROR_MODE,
+                           changed_tax_codes=(),
                            partial_update=True,
                            remove_orphaned=True,
                            header=True,
@@ -366,8 +386,10 @@ class InvoiceProgram(object):
                 self.backup_and_remove(self.logger, parser_config_file)
         self.db.initialize()
         configuration = self.db.Configuration(
+            clients=clients,
             warning_mode=warning_mode,
             error_mode=error_mode,
+            changed_tax_codes=changed_tax_codes,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
             header=header,
@@ -403,8 +425,10 @@ class InvoiceProgram(object):
         if not self.db.version_is_valid(version):
             self.logger.error("la versione del database non è valida; è necessario eseguire l'upgrade (opzione --upgrade/-U)")
 
-    def impl_config(self, *, warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
+    def impl_config(self, *, clients=None,
+                             warning_mode=ValidationResult.DEFAULT_WARNING_MODE,
                              error_mode=ValidationResult.DEFAULT_ERROR_MODE,
+                             changed_tax_codes=None,
                              partial_update=True,
                              remove_orphaned=True,
                              header=True,
@@ -432,9 +456,13 @@ class InvoiceProgram(object):
             error_mode = tuple(error_mode)
         if warning_mode is not None:
             warning_mode = tuple(warning_mode)
+        if changed_tax_codes is not None:
+            changed_tax_codes = tuple(changed_tax_codes)
         configuration = self.db.Configuration(
+            clients=clients,
             warning_mode=warning_mode,
             error_mode=error_mode,
+            changed_tax_codes=changed_tax_codes,
             partial_update=partial_update,
             remove_orphaned=remove_orphaned,
             header=header,
@@ -512,12 +540,13 @@ class InvoiceProgram(object):
         self.db.check()
         self.db.delete('invoices')
 
-    def impl_validate(self, *, warning_mode, error_mode):
+    def impl_validate(self, *, warning_mode, error_mode, changed_tax_codes):
         self.db.check()
         warning_mode = self.db.get_config_option('warning_mode', warning_mode)
         error_mode = self.db.get_config_option('error_mode', error_mode)
+        changed_tax_codes = self.db.get_config_option('changed_tax_codes', changed_tax_codes)
         invoice_collection = self.db.load_invoice_collection()
-        validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
+        validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode, changed_tax_codes=changed_tax_codes)
         with self.db.connect() as connection:
             user_validators = self.compile_user_validators(connection)
             self.validate_invoice_collection(validation_result, invoice_collection, user_validators=user_validators)
@@ -544,6 +573,44 @@ class InvoiceProgram(object):
         invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters)
         self.report_invoice_collection(invoice_collection)
 
+    def impl_yreport(self, *, year=None, table_mode=None, output_filename=None, header=None):
+        table_mode = self.db.get_config_option('table_mode', table_mode)
+        header = self.db.get_config_option('header', table_mode)
+        self.db.check()
+        filters = []
+        if year is None:
+            year = datetime.datetime.now().year
+        filters.append(lambda i: i.year == year)
+        invoice_collection = self.filter_invoice_collection(self.db.load_invoice_collection(), filters=filters)
+        all_field_names = YReport._fields
+        align = conf.ALIGN.copy()
+
+        header = ["TipoDocumento", "DataDocumento", "NumDocumento", "DataPagamento", "CodiceFiscale",
+                  "TipoSpesa", "FlagTipoSpesa", "Importo", "DataDocumentoRimborso", "NumDocumentoRimborso"]
+        with document(file=self.get_doc_file(output_filename), mode=table_mode, logger=self.logger) as doc:
+            page_template = doc.create_page_template(field_names=all_field_names, header=header, align=align)
+            doc_formats = Formats()
+            rows = []
+            for invoice in invoice_collection:
+                if invoice.vat:
+                    continue
+                date_fmt = invoice.date.strftime("%Y%m%d")
+                yreport = YReport(
+                    document_type="FT",
+                    document_date=date_fmt,
+                    document_num=invoice.number,
+                    payment_date=date_fmt,
+                    tax_code=invoice.tax_code,
+                    cost_type="SP",
+                    cost_type_flag=None,
+                    income="{:.2f}".format(invoice.income).replace('.', ','),
+                    refund_document_date=None,
+                    refund_document_num=None,
+                )
+                rows.append(yreport)
+            doc.add_page(page_template=page_template, data=rows, title=None, formats=doc_formats, prologue=None, epilogue=None)
+
+        
     def impl_summary(self, *, year=None, table_mode=None, output_filename=None, header=None):
         table_mode = self.db.get_config_option('table_mode', table_mode)
         header = self.db.get_config_option('header', table_mode)
@@ -964,10 +1031,10 @@ class InvoiceProgram(object):
                     getter=item_getter)
                 doc.add_page(page_template, rows)
 
-    def impl_legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode):
+    def impl_legacy(self, patterns, filters, date_from, date_to, validate, list, report, warning_mode, error_mode, changed_tax_codes):
         invoice_collection_reader = InvoiceCollectionReader(trace=self.trace, logger=self.logger)
 
-        validation_result=self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
+        validation_result=self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode, changed_tax_codes=changed_tax_codes)
         invoice_collection = invoice_collection_reader(validation_result, *[pattern.pattern for pattern in patterns])
         
 
@@ -1035,11 +1102,12 @@ class InvoiceProgram(object):
             result = doc_observer.apply_action(action)
             self.printer("spy {} -> {}".format(action, result))
         
-    def impl_scan(self, warning_mode=None, error_mode=None, force_refresh=None, progressbar=None,
+    def impl_scan(self, warning_mode=None, error_mode=None, changed_tax_codes=None, force_refresh=None, progressbar=None,
                         partial_update=None, remove_orphaned=None, show_scan_report=None, table_mode=None, output_filename=None):
         self.db.check()
         warning_mode = self.db.get_config_option('warning_mode', warning_mode)
         error_mode = self.db.get_config_option('error_mode', error_mode)
+        changed_tax_codes = self.db.get_config_option('changed_tax_codes', changed_tax_codes)
         show_scan_report = self.db.get_config_option('show_scan_report', show_scan_report)
         progressbar = self.db.get_config_option('progressbar', progressbar)
         internal_options = self.db.load_internal_options()
@@ -1049,17 +1117,37 @@ class InvoiceProgram(object):
         file_date_times = FileDateTimes()
         updated_invoice_collection = InvoiceCollection()
         removed_invoices = []
-        validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode)
+        validation_result = self.create_validation_result(warning_mode=warning_mode, error_mode=error_mode, changed_tax_codes=changed_tax_codes)
         scan_events = {'removed': 0, 'added': 0, 'modified': 0}
+        docs_pattern = os.path.join(conf.TMP_DOCS_DIR, "*.doc")
+
+        # clean 
+        for filename in glob.glob(docs_pattern):
+            os.remove(filename)
+
         with db.connect() as connection:
             configuration = db.load_configuration(connection)
+            clients = read_clients(configuration.clients)
             user_validators = self.compile_user_validators(connection)
             if remove_orphaned is None:
                 remove_orphaned = configuration.remove_orphaned
             if partial_update is None:
                 partial_update = configuration.partial_update
 
-            for pattern in db.load_patterns(connection=connection):
+            found_excel_filenames = set()
+            for excel_pattern in db.load_patterns(connection=connection):
+                if excel_pattern.skip:
+                    found_excel_filenames.difference_update(fnmatch.filter(found_excel_filenames, excel_pattern.pattern))
+                else:
+                    for excel_filename in glob.glob(excel_pattern.pattern):
+                        found_excel_filenames.add(Path.db_to(excel_filename))
+            excel_index = 0
+            for excel_filename in found_excel_filenames:
+                invoices = read_invoices(excel_filename)
+                create_documents(clients, invoices, os.path.join(conf.TMP_DOCS_DIR, "{{year}}_{index:05d}_{{number:05d}}.doc".format(index=excel_index)))
+                excel_index += 1
+
+            for pattern in [InvoiceDb.Pattern(pattern=docs_pattern, skip=False)]:
                 if pattern.skip:
                     found_doc_filenames.difference_update(fnmatch.filter(found_doc_filenames, pattern.pattern))
                 else:
@@ -1262,14 +1350,15 @@ class InvoiceProgram(object):
                 nd = tnd[invoice.tax_code]
                 for i_name, i_doc_filenames in nd.items():
                     if i_name != invoice.name:
-                        message = "fattura {f}: il codice_fiscale {t!r} è associato al nome {n!r}, mentre è stato associato ad un altro nome {pn!r} in #{c} fatture".format(
-                            f=invoice.doc_filename,
-                            t=invoice.tax_code,
-                            n=invoice.name,
-                            pn=i_name,
-                            c=len(i_doc_filenames),
-                        )
-                        validation_result.add_warning(invoice, InvoiceMultipleNamesError, message)
+                        if validation_result.changed_tax_codes is None or invoice.tax_code not in validation_result.changed_tax_codes:
+                            message = "fattura {f}: il codice_fiscale {t!r} è associato al nome {n!r}, mentre è stato associato ad un altro nome {pn!r} in #{c} fatture".format(
+                                f=invoice.doc_filename,
+                                t=invoice.tax_code,
+                                n=invoice.name,
+                                pn=i_name,
+                                c=len(i_doc_filenames),
+                            )
+                            validation_result.add_warning(invoice, InvoiceMultipleNamesError, message)
             tnd.setdefault(invoice.tax_code, {}).setdefault(invoice.name, []).append(invoice.doc_filename)
             if invoice.name in ntd:
                 td = ntd[invoice.name]

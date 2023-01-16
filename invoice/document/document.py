@@ -28,7 +28,7 @@ __all__ = [
     'document'
 ]
 
-from .text_csv import TextDocument, CsvDocument
+from .text_csv import TextDocument, CsvDocument, SCsvDocument
 from .xlsx import XlsxDocument, XLSX_AVAILABLE
 
 
@@ -61,6 +61,8 @@ def document(mode=conf.TABLE_MODE_TEXT, file=None, *, logger=None):
             document_class = TextDocument
         elif mode == conf.TABLE_MODE_CSV:
             document_class = CsvDocument
+        elif mode == conf.TABLE_MODE_SCSV:
+            document_class = SCsvDocument
         doc = document_class(logger=logger, file=file_handle)
     yield doc
     if must_close:

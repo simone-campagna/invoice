@@ -138,7 +138,7 @@ class Parser(metaclass=ParserMeta):
             return m_type(value)
         except Exception as err:
             e_type = m_type.__name__[len("type_"):]
-            message = "{}: errore nella conversione a tipo {}".format(key, e_type)
+            message = "{}={!r}: errore nella conversione a tipo {}".format(key, value, e_type)
             postponed_errors.append((InvoiceKeyConversionError, message))
 
     @classmethod
@@ -249,6 +249,8 @@ type = {t_money}
 action = {a_cumulate}
 default = 0.0
 
+[exceptions]
+type = {t_str}
 """.format(undefined=_UNDEFINED, **_DCT)
 
 def load_parser(parser_config_filename=None):
