@@ -21,10 +21,6 @@ from setuptools import setup, find_packages
 VERSION = '4.0.0'  ### bumpversion!
 
 def main():
-    scripts = [
-	'bin/invoice',
-    ]
-
     setup(
         name="invoice",
         version=VERSION,
@@ -38,7 +34,11 @@ def main():
         package_dir={'': 'src'},
         packages=find_packages("src"),
         package_data={'invoice.spy': ['icons/*.jpg']},
-        scripts=scripts,
+        entry_points={
+            'console_scripts': [
+                'invoice=invoice.invoice_main:invoice_main',
+            ],
+        },
     )
 
 if __name__ == "__main__":
