@@ -17,31 +17,17 @@
 __author__ = "Simone Campagna"
 
 from setuptools import setup, find_packages
-import os
-import glob
-import sys
+
+VERSION = '4.0.0'  ### bumpversion!
 
 def main():
     scripts = [
 	'bin/invoice',
     ]
 
-
-    # search requirement files
-    data_files = []
-    for data_dirname, patterns in [('requirements', ('*.txt', )),
-                                   ('docs/sphinx/source', ('conf.py', '*.rst')),
-                                   ('docs/sphinx/source/img', ('*.jpg',)),
-                                  ]:
-        files = []
-        for pattern in patterns:
-            for fpath in glob.glob(os.path.join(DIRNAME, data_dirname, pattern)):
-                files.append(os.path.relpath(fpath, DIRNAME))
-        data_files.append((data_dirname, files))
-    
     setup(
         name="invoice",
-        version='4.0.0',  # bumpversion!
+        version=VERSION,
         requires=[],
         install_requires=['openpyxl', 'XlsxWriter'],
         description="Tool to read and process invoices",
@@ -49,16 +35,9 @@ def main():
         author_email="simone.campagna11@gmail.com",
         url="https://github.com/simone-campagna/invoice",
         download_url='https://github.com/simone-campagna/invoice/archive/{}.tar.gz'.format(VERSION),
-        packages=[
-            'invoice',
-            'invoice.database',
-            'invoice.database.upgrade',
-            'invoice.document',
-            'invoice.ee',
-            'invoice.spy',
-        ],
+        package_dir={'': 'src'},
+        packages=find_packages("src"),
         package_data={'invoice.spy': ['icons/*.jpg']},
-        data_files=data_files,
         scripts=scripts,
     )
 
