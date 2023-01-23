@@ -1,3 +1,7 @@
+<new-version>
+  - fix vat number on undefined value
+  - new setup.py and source layout
+
 4.0.0
   - allow multi-row invoices
   - add changed_tax_codes configuration attribute
