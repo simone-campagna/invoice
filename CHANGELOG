@@ -1,4 +1,4 @@
-<new-version>
+4.1.0
   - fix vat number on undefined value
   - new setup.py and source layout
 
