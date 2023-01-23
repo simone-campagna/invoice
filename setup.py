@@ -16,7 +16,7 @@
 
 __author__ = "Simone Campagna"
 
-from distutils.core import setup
+from setuptools import setup, find_packages
 import os
 import glob
 import sys
@@ -26,16 +26,6 @@ def main():
 	'bin/invoice',
     ]
 
-    DIRNAME = os.path.abspath(os.path.dirname(__file__))
-    if DIRNAME:
-        os.chdir(DIRNAME)
-    try:
-        py_dirname = DIRNAME
-        sys.path.insert(0, py_dirname)
-
-        from invoice.conf import VERSION
-    finally:
-        del sys.path[0]
 
     # search requirement files
     data_files = []
@@ -50,16 +40,16 @@ def main():
         data_files.append((data_dirname, files))
     
     setup(
-        name = "invoice",
-        version = VERSION,
-        requires = [],
-        install_requires = ['openpyxl', 'XlsxWriter'],
-        description = "Tool to read and process invoices",
-        author = "Simone Campagna",
-        author_email = "simone.campagna11@gmail.com",
+        name="invoice",
+        version='4.0.0',  # bumpversion!
+        requires=[],
+        install_requires=['openpyxl', 'XlsxWriter'],
+        description="Tool to read and process invoices",
+        author="Simone Campagna",
+        author_email="simone.campagna11@gmail.com",
         url="https://github.com/simone-campagna/invoice",
-        download_url = 'https://github.com/simone-campagna/invoice/archive/{}.tar.gz'.format(VERSION),
-        packages = [
+        download_url='https://github.com/simone-campagna/invoice/archive/{}.tar.gz'.format(VERSION),
+        packages=[
             'invoice',
             'invoice.database',
             'invoice.database.upgrade',
@@ -67,9 +57,9 @@ def main():
             'invoice.ee',
             'invoice.spy',
         ],
-        package_data = {'invoice.spy': ['icons/*.jpg']},
+        package_data={'invoice.spy': ['icons/*.jpg']},
         data_files=data_files,
-        scripts = scripts,
+        scripts=scripts,
     )
 
 if __name__ == "__main__":
