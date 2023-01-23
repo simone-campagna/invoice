@@ -36,7 +36,7 @@ def mk_date(x):
 
 
 def mk_p_vat(x):
-    if x.strip() in {'A1', 'A10_18'}:
+    if x.strip() in {'', 'A1', 'A10_18'}:
         return  mk_float(0)
     else:
         return  mk_float(x.strip())

@@ -16,60 +16,29 @@
 
 __author__ = "Simone Campagna"
 
-from distutils.core import setup
-import os
-import glob
-import sys
+from setuptools import setup, find_packages
+
+VERSION = '4.1.0'  ### bumpversion!
 
 def main():
-    scripts = [
-	'bin/invoice',
-    ]
-
-    DIRNAME = os.path.abspath(os.path.dirname(__file__))
-    if DIRNAME:
-        os.chdir(DIRNAME)
-    try:
-        py_dirname = DIRNAME
-        sys.path.insert(0, py_dirname)
-
-        from invoice.conf import VERSION
-    finally:
-        del sys.path[0]
-
-    # search requirement files
-    data_files = []
-    for data_dirname, patterns in [('requirements', ('*.txt', )),
-                                   ('docs/sphinx/source', ('conf.py', '*.rst')),
-                                   ('docs/sphinx/source/img', ('*.jpg',)),
-                                  ]:
-        files = []
-        for pattern in patterns:
-            for fpath in glob.glob(os.path.join(DIRNAME, data_dirname, pattern)):
-                files.append(os.path.relpath(fpath, DIRNAME))
-        data_files.append((data_dirname, files))
-    
     setup(
-        name = "invoice",
-        version = VERSION,
-        requires = [],
-        install_requires = ['openpyxl', 'XlsxWriter'],
-        description = "Tool to read and process invoices",
-        author = "Simone Campagna",
-        author_email = "simone.campagna11@gmail.com",
+        name="invoice",
+        version=VERSION,
+        requires=[],
+        install_requires=['openpyxl', 'XlsxWriter'],
+        description="Tool to read and process invoices",
+        author="Simone Campagna",
+        author_email="simone.campagna11@gmail.com",
         url="https://github.com/simone-campagna/invoice",
-        download_url = 'https://github.com/simone-campagna/invoice/archive/{}.tar.gz'.format(VERSION),
-        packages = [
-            'invoice',
-            'invoice.database',
-            'invoice.database.upgrade',
-            'invoice.document',
-            'invoice.ee',
-            'invoice.spy',
-        ],
-        package_data = {'invoice.spy': ['icons/*.jpg']},
-        data_files=data_files,
-        scripts = scripts,
+        download_url='https://github.com/simone-campagna/invoice/archive/{}.tar.gz'.format(VERSION),
+        package_dir={'': 'src'},
+        packages=find_packages("src"),
+        package_data={'invoice.spy': ['icons/*.jpg']},
+        entry_points={
+            'console_scripts': [
+                'invoice=invoice.invoice_main:invoice_main',
+            ],
+        },
     )
 
 if __name__ == "__main__":
