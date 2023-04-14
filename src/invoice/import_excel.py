@@ -11,6 +11,7 @@ import re
 from openpyxl import load_workbook
 
 from . import conf
+from . import log
 
 Field = collections.namedtuple(
     'Field', 'header field type')
@@ -61,9 +62,10 @@ def mk_exceptions(x):
 
 
 def read_workbook(filename, fields):
+    rx = re.compile('[\s\.]+')
     def strip(txt):
         if isinstance(txt, str):
-            return txt.replace(' ', '')
+            return rx.sub('', txt.lower())
         else:
             return txt
 
@@ -97,13 +99,12 @@ def read_workbook(filename, fields):
         if not missing_fields:
             ## print("header found at line {}".format(line_no + 1))
             break
-        # else:
-        #     print(missing_fields)
-        #     input("---")
-        #     print("line {}: missing {}".format(line_no + 1, sorted(missing_fields)))
     else:
-        for field in missing_fields:
-            raise ValueError("{}: field {} not found".format(filename, field))
+        logger = log.get_default_logger()
+        logger.warning(f'missing fields:')
+        for field in sorted(missing_fields):
+            logger.warning(f' - {field!r} [{"|".join(token_names(field))}]')
+        raise ValueError(f"{filename}: fields not found: {'|'.join(sorted(missing_fields))}")
     for row in iws:
         dct = {}
         if all(row[index].value is None for index in cols):

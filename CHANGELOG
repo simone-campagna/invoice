@@ -1,7 +1,10 @@
+4.1.1
+* remove spaces and dots from header names, lowercase only
+
 4.1.0
-  - fix vat number on undefined value
-  - new setup.py and source layout
+* fix vat number on undefined value
+* new setup.py and source layout
 
 4.0.0
-  - allow multi-row invoices
-  - add changed_tax_codes configuration attribute
+* allow multi-row invoices
+* add changed_tax_codes configuration attribute
