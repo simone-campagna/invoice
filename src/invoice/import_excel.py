@@ -62,7 +62,7 @@ def mk_exceptions(x):
 
 
 def read_workbook(filename, fields):
-    rx = re.compile('[\s\.]+')
+    rx = re.compile(r'[\s\.]+')
     def strip(txt):
         if isinstance(txt, str):
             return rx.sub('', txt.lower())

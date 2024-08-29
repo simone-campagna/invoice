@@ -147,7 +147,7 @@ regexpr = ^\# taxes\|\s*(?P<taxes>{p})\s*$
 [exceptions]
 regexpr = ^\# exceptions\|\s*(?P<exceptions>.*)\s*$
 
-""".format(p='[^\|]*')
+""".format(p=r'[^\|]*')
 
 
 def load_scanner(scanner_config_filename=None):
