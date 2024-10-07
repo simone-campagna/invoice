@@ -154,7 +154,11 @@ class Invoice(InvoiceNamedTuple):
                     exc_type=InvoiceInconsistentIncomeError,
                     message="fattura {}: incasso non coerente: {} - totale:{} - atteso:{}".format(self.doc_filename, parts, self.income, expected_income))
         ndecimals = 2
+        change_date = datetime.date(2024, 10, 7)  # after this date, the cpa must be computed including the taxes (a.k.a. bolli)
         for key in "cpa", "vat", "deduction":
+            source_fields = list(conf.DERIVATIVES[key])
+            if self.date >= change_date:
+                source_fields.append('taxes')
             p_key = "p_" + key
             percentage = getattr(self, p_key)
             if percentage is not None:
@@ -167,7 +171,6 @@ class Invoice(InvoiceNamedTuple):
                     elif key == "deduction":
                        error_class = InvoiceInconsistentDeductionError
                        val = -val
-                source_fields = conf.DERIVATIVES[key]
                 source_vals = [getattr(self, source_field) for source_field in source_fields]
                 source_val = round(sum(v for v in source_vals if v is not None), ndecimals)
                 expected_val = round(source_val * percentage / 100.0, ndecimals)

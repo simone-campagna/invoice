@@ -18,7 +18,7 @@ __author__ = "Simone Campagna"
 
 from setuptools import setup, find_packages
 
-VERSION = '4.1.1'  ### bumpversion!
+VERSION = '4.1.2'  ### bumpversion!
 
 def main():
     setup(
