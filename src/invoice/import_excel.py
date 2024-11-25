@@ -61,14 +61,16 @@ def mk_exceptions(x):
     return ','.join(exceptions)
 
 
-def read_workbook(filename, fields):
-    rx = re.compile(r'[\s\.]+')
-    def strip(txt):
-        if isinstance(txt, str):
-            return rx.sub('', txt.lower())
-        else:
-            return txt
+RX_SPACE = re.compile(r'[\s\.]+')
 
+def strip(txt):
+    if isinstance(txt, str):
+        return RX_SPACE.sub('', txt.lower())
+    else:
+        return txt
+
+
+def read_workbook(filename, fields, alternate_names=None):
     wb = load_workbook(filename)
     if len(wb.sheetnames) != 1:
         raise ValueError("file {}: sheetnames: {!r}".format(filename, wb.sheetnames))
@@ -76,15 +78,26 @@ def read_workbook(filename, fields):
     ws = wb[sheetname]
     iws = iter(ws.rows)
     fields_dict = {strip(field.header): field for field in fields}
-    alternate_names = {
-        strip('Codice fiscale'): strip('C.F.'),
-        strip('Cliente'): strip('Cliente/Fornitore'),
-        strip('Partita IVA'): strip('P.I.'),
-    }
+
+    if alternate_names is None:
+        alternate_names = {
+            strip('C.F.'): [strip('Codice fiscale')],
+            strip('Cliente/Fornitore'): [strip('Cliente')],
+            strip('Cliente'): [strip('Ragione sociale')],
+            strip('P.I.'): [strip('Partita IVA')],
+        }
+
+    rev_alternate_names = {}
+    for name, alt_names in alternate_names.items():
+        for alt_name in alt_names:
+            if alt_name in rev_alternate_names:
+                raise ValueError(f'duplicate alias {alt_name!r}')
+            rev_alternate_names[alt_name] = name
+
     def token_names(token):
         yield token
-        if token in alternate_names:
-            yield alternate_names[token]
+        if token in rev_alternate_names:
+            yield rev_alternate_names[token]
 
     for line_no, row in enumerate(iws):
         header = [strip(cell.value) for cell in row]
@@ -103,7 +116,9 @@ def read_workbook(filename, fields):
         logger = log.get_default_logger()
         logger.warning(f'missing fields:')
         for field in sorted(missing_fields):
-            logger.warning(f' - {field!r} [{"|".join(token_names(field))}]')
+            names = [field]
+            names.extend(alternate_names.get(field, []))
+            logger.warning(f' - {field!r} [{"|".join(names)}]')
         raise ValueError(f"{filename}: fields not found: {'|'.join(sorted(missing_fields))}")
     for row in iws:
         dct = {}
