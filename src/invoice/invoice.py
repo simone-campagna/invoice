@@ -157,7 +157,7 @@ class Invoice(InvoiceNamedTuple):
         change_date = datetime.date(2024, 10, 7)  # after this date, the cpa must be computed including the taxes (a.k.a. bolli)
         for key in "cpa", "vat", "deduction":
             source_fields = list(conf.DERIVATIVES[key])
-            if self.date >= change_date:
+            if self.date >= change_date and self.tax_code != '91332520377':
                 source_fields.append('taxes')
             p_key = "p_" + key
             percentage = getattr(self, p_key)
