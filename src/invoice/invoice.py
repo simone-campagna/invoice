@@ -155,9 +155,10 @@ class Invoice(InvoiceNamedTuple):
                     message="fattura {}: incasso non coerente: {} - totale:{} - atteso:{}".format(self.doc_filename, parts, self.income, expected_income))
         ndecimals = 2
         change_date = datetime.date(2024, 10, 7)  # after this date, the cpa must be computed including the taxes (a.k.a. bolli)
+        change_date_all = datetime.date(2026, 1, 1)
         for key in "cpa", "vat", "deduction":
             source_fields = list(conf.DERIVATIVES[key])
-            if self.date >= change_date and self.tax_code != '91332520377':
+            if self.date >= change_date_all or (self.date >= change_date and self.tax_code != '91332520377'):
                 source_fields.append('taxes')
             p_key = "p_" + key
             percentage = getattr(self, p_key)
